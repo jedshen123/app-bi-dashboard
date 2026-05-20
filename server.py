@@ -85,9 +85,10 @@ def parse_filters(query_string: str) -> dict:
     }
 
 
-def build_where(filters: dict):
+def build_where(filters: dict, include_date: bool = True):
     """
     根据筛选条件构建 WHERE 子句与参数列表。
+    include_date=False 时，不加入 event_date 时间条件（供单独构造活跃用户查询使用）。
     返回 (where_str, params)，where_str 以 'WHERE ' 开头或为空字符串。
     使用参数化查询，防止 SQL 注入。
     """
@@ -112,25 +113,25 @@ def build_where(filters: dict):
         parts.append("active_status = %s")
         params.append(filters["active_status"])
 
-    # 日期范围：自定义区间优先，否则用近 N 天
-    date_from = filters.get("date_from", "")
-    date_to   = filters.get("date_to",   "")
-    date_days = filters.get("date_days", "")
+    if include_date:
+        # 日期范围：自定义区间优先，否则用近 N 天
+        date_from = filters.get("date_from", "")
+        date_to   = filters.get("date_to",   "")
+        date_days = filters.get("date_days", "")
 
-    if date_from:
-        parts.append("event_date >= %s")
-        params.append(date_from)
-    if date_to:
-        parts.append("event_date <= %s")
-        params.append(date_to)
-    if not date_from and not date_to and date_days:
-        try:
-            days = int(date_days)
-            if days > 0:
-                # DATE_SUB 在 StarRocks 中兼容
-                parts.append(f"event_date >= DATE_SUB(CURDATE(), INTERVAL {days} DAY)")
-        except ValueError:
-            pass
+        if date_from:
+            parts.append("event_date >= %s")
+            params.append(date_from)
+        if date_to:
+            parts.append("event_date <= %s")
+            params.append(date_to)
+        if not date_from and not date_to and date_days:
+            try:
+                days = int(date_days)
+                if days > 0:
+                    parts.append(f"event_date >= DATE_SUB(CURDATE(), INTERVAL {days} DAY)")
+            except ValueError:
+                pass
 
     where = ("WHERE " + " AND ".join(parts)) if parts else ""
     return where, params
@@ -162,10 +163,23 @@ def build_dashboard_data(filters: dict = None) -> dict:
 
     where, params = build_where(filters)
 
+    # 不含日期的基础 WHERE（用于构造活跃用户查询）
+    base_where, base_params = build_where(filters, include_date=False)
+
+    # ---------- 活跃用户专用 WHERE ----------
+    # 活跃用户 = 指定时间范围内有 event_date 记录的去重 uid
+    # 有日期筛选则沿用，无则默认近 30 天
+    has_date = filters.get("date_from") or filters.get("date_to") or filters.get("date_days")
+    if has_date:
+        active_where, active_params = where, list(params)
+    else:
+        # 默认近 30 天
+        sep = " AND " if base_where else "WHERE "
+        active_where  = base_where + sep + "event_date >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)"
+        active_params = list(base_params)
+
     # 趋势图额外的日期过滤：未指定日期时默认近 30 天
-    has_date_filter = (
-        filters.get("date_from") or filters.get("date_to") or filters.get("date_days")
-    )
+    has_date_filter = has_date
     if not has_date_filter:
         trend_where  = (where + " AND " if where else "WHERE ") + \
                        "event_date >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)"
@@ -174,12 +188,10 @@ def build_dashboard_data(filters: dict = None) -> dict:
         trend_where  = where
         trend_params = list(params)
 
-    # ---------- 1. 总体概览 ----------
+    # ---------- 1. 总体概览（总量指标，不依赖 event_date）----------
     ov_rows = run_sql(f"""
         SELECT
           COUNT(DISTINCT uid)                                            AS total_users,
-          SUM(CASE WHEN active_status = '1' THEN 1 ELSE 0 END)         AS active_users,
-          SUM(CASE WHEN active_status = '0' THEN 1 ELSE 0 END)         AS inactive_users,
           SUM(CASE WHEN deleted = '1'       THEN 1 ELSE 0 END)         AS deleted_users,
           COUNT(DISTINCT country_ad_ch)                                 AS country_count,
           MAX(update_date)                                              AS latest_update_date,
@@ -187,8 +199,19 @@ def build_dashboard_data(filters: dict = None) -> dict:
         FROM {TABLE_NAME} {where}
     """, params)
     ov = ov_rows[0] if ov_rows else {}
-    total  = int(ov.get("total_users")  or 1)
-    active = int(ov.get("active_users") or 0)
+    total = int(ov.get("total_users") or 1)
+
+    # ---------- 2. 活跃用户：按 event_date 时间范围去重 uid ----------
+    evt_not_null = "AND event_date IS NOT NULL AND event_date != ''" \
+                   if active_where else \
+                   "WHERE event_date IS NOT NULL AND event_date != ''"
+    active_rows = run_sql(f"""
+        SELECT COUNT(DISTINCT uid) AS active_users
+        FROM {TABLE_NAME}
+        {active_where}
+        {evt_not_null}
+    """, active_params)
+    active = int((active_rows[0].get("active_users") if active_rows else None) or 0)
 
     # ---------- 2. 数据来源分布 ----------
     # 如果已按来源筛选，额外加 NOT NULL 条件
@@ -258,7 +281,7 @@ def build_dashboard_data(filters: dict = None) -> dict:
         "overview": {
             "total_users":        total,
             "active_users":       active,
-            "inactive_users":     to_int(ov.get("inactive_users")),
+            "inactive_users":     max(total - active, 0),
             "deleted_users":      to_int(ov.get("deleted_users")),
             "active_rate":        round(active / total * 100, 2),
             "country_count":      to_int(ov.get("country_count")),
