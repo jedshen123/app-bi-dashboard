@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>用户标签数据看板</title>
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js"></script>
+  <style>
+    /* ============================================================
+       CSS 变量 & 重置
+    ============================================================ */
+    :root {
+      --bg-deep:   #020c1b;
+      --bg-page:   #041020;
+      --bg-card:   #071a30;
+      --bg-card2:  #0a2040;
+      --border:    #1a3a60;
+      --border-glow: #1e5fa0;
+      --blue:      #00d4ff;
+      --blue-dim:  #0096c7;
+      --blue-dark: #003a55;
+      --purple:    #9b5de5;
+      --purple-dim:#6a3fa0;
+      --green:     #00f5a0;
+      --green-dim: #00b87a;
+      --amber:     #ffd166;
+      --amber-dim: #cc9900;
+      --red:       #ef476f;
+      --red-dim:   #a0334e;
+      --text-1:    #ddeeff;
+      --text-2:    #7aa8cc;
+      --text-3:    #3d6a90;
+      --radius:    12px;
+      --radius-sm: 8px;
+      --shadow:    0 4px 24px rgba(0,0,0,0.5);
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'PingFang SC', 'Microsoft YaHei', 'Segoe UI', sans-serif;
+      background: var(--bg-deep);
+      color: var(--text-1);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ============================================================
+       扫描线背景装饰
+    ============================================================ */
+    body::before {
+      content: '';
+      position: fixed; inset: 0; pointer-events: none; z-index: 0;
+      background:
+        linear-gradient(rgba(0,180,255,0.025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,180,255,0.025) 1px, transparent 1px);
+      background-size: 40px 40px;
+    }
+
+    /* ============================================================
+       页面包装器
+    ============================================================ */
+    .page-wrapper {
+      position: relative; z-index: 1;
+      max-width: 1680px;
+      margin: 0 auto;
+      padding: 0 20px 24px;
+    }
+
+    /* ============================================================
+       头部
+    ============================================================ */
+    .dashboard-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20px 0 16px;
+      border-bottom: 1px solid var(--border);
+      gap: 16px;
+    }
+    .header-left {
+      display: flex; align-items: center; gap: 16px;
+    }
+    .logo-icon {
+      width: 44px; height: 44px;
+      background: linear-gradient(135deg, var(--blue), var(--purple));
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px; flex-shrink: 0;
+      box-shadow: 0 0 20px rgba(0,212,255,0.4);
+    }
+    .title-group h1 {
+      font-size: 22px; font-weight: 700;
+      background: linear-gradient(90deg, #ffffff, var(--blue));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      letter-spacing: 1px;
+    }
+    .title-group .subtitle {
+      font-size: 12px; color: var(--text-3);
+      font-family: 'Courier New', monospace;
+      letter-spacing: 0.5px;
+    }
+    .header-right {
+      display: flex; align-items: center; gap: 20px;
+    }
+    .clock-group { text-align: right; }
+    #live-clock {
+      font-size: 18px; font-weight: 600;
+      color: var(--blue); font-family: 'Courier New', monospace;
+      letter-spacing: 2px;
+    }
+    #last-refresh {
+      font-size: 11px; color: var(--text-3);
+      margin-top: 2px;
+    }
+    #refresh-btn {
+      display: flex; align-items: center; gap: 8px;
+      padding: 9px 20px;
+      background: linear-gradient(135deg, var(--blue-dark), #002233);
+      border: 1px solid var(--blue-dim);
+      border-radius: var(--radius-sm);
+      color: var(--blue); font-size: 13px; font-weight: 600;
+      cursor: pointer; transition: all 0.25s;
+      letter-spacing: 0.5px;
+    }
+    #refresh-btn:hover {
+      background: linear-gradient(135deg, #004a70, var(--blue-dark));
+      box-shadow: 0 0 16px rgba(0,212,255,0.35);
+      transform: translateY(-1px);
+    }
+    #refresh-btn.loading { opacity: 0.6; pointer-events: none; }
+    .spin { display: inline-block; animation: spin 1s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ============================================================
+       状态条
+    ============================================================ */
+    .status-bar {
+      display: flex; align-items: center; gap: 8px;
+      padding: 8px 14px;
+      background: rgba(0,212,255,0.06);
+      border: 1px solid rgba(0,212,255,0.15);
+      border-radius: var(--radius-sm);
+      margin: 12px 0;
+      font-size: 12px; color: var(--text-2);
+      min-height: 34px;
+      transition: all 0.3s;
+    }
+    .status-bar.error { background: rgba(239,71,111,0.08); border-color: rgba(239,71,111,0.3); color: var(--red); }
+    .status-dot {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 8px var(--green);
+      flex-shrink: 0;
+      animation: pulse-dot 2s ease infinite;
+    }
+    .status-dot.loading { background: var(--amber); box-shadow: 0 0 8px var(--amber); animation: none; }
+    .status-dot.error { background: var(--red); box-shadow: 0 0 8px var(--red); animation: none; }
+    @keyframes pulse-dot {
+      0%, 100% { opacity: 1; } 50% { opacity: 0.4; }
+    }
+
+    /* ============================================================
+       KPI 卡片
+    ============================================================ */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 14px;
+      margin-bottom: 16px;
+    }
+    .kpi-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 18px 20px 16px;
+      position: relative; overflow: hidden;
+      transition: transform 0.2s, box-shadow 0.2s;
+      cursor: default;
+    }
+    .kpi-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 32px rgba(0,0,0,0.5);
+    }
+    .kpi-card::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0;
+      height: 2px;
+    }
+    .kpi-card.c-blue::before   { background: linear-gradient(90deg, transparent, var(--blue), transparent); }
+    .kpi-card.c-green::before  { background: linear-gradient(90deg, transparent, var(--green), transparent); }
+    .kpi-card.c-purple::before { background: linear-gradient(90deg, transparent, var(--purple), transparent); }
+    .kpi-card.c-amber::before  { background: linear-gradient(90deg, transparent, var(--amber), transparent); }
+    .kpi-card.c-red::before    { background: linear-gradient(90deg, transparent, var(--red), transparent); }
+
+    /* 背景光晕 */
+    .kpi-card.c-blue   { box-shadow: inset 0 0 80px rgba(0,212,255,0.04); }
+    .kpi-card.c-green  { box-shadow: inset 0 0 80px rgba(0,245,160,0.04); }
+    .kpi-card.c-purple { box-shadow: inset 0 0 80px rgba(155,93,229,0.04); }
+    .kpi-card.c-amber  { box-shadow: inset 0 0 80px rgba(255,209,102,0.04); }
+    .kpi-card.c-red    { box-shadow: inset 0 0 80px rgba(239,71,111,0.04); }
+
+    .kpi-label {
+      font-size: 12px; color: var(--text-2);
+      letter-spacing: 0.5px; margin-bottom: 10px;
+      text-transform: uppercase;
+    }
+    .kpi-value {
+      font-size: 32px; font-weight: 800;
+      line-height: 1; letter-spacing: -1px;
+      font-family: 'Courier New', monospace;
+    }
+    .kpi-card.c-blue   .kpi-value { color: var(--blue); }
+    .kpi-card.c-green  .kpi-value { color: var(--green); }
+    .kpi-card.c-purple .kpi-value { color: var(--purple); }
+    .kpi-card.c-amber  .kpi-value { color: var(--amber); }
+    .kpi-card.c-red    .kpi-value { color: var(--red); }
+
+    .kpi-sub {
+      margin-top: 8px; font-size: 11px; color: var(--text-3);
+    }
+    .kpi-badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 20px;
+      font-size: 11px; font-weight: 600;
+      margin-top: 6px;
+    }
+    .badge-up   { background: rgba(0,245,160,0.15); color: var(--green); }
+    .badge-down { background: rgba(239,71,111,0.15); color: var(--red); }
+    .badge-neu  { background: rgba(0,212,255,0.12); color: var(--blue); }
+
+    .kpi-icon-bg {
+      position: absolute; right: 14px; top: 50%; transform: translateY(-50%);
+      font-size: 38px; opacity: 0.07; pointer-events: none;
+      line-height: 1;
+    }
+
+    /* ============================================================
+       图表行
+    ============================================================ */
+    .charts-row {
+      display: grid;
+      gap: 14px;
+      margin-bottom: 16px;
+    }
+    .charts-row-1 { grid-template-columns: 3fr 2fr; }
+    .charts-row-2 { grid-template-columns: 55fr 45fr; }
+
+    .chart-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 18px 20px;
+      display: flex; flex-direction: column;
+    }
+    .chart-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 14px;
+    }
+    .chart-title {
+      font-size: 14px; font-weight: 600; color: var(--text-1);
+      display: flex; align-items: center; gap: 8px;
+    }
+    .chart-title::before {
+      content: '';
+      display: inline-block; width: 3px; height: 14px;
+      border-radius: 2px;
+    }
+    .c-blue-bar   .chart-title::before { background: var(--blue); }
+    .c-green-bar  .chart-title::before { background: var(--green); }
+    .c-purple-bar .chart-title::before { background: var(--purple); }
+    .c-amber-bar  .chart-title::before { background: var(--amber); }
+
+    .chart-meta {
+      font-size: 11px; color: var(--text-3);
+    }
+    .chart-body {
+      flex: 1;
+      min-height: 280px;
+    }
+
+    /* ============================================================
+       底部信息栏
+    ============================================================ */
+    .footer-bar {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 12px 0;
+      border-top: 1px solid var(--border);
+      font-size: 11px; color: var(--text-3);
+      gap: 20px; flex-wrap: wrap;
+    }
+    .footer-item { display: flex; align-items: center; gap: 6px; }
+    .footer-dot {
+      width: 5px; height: 5px; border-radius: 50%;
+      background: var(--blue-dim);
+    }
+
+    /* ============================================================
+       加载遮罩
+    ============================================================ */
+    .chart-loading {
+      position: absolute; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(7,26,48,0.85);
+      border-radius: var(--radius); z-index: 10;
+      font-size: 13px; color: var(--text-2);
+      gap: 10px;
+    }
+
+    /* ============================================================
+       响应式
+    ============================================================ */
+    @media (max-width: 1200px) {
+      .kpi-grid { grid-template-columns: repeat(3, 1fr); }
+    }
+    @media (max-width: 900px) {
+      .charts-row-1, .charts-row-2 { grid-template-columns: 1fr; }
+      .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 600px) {
+      .kpi-grid { grid-template-columns: 1fr; }
+      .title-group h1 { font-size: 17px; }
+    }
+  </style>
+</head>
+<body>
+<div class="page-wrapper">
+
+  <!-- ========== 头部 ========== -->
+  <header class="dashboard-header">
+    <div class="header-left">
+      <div class="logo-icon">📊</div>
+      <div class="title-group">
+        <h1>用户标签数据看板</h1>
+        <span class="subtitle">DATA SOURCE: dwd_app_user_flag_info &nbsp;|&nbsp; 美东 StarRocks</span>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="clock-group">
+        <div id="live-clock">--:--:--</div>
+        <div id="last-refresh">等待加载...</div>
+      </div>
+      <button id="refresh-btn" onclick="loadData()">
+        <span id="btn-icon">↻</span>
+        <span>刷新数据</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- ========== 状态条 ========== -->
+  <div class="status-bar" id="status-bar">
+    <div class="status-dot loading" id="status-dot"></div>
+    <span id="status-text">正在连接数据库并加载数据...</span>
+  </div>
+
+  <!-- ========== KPI 卡片 ========== -->
+  <div class="kpi-grid">
+    <div class="kpi-card c-blue">
+      <div class="kpi-label">注册用户总量</div>
+      <div class="kpi-value" id="kpi-total">--</div>
+      <div class="kpi-sub">累计去重用户数</div>
+      <div class="kpi-icon-bg">👥</div>
+    </div>
+    <div class="kpi-card c-green">
+      <div class="kpi-label">活跃用户数</div>
+      <div class="kpi-value" id="kpi-active">--</div>
+      <div class="kpi-sub">active_status = 1</div>
+      <div class="kpi-icon-bg">✅</div>
+    </div>
+    <div class="kpi-card c-amber">
+      <div class="kpi-label">用户活跃率</div>
+      <div class="kpi-value" id="kpi-rate">--</div>
+      <div class="kpi-sub">活跃 / 总注册</div>
+      <div class="kpi-icon-bg">📈</div>
+    </div>
+    <div class="kpi-card c-purple">
+      <div class="kpi-label">覆盖国家 / 地区</div>
+      <div class="kpi-value" id="kpi-countries">--</div>
+      <div class="kpi-sub">country_ad_ch 维度</div>
+      <div class="kpi-icon-bg">🌍</div>
+    </div>
+    <div class="kpi-card c-red">
+      <div class="kpi-label">非活跃用户</div>
+      <div class="kpi-value" id="kpi-inactive">--</div>
+      <div class="kpi-sub">active_status = 0</div>
+      <div class="kpi-icon-bg">⚠️</div>
+    </div>
+  </div>
+
+  <!-- ========== 第一行图表：趋势 + 来源 ========== -->
+  <div class="charts-row charts-row-1">
+    <div class="chart-card c-blue-bar">
+      <div class="chart-header">
+        <div class="chart-title">近 30 天日活跃用户趋势</div>
+        <span class="chart-meta" id="trend-meta">--</span>
+      </div>
+      <div class="chart-body" id="chart-trend"></div>
+    </div>
+    <div class="chart-card c-purple-bar">
+      <div class="chart-header">
+        <div class="chart-title">数据来源分布</div>
+        <span class="chart-meta">EC · EU · AP</span>
+      </div>
+      <div class="chart-body" id="chart-source"></div>
+    </div>
+  </div>
+
+  <!-- ========== 第二行图表：国家 + 行为 ========== -->
+  <div class="charts-row charts-row-2">
+    <div class="chart-card c-green-bar">
+      <div class="chart-header">
+        <div class="chart-title">国家 / 地区用户分布 TOP 10</div>
+        <span class="chart-meta">按去重用户数排序</span>
+      </div>
+      <div class="chart-body" id="chart-country"></div>
+    </div>
+    <div class="chart-card c-amber-bar">
+      <div class="chart-header">
+        <div class="chart-title">用户行为标记分析</div>
+        <span class="chart-meta">7 维度覆盖</span>
+      </div>
+      <div class="chart-body" id="chart-behavior"></div>
+    </div>
+  </div>
+
+  <!-- ========== 底部信息 ========== -->
+  <div class="footer-bar">
+    <div class="footer-item">
+      <div class="footer-dot"></div>
+      <span>数据源：美东 StarRocks / dwd_app_user_flag_info</span>
+    </div>
+    <div class="footer-item">
+      <div class="footer-dot"></div>
+      <span>数据截止日期：<b id="footer-event-date" style="color:var(--text-2)">--</b></span>
+    </div>
+    <div class="footer-item">
+      <div class="footer-dot"></div>
+      <span>最后更新：<b id="footer-update-date" style="color:var(--text-2)">--</b></span>
+    </div>
+    <div class="footer-item" style="margin-left:auto">
+      <span style="color:var(--text-3)">© 数据分析中台 &nbsp;|&nbsp; 用户标签看板 v2.0</span>
+    </div>
+  </div>
+
+</div><!-- /page-wrapper -->
+
+<script>
+/* ================================================================
+   工具函数
+================================================================ */
+/** 数字格式化：超过 1 万显示 x.x万，超过 100 万显示 x.x百万 */
+function fmtNum(n) {
+  if (n === null || n === undefined || n === '--') return '--';
+  n = Number(n);
+  if (isNaN(n)) return '--';
+  if (n >= 10000000) return (n / 10000000).toFixed(1) + '千万';
+  if (n >= 1000000)  return (n / 1000000).toFixed(1) + '百万';
+  if (n >= 10000)    return (n / 10000).toFixed(1) + '万';
+  return n.toLocaleString('zh-CN');
+}
+
+/** 带动画的数字更新 */
+function animateNum(el, target, isPercent) {
+  if (el.__animTimer) clearInterval(el.__animTimer);
+  const start = 0, duration = 900, step = 16;
+  const steps = Math.ceil(duration / step);
+  let cur = 0;
+  el.__animTimer = setInterval(() => {
+    cur++;
+    const pct = cur / steps;
+    const val = Math.round(target * (1 - Math.pow(1 - pct, 3)));
+    if (isPercent) {
+      el.textContent = (target * (1 - Math.pow(1 - pct, 3))).toFixed(1) + '%';
+    } else {
+      el.textContent = fmtNum(val);
+    }
+    if (cur >= steps) {
+      clearInterval(el.__animTimer);
+      el.textContent = isPercent ? target.toFixed(1) + '%' : fmtNum(target);
+    }
+  }, step);
+}
+
+/* ================================================================
+   实时时钟
+================================================================ */
+function updateClock() {
+  const now = new Date();
+  const hh = String(now.getHours()).padStart(2,'0');
+  const mm = String(now.getMinutes()).padStart(2,'0');
+  const ss = String(now.getSeconds()).padStart(2,'0');
+  document.getElementById('live-clock').textContent = `${hh}:${mm}:${ss}`;
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+/* ================================================================
+   ECharts 实例管理（防止重复初始化）
+================================================================ */
+const charts = {};
+function getChart(id) {
+  const el = document.getElementById(id);
+  if (!el) return null;
+  if (charts[id]) { charts[id].clear(); return charts[id]; }
+  charts[id] = echarts.init(el, null, { renderer: 'canvas' });
+  return charts[id];
+}
+
+/* ================================================================
+   公共颜色常量
+================================================================ */
+const C = {
+  blue:   '#00d4ff',
+  blueD:  '#0096c7',
+  purple: '#9b5de5',
+  green:  '#00f5a0',
+  greenD: '#00b87a',
+  amber:  '#ffd166',
+  red:    '#ef476f',
+  text1:  '#ddeeff',
+  text2:  '#7aa8cc',
+  text3:  '#3d6a90',
+  grid:   '#1a3a60',
+  bg:     '#071a30',
+};
+
+/* ================================================================
+   图表渲染函数
+================================================================ */
+function renderTrend(trendData) {
+  const chart = getChart('chart-trend');
+  if (!chart) return;
+  const dates = trendData.map(r => r.event_date);
+  const vals  = trendData.map(r => r.daily_users);
+  const max = Math.max(...vals), min = Math.min(...vals);
+  document.getElementById('trend-meta').textContent =
+    `最高 ${fmtNum(max)} · 最低 ${fmtNum(min)}`;
+
+  chart.setOption({
+    backgroundColor: 'transparent',
+    tooltip: {
+      trigger: 'axis', backgroundColor: '#0a1929',
+      borderColor: C.grid, textStyle: { color: C.text1, fontSize: 12 },
+      formatter: p => `<b style="color:${C.blue}">${p[0].axisValue}</b><br/>
+        日活用户：<b style="color:${C.green}">${fmtNum(p[0].data)}</b>`
+    },
+    grid: { left: 55, right: 24, top: 20, bottom: 40 },
+    xAxis: {
+      type: 'category', data: dates,
+      axisLine: { lineStyle: { color: C.grid } },
+      axisLabel: {
+        color: C.text2, fontSize: 10, interval: 4,
+        formatter: v => v.slice(5)
+      },
+      axisTick: { show: false }
+    },
+    yAxis: {
+      type: 'value',
+      splitLine: { lineStyle: { color: C.grid, type: 'dashed' } },
+      axisLabel: { color: C.text2, fontSize: 10, formatter: v => fmtNum(v) },
+      axisLine: { show: false }, axisTick: { show: false }
+    },
+    series: [{
+      type: 'line', data: vals, smooth: true,
+      symbol: 'circle', symbolSize: 0,
+      lineStyle: { color: C.blue, width: 2.5 },
+      itemStyle: { color: C.blue },
+      emphasis: { scale: true, itemStyle: { symbolSize: 8 } },
+      areaStyle: {
+        color: {
+          type: 'linear', x: 0, y: 0, x2: 0, y2: 1,
+          colorStops: [
+            { offset: 0, color: 'rgba(0,212,255,0.28)' },
+            { offset: 1, color: 'rgba(0,212,255,0.02)' }
+          ]
+        }
+      },
+      markLine: {
+        silent: true,
+        lineStyle: { color: C.amber, type: 'dashed', width: 1 },
+        label: { color: C.amber, fontSize: 10 },
+        data: [{ type: 'average', name: '均值' }]
+      }
+    }]
+  });
+}
+
+function renderSource(sourceData) {
+  const chart = getChart('chart-source');
+  if (!chart) return;
+  const sourceMap = { EC: '美洲 (EC)', EU: '欧洲 (EU)', AP: '亚太 (AP)' };
+  const colorMap  = { EC: C.blue, EU: C.purple, AP: C.green };
+  const data = sourceData.map(r => ({
+    name:  sourceMap[r.data_source] || r.data_source,
+    value: r.user_count,
+    itemStyle: { color: colorMap[r.data_source] || C.amber }
+  }));
+
+  chart.setOption({
+    backgroundColor: 'transparent',
+    tooltip: {
+      trigger: 'item', backgroundColor: '#0a1929',
+      borderColor: C.grid, textStyle: { color: C.text1, fontSize: 12 },
+      formatter: p => `${p.marker}${p.name}<br/>
+        用户数：<b>${fmtNum(p.value)}</b>　占比：<b>${p.percent}%</b>`
+    },
+    legend: {
+      orient: 'vertical', right: 10, top: 'middle',
+      textStyle: { color: C.text2, fontSize: 12 },
+      itemWidth: 10, itemHeight: 10
+    },
+    series: [{
+      type: 'pie', radius: ['46%', '72%'],
+      center: ['40%', '50%'],
+      data,
+      label: {
+        show: true, position: 'inside',
+        formatter: '{d}%',
+        color: '#fff', fontSize: 12, fontWeight: 700
+      },
+      labelLine: { show: false },
+      emphasis: {
+        itemStyle: { shadowBlur: 14, shadowOffsetX: 0, shadowColor: 'rgba(0,0,0,0.5)' }
+      }
+    }]
+  });
+}
+
+function renderCountry(countryData) {
+  const chart = getChart('chart-country');
+  if (!chart) return;
+  /* 倒序，使第一名在顶部 */
+  const sorted = [...countryData].reverse();
+  const names  = sorted.map(r => r.country_ad_ch);
+  const vals   = sorted.map(r => r.user_count);
+
+  chart.setOption({
+    backgroundColor: 'transparent',
+    tooltip: {
+      trigger: 'axis', axisPointer: { type: 'none' },
+      backgroundColor: '#0a1929', borderColor: C.grid,
+      textStyle: { color: C.text1, fontSize: 12 },
+      formatter: p => `${p[0].name}：<b style="color:${C.green}">${fmtNum(p[0].data)}</b> 用户`
+    },
+    grid: { left: 80, right: 60, top: 10, bottom: 20 },
+    xAxis: {
+      type: 'value',
+      splitLine: { lineStyle: { color: C.grid, type: 'dashed' } },
+      axisLabel: { color: C.text2, fontSize: 10, formatter: v => fmtNum(v) },
+      axisLine: { show: false }, axisTick: { show: false }
+    },
+    yAxis: {
+      type: 'category', data: names,
+      axisLine: { show: false }, axisTick: { show: false },
+      axisLabel: { color: C.text2, fontSize: 11 }
+    },
+    series: [{
+      type: 'bar', data: vals,
+      barMaxWidth: 18, barBorderRadius: [0, 4, 4, 0],
+      itemStyle: {
+        color: {
+          type: 'linear', x: 0, y: 0, x2: 1, y2: 0,
+          colorStops: [
+            { offset: 0, color: 'rgba(0,245,160,0.6)' },
+            { offset: 1, color: 'rgba(0,245,160,1)' }
+          ]
+        }
+      },
+      emphasis: { itemStyle: { color: C.blue } },
+      label: {
+        show: true, position: 'right',
+        color: C.text2, fontSize: 10,
+        formatter: p => fmtNum(p.value)
+      }
+    }]
+  });
+}
+
+function renderBehavior(flags) {
+  const chart = getChart('chart-behavior');
+  if (!chart) return;
+  const total = flags.total_records || 1;
+  const dims  = ['行为活跃','设备访问','统计访问','动态访问','账户访问','成员访问','动态互动'];
+  const keys  = ['行为活跃','设备访问','统计访问','动态访问','账户访问','成员访问','动态互动'];
+  const vals  = keys.map(k => {
+    const v = flags[k] || 0;
+    return Math.round(v / total * 100 * 100) / 100;  /* 百分比 */
+  });
+
+  chart.setOption({
+    backgroundColor: 'transparent',
+    tooltip: {
+      trigger: 'item', backgroundColor: '#0a1929',
+      borderColor: C.grid, textStyle: { color: C.text1, fontSize: 12 },
+      formatter: p => {
+        if (!Array.isArray(p)) return '';
+        return p.map((item, i) =>
+          `${dims[i]}：<b style="color:${C.amber}">${item.value}%</b>`
+        ).join('<br/>');
+      }
+    },
+    radar: {
+      indicator: dims.map(d => ({ name: d, max: 105 })),
+      center: ['50%', '52%'], radius: '68%',
+      axisName: { color: C.text2, fontSize: 12 },
+      splitLine: { lineStyle: { color: C.grid } },
+      splitArea: {
+        areaStyle: {
+          color: ['rgba(0,212,255,0.02)', 'rgba(0,212,255,0.04)',
+                  'rgba(0,212,255,0.06)', 'rgba(0,212,255,0.08)']
+        }
+      },
+      axisLine: { lineStyle: { color: C.grid } }
+    },
+    series: [{
+      type: 'radar', data: [{
+        value: vals, name: '行为覆盖率(%)',
+        areaStyle: {
+          color: {
+            type: 'radial', x: 0.5, y: 0.5, r: 0.5,
+            colorStops: [
+              { offset: 0, color: 'rgba(255,209,102,0.5)' },
+              { offset: 1, color: 'rgba(255,209,102,0.08)' }
+            ]
+          }
+        },
+        lineStyle: { color: C.amber, width: 2 },
+        itemStyle: { color: C.amber },
+        label: {
+          show: true, color: C.amber, fontSize: 10,
+          formatter: p => p.value + '%'
+        }
+      }]
+    }]
+  });
+}
+
+/* ================================================================
+   主数据加载
+================================================================ */
+async function loadData() {
+  const btn  = document.getElementById('refresh-btn');
+  const dot  = document.getElementById('status-dot');
+  const txt  = document.getElementById('status-text');
+  const bar  = document.getElementById('status-bar');
+  const icon = document.getElementById('btn-icon');
+
+  btn.classList.add('loading');
+  icon.innerHTML = '<span class="spin">↻</span>';
+  dot.className  = 'status-dot loading';
+  bar.className  = 'status-bar';
+  txt.textContent = '正在查询 StarRocks 数据库...';
+
+  try {
+    const res = await fetch('/api/dashboard');
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const d = await res.json();
+    if (d.error) throw new Error(d.error);
+
+    /* ---- KPI ---- */
+    const ov = d.overview;
+    animateNum(document.getElementById('kpi-total'),    ov.total_users,  false);
+    animateNum(document.getElementById('kpi-active'),   ov.active_users, false);
+    animateNum(document.getElementById('kpi-rate'),     ov.active_rate,  true);
+    animateNum(document.getElementById('kpi-countries'),ov.country_count,false);
+    animateNum(document.getElementById('kpi-inactive'), ov.inactive_users,false);
+
+    /* ---- 底部信息 ---- */
+    document.getElementById('footer-event-date').textContent  = ov.latest_event_date  || '--';
+    document.getElementById('footer-update-date').textContent = ov.latest_update_date || '--';
+
+    /* ---- 图表 ---- */
+    if (d.daily_trend   && d.daily_trend.length)   renderTrend(d.daily_trend);
+    if (d.data_source   && d.data_source.length)   renderSource(d.data_source);
+    if (d.country_top10 && d.country_top10.length) renderCountry(d.country_top10);
+    if (d.behavior_flags)                          renderBehavior(d.behavior_flags);
+
+    /* ---- 状态 ---- */
+    const now = new Date();
+    const ts  = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')} ` +
+                `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
+    document.getElementById('last-refresh').textContent = '刷新于 ' + ts;
+    dot.className  = 'status-dot';
+    bar.className  = 'status-bar';
+    txt.textContent = `数据加载成功 ✓  |  总记录数: ${fmtNum(d.behavior_flags?.total_records)}  |  数据截止: ${ov.latest_event_date}`;
+  } catch (err) {
+    dot.className  = 'status-dot error';
+    bar.className  = 'status-bar error';
+    txt.textContent = `加载失败：${err.message}  —  请确认后端服务已启动 (python server.py)`;
+    document.getElementById('last-refresh').textContent = '加载失败';
+  } finally {
+    btn.classList.remove('loading');
+    icon.textContent = '↻';
+  }
+}
+
+/* ================================================================
+   窗口 resize 自适应
+================================================================ */
+window.addEventListener('resize', () => {
+  Object.values(charts).forEach(c => c && c.resize());
+});
+
+/* ================================================================
+   启动：页面加载完毕后自动获取数据
+================================================================ */
+window.addEventListener('DOMContentLoaded', loadData);
+</script>
+</body>
+</html>
