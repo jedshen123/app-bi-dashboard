@@ -532,9 +532,8 @@
       </div>
     </div>
 
-    <!-- 应用 / 重置 -->
+    <!-- 重置 -->
     <div class="filter-actions">
-      <button class="btn-apply" onclick="applyFilter()">应用筛选</button>
       <button class="btn-reset" onclick="resetFilter()">重置</button>
     </div>
   </div>
@@ -950,7 +949,7 @@ function renderCountryList(countries) {
   );
   list.innerHTML = countries.map(c => `
     <label>
-      <input type="checkbox" value="${c}" ${checked.has(c) ? 'checked' : ''} onchange="updateCountryLabel()" />
+      <input type="checkbox" value="${c}" ${checked.has(c) ? 'checked' : ''} onchange="updateCountryLabel(); applyFilter()" />
       <span>${c}</span>
     </label>`).join('');
 }
@@ -972,11 +971,13 @@ function toggleCountryDD() {
 function selectAllCountries() {
   document.querySelectorAll('#ms-list input').forEach(cb => { cb.checked = true; });
   updateCountryLabel();
+  applyFilter();
 }
 
 function clearCountries() {
   document.querySelectorAll('#ms-list input').forEach(cb => { cb.checked = false; });
   updateCountryLabel();
+  applyFilter();
 }
 
 function updateCountryLabel() {
@@ -995,19 +996,27 @@ document.addEventListener('click', e => {
   }
 });
 
-// 日期按钮（单选）
+// 日期按钮（单选）—— 非自定义模式直接触发；自定义模式等日期填完再触发
 document.querySelectorAll('.flt-btn[data-days]').forEach(btn => {
   btn.addEventListener('click', function () {
     document.querySelectorAll('.flt-btn[data-days]').forEach(b => b.classList.remove('active'));
     this.classList.add('active');
     const custom = document.getElementById('date-custom');
     custom.classList.toggle('show', this.dataset.days === 'custom');
+    if (this.dataset.days !== 'custom') applyFilter();
   });
 });
 
+// 自定义日期输入完成后触发
+document.getElementById('date-from').addEventListener('change', applyFilter);
+document.getElementById('date-to').addEventListener('change', applyFilter);
+
 // 数据来源（多选 toggle）
 document.querySelectorAll('.flt-btn[data-source]').forEach(btn => {
-  btn.addEventListener('click', function () { this.classList.toggle('active'); });
+  btn.addEventListener('click', function () {
+    this.classList.toggle('active');
+    applyFilter();
+  });
 });
 
 // 活跃状态（单选）
@@ -1019,6 +1028,7 @@ document.querySelectorAll('.flt-btn[data-status]').forEach(btn => {
     this.classList.add('active');
     if (this.dataset.status === '1') this.classList.add('green');
     if (this.dataset.status === '0') this.classList.add('red');
+    applyFilter();
   });
 });
 
@@ -1077,9 +1087,11 @@ function resetFilter() {
   document.querySelectorAll('.flt-btn[data-status]').forEach(b => b.classList.remove('active', 'green', 'red'));
   document.querySelector('.flt-btn[data-status=""]').classList.add('active');
 
-  clearCountries();
+  // 直接清空 checkbox，不触发 applyFilter
+  document.querySelectorAll('#ms-list input').forEach(cb => { cb.checked = false; });
   document.getElementById('ms-search').value = '';
   renderCountryList(_allCountries);
+  updateCountryLabel();
 
   document.getElementById('filter-bar').classList.remove('filtered');
   loadData({});
