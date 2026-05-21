@@ -1,0 +1,956 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>数据看板</title>
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js"></script>
+  <style>
+    /* ============================================================ CSS 变量 */
+    :root {
+      --bg-deep:   #020c1b;
+      --bg-card:   #071a30;
+      --bg-card2:  #0a2040;
+      --border:    #1a3a60;
+      --border-hi: #1e5fa0;
+      --blue:      #00d4ff;
+      --blue-dim:  #0096c7;
+      --blue-dark: #003a55;
+      --purple:    #9b5de5;
+      --green:     #00f5a0;
+      --green-dim: #00b87a;
+      --amber:     #ffd166;
+      --red:       #ef476f;
+      --text-1:    #ddeeff;
+      --text-2:    #7aa8cc;
+      --text-3:    #3d6a90;
+      --radius:    10px;
+      --radius-sm: 6px;
+      --row-h:     90px;
+      --gap:       10px;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'PingFang SC', 'Microsoft YaHei', 'Segoe UI', sans-serif;
+      background: var(--bg-deep); color: var(--text-1);
+      min-height: 100vh; overflow-x: hidden;
+    }
+    body::before {
+      content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 0;
+      background: linear-gradient(rgba(0,180,255,.025) 1px, transparent 1px),
+                  linear-gradient(90deg, rgba(0,180,255,.025) 1px, transparent 1px);
+      background-size: 40px 40px;
+    }
+    .page { position: relative; z-index: 1; max-width: 1800px; margin: 0 auto; padding: 0 16px 24px; }
+
+    /* ============================================================ 头部 */
+    .hdr {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 16px 0 14px; border-bottom: 1px solid var(--border); gap: 12px;
+    }
+    .hdr-left  { display: flex; align-items: center; gap: 12px; }
+    .hdr-icon  {
+      width: 40px; height: 40px; border-radius: 9px; flex-shrink: 0;
+      background: linear-gradient(135deg, var(--blue), var(--purple));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px; box-shadow: 0 0 18px rgba(0,212,255,.4);
+    }
+    .hdr-title { font-size: 20px; font-weight: 700; letter-spacing: .5px;
+      background: linear-gradient(90deg, #fff, var(--blue));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .hdr-sub   { font-size: 11px; color: var(--text-3); margin-top: 2px; font-family: 'Courier New', monospace; }
+    .hdr-right { display: flex; align-items: center; gap: 16px; }
+    #live-clock { font-size: 17px; font-weight: 600; color: var(--blue);
+      font-family: 'Courier New', monospace; letter-spacing: 2px; }
+    #last-refresh { font-size: 11px; color: var(--text-3); margin-top: 2px; text-align: right; }
+    #refresh-btn {
+      display: flex; align-items: center; gap: 6px; padding: 7px 16px;
+      background: linear-gradient(135deg, var(--blue-dark), #002233);
+      border: 1px solid var(--blue-dim); border-radius: var(--radius-sm);
+      color: var(--blue); font-size: 12px; font-weight: 600; cursor: pointer;
+      transition: all .22s; letter-spacing: .5px;
+    }
+    #refresh-btn:hover { box-shadow: 0 0 14px rgba(0,212,255,.35); transform: translateY(-1px); }
+    #refresh-btn.loading { opacity: .6; pointer-events: none; }
+    .spin { display: inline-block; animation: spin 1s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ============================================================ 状态条 */
+    .status-bar {
+      display: flex; align-items: center; gap: 8px;
+      padding: 7px 12px; margin: 10px 0;
+      background: rgba(0,212,255,.06); border: 1px solid rgba(0,212,255,.15);
+      border-radius: var(--radius-sm); font-size: 12px; color: var(--text-2);
+      min-height: 32px; transition: all .3s;
+    }
+    .status-bar.error { background: rgba(239,71,111,.08); border-color: rgba(239,71,111,.3); color: var(--red); }
+    .s-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+    .s-dot.ok      { background: var(--green); box-shadow: 0 0 7px var(--green); animation: blink 2s infinite; }
+    .s-dot.loading { background: var(--amber); box-shadow: 0 0 7px var(--amber); }
+    .s-dot.error   { background: var(--red);   box-shadow: 0 0 7px var(--red);   }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.4} }
+
+    /* ============================================================ 筛选栏 */
+    .flt-bar {
+      display: flex; align-items: center; flex-wrap: wrap; gap: 6px;
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 10px 14px; margin-bottom: 12px;
+    }
+    .flt-bar.filtered { border-color: rgba(0,180,255,.35); box-shadow: 0 0 12px rgba(0,180,255,.08); }
+    .flt-label { font-size: 11px; color: var(--text-3); text-transform: uppercase; letter-spacing: .5px; flex-shrink: 0; }
+    .flt-divider { width: 1px; height: 24px; background: var(--border); margin: 0 10px; flex-shrink: 0; }
+    .flt-btn {
+      padding: 4px 10px; border-radius: 4px; font-size: 12px;
+      border: 1px solid var(--border); background: transparent; color: var(--text-2);
+      cursor: pointer; transition: all .18s; white-space: nowrap;
+    }
+    .flt-btn:hover { border-color: var(--blue-dim); color: var(--text-1); }
+    .flt-btn.active { background: rgba(0,180,255,.13); border-color: var(--blue-dim); color: var(--blue); }
+    .flt-custom { display: none; align-items: center; gap: 5px; }
+    .flt-custom.show { display: flex; }
+    .flt-custom input[type="date"] {
+      background: var(--bg-card2); border: 1px solid var(--border); border-radius: 4px;
+      color: var(--text-1); padding: 3px 7px; font-size: 12px; outline: none; color-scheme: dark;
+    }
+    .flt-custom input:focus { border-color: var(--blue-dim); }
+    .flt-custom em { color: var(--text-3); font-size: 11px; font-style: normal; }
+    .flt-actions { margin-left: auto; }
+    .btn-reset {
+      padding: 5px 12px; background: transparent; border: 1px solid var(--border);
+      border-radius: var(--radius-sm); color: var(--text-2); font-size: 12px;
+      cursor: pointer; transition: all .2s;
+    }
+    .btn-reset:hover { border-color: var(--text-3); color: var(--text-1); }
+
+    /* ============================================================ 空状态提示 */
+    .no-dashboard {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      height: 60vh; gap: 16px; color: var(--text-3);
+    }
+    .no-dashboard .nd-icon { font-size: 48px; }
+    .no-dashboard .nd-text { font-size: 16px; }
+    .no-dashboard code { background: var(--bg-card); padding: 4px 10px; border-radius: 4px; color: var(--blue); font-family: monospace; }
+
+    /* ============================================================ 看板网格 */
+    .db-grid {
+      display: grid;
+      grid-template-columns: repeat(24, 1fr);
+      grid-auto-rows: var(--row-h);
+      gap: var(--gap);
+    }
+
+    /* ============================================================ 卡片 */
+    .db-card {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: var(--radius); overflow: hidden;
+      display: flex; flex-direction: column;
+      position: relative; transition: border-color .2s;
+    }
+    .db-card:hover { border-color: var(--border-hi); }
+    .card-hdr {
+      display: flex; align-items: center; gap: 8px;
+      padding: 8px 14px 6px; flex-shrink: 0;
+      border-bottom: 1px solid rgba(26,58,96,.6);
+    }
+    .card-hdr::before {
+      content: ''; width: 3px; height: 13px; border-radius: 2px;
+      background: var(--blue); flex-shrink: 0;
+    }
+    .card-title { font-size: 13px; font-weight: 600; color: var(--text-1); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .card-body  { flex: 1; overflow: hidden; position: relative; }
+
+    /* 加载遮罩 */
+    .card-loading {
+      position: absolute; inset: 0; z-index: 10;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      background: rgba(7,26,48,.85); gap: 8px;
+      font-size: 12px; color: var(--text-2);
+    }
+    .loading-ring {
+      width: 28px; height: 28px; border-radius: 50%;
+      border: 3px solid rgba(0,212,255,.15);
+      border-top-color: var(--blue);
+      animation: spin .8s linear infinite;
+    }
+    /* 错误状态 */
+    .card-error {
+      position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+      flex-direction: column; gap: 6px; color: var(--red); font-size: 12px; padding: 12px;
+    }
+    .card-error .err-icon { font-size: 22px; }
+
+    /* ============================================================ Scalar（大数字）*/
+    .scalar-wrap {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      height: 100%; padding: 12px;
+    }
+    .scalar-val {
+      font-size: clamp(24px, 4vw, 44px); font-weight: 800;
+      color: var(--blue); font-family: 'Courier New', monospace;
+      letter-spacing: -1px; line-height: 1;
+    }
+    .scalar-lbl { font-size: 12px; color: var(--text-2); margin-top: 6px; text-align: center; }
+
+    /* ============================================================ 表格 */
+    .tbl-wrap { overflow: auto; height: 100%; padding: 0 4px; }
+    .mb-tbl {
+      width: 100%; border-collapse: collapse; font-size: 12px;
+    }
+    .mb-tbl th {
+      padding: 7px 10px; text-align: left; white-space: nowrap;
+      background: rgba(0,180,255,.08); color: var(--text-2);
+      border-bottom: 1px solid var(--border); font-weight: 600;
+      position: sticky; top: 0; z-index: 1;
+    }
+    .mb-tbl td {
+      padding: 6px 10px; border-bottom: 1px solid rgba(26,58,96,.4);
+      color: var(--text-1); white-space: nowrap;
+    }
+    .mb-tbl td.num { text-align: right; font-family: 'Courier New', monospace; font-size: 11px; }
+    .mb-tbl tr:hover td { background: rgba(0,180,255,.05); }
+
+    /* ============================================================ 底部 */
+    .footer {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 0; border-top: 1px solid var(--border);
+      font-size: 11px; color: var(--text-3); flex-wrap: wrap; gap: 12px;
+      margin-top: 12px;
+    }
+    .footer span + span::before { content: '|'; margin: 0 8px; color: var(--border); }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <!-- 头部 -->
+  <header class="hdr">
+    <div class="hdr-left">
+      <div class="hdr-icon">📊</div>
+      <div>
+        <div class="hdr-title" id="db-title">数据看板</div>
+        <div class="hdr-sub" id="db-sub">Metabase Dashboard</div>
+      </div>
+    </div>
+    <div class="hdr-right">
+      <div>
+        <div id="live-clock">--:--:--</div>
+        <div id="last-refresh">等待加载...</div>
+      </div>
+      <button id="refresh-btn" onclick="reloadAllCards()">
+        <span id="btn-icon">↻</span><span>刷新</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- 状态条 -->
+  <div class="status-bar" id="status-bar">
+    <div class="s-dot loading" id="s-dot"></div>
+    <span id="s-text">正在连接 Metabase...</span>
+  </div>
+
+  <!-- 筛选栏（动态渲染） -->
+  <div class="flt-bar" id="flt-bar" style="display:none"></div>
+
+  <!-- 看板网格（动态渲染） -->
+  <div class="db-grid" id="db-grid"></div>
+
+  <!-- 无 dashboard_id 提示 -->
+  <div class="no-dashboard" id="no-db" style="display:none">
+    <div class="nd-icon">🔍</div>
+    <div class="nd-text">请在 URL 中指定看板 ID</div>
+    <div>示例：<code>?dashboard_id=14</code></div>
+  </div>
+
+  <footer class="footer" id="footer" style="display:none">
+    <div>
+      <span>数据源：Metabase</span>
+      <span id="ft-name"></span>
+    </div>
+    <span>© 数据分析中台 · Metabase 大屏看板</span>
+  </footer>
+
+</div><!-- /page -->
+
+<script>
+/* ================================================================
+   全局状态
+================================================================ */
+const DASHBOARD_ID = new URLSearchParams(location.search).get('dashboard_id');
+let meta       = null;
+let filterState = {};     // param_id → 值字符串
+let chartMap    = {};     // dashcard_id → echarts instance
+
+const COLORS = ['#00d4ff','#ffd166','#00f5a0','#9b5de5','#ef476f','#f8961e','#43aa8b','#4cc9f0','#f72585'];
+
+/* ================================================================
+   时钟
+================================================================ */
+function tickClock() {
+  const now = new Date();
+  const pad = n => String(n).padStart(2,'0');
+  document.getElementById('live-clock').textContent =
+    `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+}
+setInterval(tickClock, 1000); tickClock();
+
+/* ================================================================
+   工具函数
+================================================================ */
+/** ISO 日期字符串 → YYYY-MM-DD */
+function fmtDate(v) {
+  if (!v) return '';
+  return String(v).slice(0, 10);
+}
+
+/** 大数字缩写 */
+function fmtShort(n) {
+  if (n === null || n === undefined) return '--';
+  n = Number(n);
+  if (isNaN(n)) return '--';
+  if (Math.abs(n) >= 1e8) return (n / 1e8).toFixed(1) + '亿';
+  if (Math.abs(n) >= 1e4) return (n / 1e4).toFixed(1) + '万';
+  return n.toLocaleString('zh-CN');
+}
+
+/** 判断是否为数值类型 */
+function isNumType(bt) {
+  return bt && (bt.includes('Integer') || bt.includes('Float') ||
+                bt.includes('Number') || bt.includes('Decimal'));
+}
+function isFloatType(bt) { return bt && bt.includes('Float'); }
+function isDateType(bt)  { return bt && (bt.includes('Date') || bt.includes('Time')); }
+
+/**
+ * 从 viz_settings.column_settings 中提取百分比列配置
+ * 返回 Map<colName, decimals>
+ * key 格式：'["name","列名"]'
+ */
+function getPctConfig(vizSettings) {
+  const cs  = (vizSettings || {}).column_settings || {};
+  const cfg = new Map();
+  for (const [key, c] of Object.entries(cs)) {
+    if (c.number_style === 'percent') {
+      try {
+        const parsed = JSON.parse(key);
+        if (Array.isArray(parsed) && parsed[0] === 'name') cfg.set(parsed[1], c.decimals ?? 2);
+      } catch {}
+    }
+  }
+  return cfg;
+}
+
+/** 百分比格式化（值已是小数，如 0.956 → "95.60%"） */
+function fmtPct(v, decimals) {
+  return (Number(v) * 100).toFixed(decimals ?? 2) + '%';
+}
+
+/* ================================================================
+   筛选器渲染
+================================================================ */
+function renderFilters(parameters) {
+  const bar = document.getElementById('flt-bar');
+  if (!parameters || !parameters.length) { bar.style.display = 'none'; return; }
+  bar.style.display = 'flex';
+
+  let html = '';
+  for (const p of parameters) {
+    html += renderOneFilter(p);
+  }
+  html += `<div class="flt-actions"><button class="btn-reset" onclick="resetFilters()">重置</button></div>`;
+  bar.innerHTML = html;
+
+  // 绑定事件
+  for (const p of parameters) {
+    bindFilterEvents(p);
+  }
+}
+
+function renderOneFilter(p) {
+  const type = p.type || '';
+
+  if (type.startsWith('date/')) {
+    return `
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+        <span class="flt-label">${p.name}</span>
+        <button class="flt-btn" data-pid="${p.id}" data-v="past7days">近7天</button>
+        <button class="flt-btn active" data-pid="${p.id}" data-v="past30days">近30天</button>
+        <button class="flt-btn" data-pid="${p.id}" data-v="thismonth">本月</button>
+        <button class="flt-btn" data-pid="${p.id}" data-v="lastmonth">上月</button>
+        <button class="flt-btn" data-pid="${p.id}" data-v="custom">自定义</button>
+        <div class="flt-custom" id="custom-${p.id}">
+          <input type="date" id="df-${p.id}" />
+          <em>—</em>
+          <input type="date" id="dt-${p.id}" />
+        </div>
+      </div>`;
+  }
+
+  if (type === 'category' || type === 'string/=') {
+    return `
+      <div style="display:flex;align-items:center;gap:8px">
+        <span class="flt-label">${p.name}</span>
+        <select id="sel-${p.id}" onchange="onFilterSelect('${p.id}', this.value)"
+          style="background:var(--bg-card2);border:1px solid var(--border);border-radius:4px;
+                 color:var(--text-1);padding:4px 8px;font-size:12px;outline:none;cursor:pointer">
+          <option value="">全部</option>
+        </select>
+      </div>`;
+  }
+
+  if (type === 'number/=') {
+    return `
+      <div style="display:flex;align-items:center;gap:8px">
+        <span class="flt-label">${p.name}</span>
+        <input type="number" id="num-${p.id}" placeholder="输入数值"
+          style="background:var(--bg-card2);border:1px solid var(--border);border-radius:4px;
+                 color:var(--text-1);padding:4px 8px;font-size:12px;outline:none;width:100px"
+          onchange="onFilterNum('${p.id}', this.value)" />
+      </div>`;
+  }
+
+  return '';
+}
+
+function bindFilterEvents(p) {
+  const type = p.type || '';
+
+  if (type.startsWith('date/')) {
+    // 快捷按钮
+    document.querySelectorAll(`.flt-btn[data-pid="${p.id}"]`).forEach(btn => {
+      btn.addEventListener('click', function() {
+        document.querySelectorAll(`.flt-btn[data-pid="${p.id}"]`).forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+        const customEl = document.getElementById(`custom-${p.id}`);
+        const isCustom = this.dataset.v === 'custom';
+        customEl.classList.toggle('show', isCustom);
+        if (!isCustom) {
+          filterState[p.id] = this.dataset.v;
+          document.getElementById('flt-bar').classList.add('filtered');
+          reloadAllCards();
+        }
+      });
+    });
+
+    // 自定义日期输入
+    ['df-', 'dt-'].forEach(prefix => {
+      const el = document.getElementById(prefix + p.id);
+      if (el) el.addEventListener('change', () => {
+        const from = document.getElementById(`df-${p.id}`).value;
+        const to   = document.getElementById(`dt-${p.id}`).value;
+        if (from && to) {
+          filterState[p.id] = `${from}~${to}`;
+          document.getElementById('flt-bar').classList.add('filtered');
+          reloadAllCards();
+        }
+      });
+    });
+
+    // 默认近30天
+    filterState[p.id] = 'past30days';
+  }
+
+  if (type === 'category' || type === 'string/=') {
+    // 异步加载选项
+    loadParamValues(DASHBOARD_ID, p);
+  }
+}
+
+async function loadParamValues(dashboardId, p) {
+  try {
+    const res  = await fetch(`/api/param_values?dashboard_id=${dashboardId}&param_key=${p.id}`);
+    const data = await res.json();
+    const sel  = document.getElementById(`sel-${p.id}`);
+    if (!sel) return;
+    const vals = data.values || data.data || [];
+    vals.forEach(v => {
+      const opt = document.createElement('option');
+      const label = Array.isArray(v) ? v[0] : v;
+      opt.value = label; opt.textContent = label;
+      sel.appendChild(opt);
+    });
+  } catch {}
+}
+
+function onFilterSelect(paramId, value) {
+  filterState[paramId] = value || '';
+  document.getElementById('flt-bar').classList.toggle('filtered', !!value);
+  reloadAllCards();
+}
+
+function onFilterNum(paramId, value) {
+  filterState[paramId] = value || '';
+  reloadAllCards();
+}
+
+function resetFilters() {
+  filterState = {};
+  // 重置日期快捷按钮为"近30天"
+  if (meta?.parameters) {
+    meta.parameters.forEach(p => {
+      if (p.type?.startsWith('date/')) {
+        document.querySelectorAll(`.flt-btn[data-pid="${p.id}"]`).forEach(b => b.classList.remove('active'));
+        const btn30 = document.querySelector(`.flt-btn[data-pid="${p.id}"][data-v="past30days"]`);
+        if (btn30) btn30.classList.add('active');
+        const customEl = document.getElementById(`custom-${p.id}`);
+        if (customEl) customEl.classList.remove('show');
+        filterState[p.id] = 'past30days';
+      }
+    });
+  }
+  document.getElementById('flt-bar').classList.remove('filtered');
+  reloadAllCards();
+}
+
+function buildQueryParams() {
+  if (!meta?.parameters) return [];
+  return meta.parameters
+    .filter(p => filterState[p.id])
+    .map(p => ({ id: String(p.id), type: p.type, value: filterState[p.id] }));
+}
+
+/* ================================================================
+   网格布局
+================================================================ */
+function renderGrid(dashcards) {
+  const grid = document.getElementById('db-grid');
+  grid.innerHTML = '';
+  chartMap = {};
+
+  dashcards.forEach(dc => {
+    const el = document.createElement('div');
+    el.className = 'db-card';
+    el.id = `card-${dc.id}`;
+    el.style.gridColumn = `${dc.col + 1} / span ${dc.size_x}`;
+    el.style.gridRow    = `${dc.row + 1} / span ${dc.size_y}`;
+
+    el.innerHTML = `
+      <div class="card-hdr">
+        <div class="card-title" title="${dc.name}">${dc.name || '（无标题）'}</div>
+      </div>
+      <div class="card-body" id="body-${dc.id}">
+        <div class="card-loading" id="loading-${dc.id}">
+          <div class="loading-ring"></div>
+          <span>加载中...</span>
+        </div>
+      </div>`;
+    grid.appendChild(el);
+  });
+}
+
+/* ================================================================
+   卡片数据加载
+================================================================ */
+async function loadAllCards() {
+  if (!meta?.dashcards) return;
+  const params = buildQueryParams();
+  // 并行加载，失败的单独处理
+  await Promise.allSettled(
+    meta.dashcards
+      .filter(dc => dc.card_id)          // 跳过纯文本/标题卡片
+      .map(dc => loadCard(dc, params))
+  );
+}
+
+async function loadCard(dc, params) {
+  const bodyEl    = document.getElementById(`body-${dc.id}`);
+  const loadingEl = document.getElementById(`loading-${dc.id}`);
+  if (!bodyEl) return;
+
+  // 只传与该卡片有 mapping 的参数
+  const mappedIds = new Set((dc.parameter_mappings || []).map(m => String(m.parameter_id)));
+  const cardParams = params.filter(p => mappedIds.size === 0 || mappedIds.has(String(p.id)));
+
+  try {
+    const res = await fetch(
+      `/api/card_data?dashboard_id=${DASHBOARD_ID}&dashcard_id=${dc.id}&card_id=${dc.card_id}`,
+      { method: 'POST', headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ parameters: cardParams }) }
+    );
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+    if (loadingEl) loadingEl.remove();
+    renderCard(bodyEl, dc, data.cols || [], data.rows || []);
+  } catch (e) {
+    if (loadingEl) loadingEl.remove();
+    bodyEl.innerHTML = `<div class="card-error"><div class="err-icon">⚠</div><div>${e.message}</div></div>`;
+  }
+}
+
+async function reloadAllCards() {
+  setStatus('loading', '正在刷新数据...');
+  // 恢复卡片加载状态
+  meta?.dashcards?.filter(dc => dc.card_id).forEach(dc => {
+    const body = document.getElementById(`body-${dc.id}`);
+    if (body) {
+      // 销毁旧图表
+      if (chartMap[dc.id]) { chartMap[dc.id].dispose(); delete chartMap[dc.id]; }
+      body.innerHTML = `<div class="card-loading" id="loading-${dc.id}"><div class="loading-ring"></div><span>加载中...</span></div>`;
+    }
+  });
+  await loadAllCards();
+  markRefreshed();
+}
+
+/* ================================================================
+   图表渲染分发
+================================================================ */
+function renderCard(el, dc, cols, rows) {
+  if (!cols.length) {
+    el.innerHTML = '<div class="card-error"><div class="err-icon">📭</div><div>暂无数据</div></div>';
+    return;
+  }
+
+  switch (dc.display) {
+    case 'scalar':
+    case 'smartscalar':
+      renderScalar(el, cols, rows, dc.viz_settings);
+      break;
+    case 'table':
+      renderTable(el, cols, rows, dc.viz_settings);
+      break;
+    case 'line':
+    case 'area':
+    case 'bar':
+    case 'row':
+    case 'combo':
+      renderLineCombo(el, dc.id, cols, rows, dc.display, dc.viz_settings);
+      break;
+    case 'pie':
+      renderPie(el, dc.id, cols, rows, dc.viz_settings);
+      break;
+    default:
+      renderTable(el, cols, rows, dc.viz_settings);
+  }
+}
+
+/* ================================================================
+   Scalar 渲染
+================================================================ */
+function renderScalar(el, cols, rows, vizSettings) {
+  const val    = rows.length ? rows[0][0] : null;
+  const col    = cols[0] || {};
+  const pctCfg = getPctConfig(vizSettings);
+  const dec    = pctCfg.get(col.name);
+  const isPct  = dec !== undefined;
+  const disp   = val === null ? '--'
+    : isPct ? fmtPct(val, dec)
+    : fmtShort(val);
+  el.innerHTML = `
+    <div class="scalar-wrap">
+      <div class="scalar-val">${disp}</div>
+      <div class="scalar-lbl">${col.display_name || col.name || ''}</div>
+    </div>`;
+}
+
+/* ================================================================
+   折线 / 面积 / 柱状 / 组合图渲染
+================================================================ */
+function renderLineCombo(el, dcId, cols, rows, display, vizSettings) {
+  const pctCfg = getPctConfig(vizSettings);
+  const vs      = vizSettings || {};
+
+  // 确定维度列和指标列
+  const dimNames = vs['graph.dimensions'] || [];
+  const metNames = vs['graph.metrics']    || [];
+
+  let dimCols, metCols;
+  if (dimNames.length) {
+    dimCols = dimNames.map(n => cols.find(c => c.name === n)).filter(Boolean);
+  } else {
+    dimCols = [cols[0]];
+  }
+
+  if (metNames.length) {
+    metCols = metNames.map(n => cols.find(c => c.name === n)).filter(Boolean);
+  } else {
+    metCols = cols.filter((_, i) => i >= dimCols.length);
+  }
+
+  if (!dimCols.length || !metCols.length) { renderTable(el, cols, rows, vizSettings); return; }
+
+  const seriesSettings = vs['series_settings'] || {};
+  const dimIdx         = cols.indexOf(dimCols[0]);
+  const xData          = rows.map(r => fmtDate(r[dimIdx]) || r[dimIdx]);
+
+  // 百分比/整数/小数 分类（只从 column_settings 判断，不依赖 Float 类型）
+  const hasInt  = metCols.some(c => isNumType(c.base_type) && pctCfg.get(c.name) === undefined);
+  const hasPct  = metCols.some(c => pctCfg.get(c.name) !== undefined);
+  const dualAxis = hasInt && hasPct;
+
+  const series = metCols.map((col, i) => {
+    const colIdx  = cols.indexOf(col);
+    const ss      = seriesSettings[col.name] || {};
+    const dec     = pctCfg.get(col.name);
+    const isPct   = dec !== undefined;
+    const yIdx    = dualAxis && isPct ? 1 : 0;
+    const color   = ss.color || COLORS[i % COLORS.length];
+
+    // 决定图表类型
+    let sType;
+    if (display === 'combo') sType = (ss.display || 'line');
+    else if (display === 'bar' || display === 'row') sType = 'bar';
+    else sType = 'line';
+
+    const s = {
+      name:       ss.title || col.display_name || col.name,
+      type:       sType,
+      yAxisIndex: yIdx,
+      data:       rows.map(r => r[colIdx]),
+      itemStyle:  { color },
+      lineStyle:  { color, width: 2.5 },
+      smooth:     true,
+      symbol:     'circle',
+      symbolSize: 0,
+    };
+
+    if (display === 'area') {
+      s.areaStyle = { color: { type:'linear', x:0, y:0, x2:0, y2:1,
+        colorStops: [{ offset:0, color: color+'44' }, { offset:1, color: color+'08' }] }};
+    }
+    if (sType === 'bar') {
+      s.barMaxWidth = 40;
+      s.itemStyle   = { color, borderRadius: display === 'row' ? [0,3,3,0] : [3,3,0,0] };
+    }
+    return s;
+  });
+
+  // Y 轴配置
+  const yAxisBase = {
+    splitLine: { lineStyle: { color: '#1a3a60', type:'dashed' } },
+    axisLabel: { color:'#7aa8cc', fontSize:10 },
+    axisLine:  { show: false }, axisTick: { show: false }
+  };
+  const yAxes = dualAxis
+    ? [
+        { ...yAxisBase, type:'value',
+          axisLabel: { ...yAxisBase.axisLabel, formatter: v => fmtShort(v) } },
+        { ...yAxisBase, type:'value', position:'right', splitLine:{show:false},
+          axisLabel: { ...yAxisBase.axisLabel, formatter: v => (v * 100).toFixed(1) + '%' } }
+      ]
+    : [{ ...yAxisBase, type:'value',
+         axisLabel: { ...yAxisBase.axisLabel, formatter: hasPct && !hasInt
+           ? v => (v * 100).toFixed(1) + '%'
+           : v => fmtShort(v) }
+       }];
+
+  // X/Y 轴互换（row 水平图）
+  const isHorz = display === 'row';
+
+  const chart = getChart(el, dcId);
+  chart.setOption({
+    backgroundColor: 'transparent',
+    tooltip: {
+      trigger: 'axis',
+      backgroundColor: '#071a30', borderColor: '#1a3a60',
+      textStyle: { color: '#ddeeff', fontSize: 12 },
+      formatter(params) {
+        if (!params?.length) return '';
+        let html = `<b style="color:${COLORS[0]}">${params[0].axisValue}</b><br/>`;
+        params.forEach(p => {
+          const matchCol = metCols.find(c =>
+            (seriesSettings[c.name]?.title || c.display_name || c.name) === p.seriesName);
+          const dec = matchCol ? pctCfg.get(matchCol.name) : undefined;
+          const val = dec !== undefined ? fmtPct(p.value, dec) : fmtShort(p.value);
+          html += `${p.marker}${p.seriesName}：<b>${val}</b><br/>`;
+        });
+        return html;
+      }
+    },
+    legend: {
+      show: metCols.length > 1,
+      textStyle: { color:'#7aa8cc', fontSize:11 },
+      type: 'scroll', top: 4, pageTextStyle:{ color:'#7aa8cc' }
+    },
+    grid: {
+      left:   isHorz ? 100 : 55,
+      right:  dualAxis ? 60 : 16,
+      top:    metCols.length > 1 ? 38 : 18,
+      bottom: 38
+    },
+    xAxis: isHorz
+      ? { type:'value', ...yAxisBase, axisLabel:{ color:'#7aa8cc', fontSize:10, formatter: v => fmtShort(v) } }
+      : { type:'category', data: xData,
+          axisLine:  { lineStyle:{ color:'#1a3a60' } },
+          axisLabel: { color:'#7aa8cc', fontSize:10, rotate: xData.length > 20 ? 30 : 0 },
+          axisTick:  { show:false } },
+    yAxis: isHorz
+      ? [{ type:'category', data:[...xData].reverse(),
+           axisLine:{show:false}, axisTick:{show:false},
+           axisLabel:{ color:'#7aa8cc', fontSize:10 } }]
+      : yAxes,
+    series: isHorz
+      ? series.map(s => ({ ...s, data:[...s.data].reverse() }))
+      : series,
+    color: COLORS,
+  });
+}
+
+/* ================================================================
+   饼图渲染
+================================================================ */
+function renderPie(el, dcId, cols, rows, vizSettings) {
+  const chart = getChart(el, dcId);
+  const data  = rows.map((r, i) => ({
+    name:      String(r[0] ?? `项${i+1}`),
+    value:     r[1],
+    itemStyle: { color: COLORS[i % COLORS.length] }
+  }));
+
+  chart.setOption({
+    backgroundColor: 'transparent',
+    tooltip: {
+      trigger:'item', backgroundColor:'#071a30', borderColor:'#1a3a60',
+      textStyle:{ color:'#ddeeff', fontSize:12 },
+      formatter: p => `${p.marker}${p.name}<br/>值：<b>${fmtShort(p.value)}</b>　占比：<b>${p.percent}%</b>`
+    },
+    legend: { orient:'vertical', right:8, top:'middle', textStyle:{ color:'#7aa8cc', fontSize:11 }, type:'scroll' },
+    series: [{
+      type:'pie', radius:['42%','68%'], center:['40%','52%'],
+      data,
+      label:{ show:true, position:'inside', formatter:'{d}%', color:'#fff', fontSize:11, fontWeight:700 },
+      labelLine:{ show:false },
+      emphasis:{ itemStyle:{ shadowBlur:12 } }
+    }],
+  });
+}
+
+/* ================================================================
+   表格渲染
+================================================================ */
+function renderTable(el, cols, rows, vizSettings) {
+  const pctCfg = getPctConfig(vizSettings || {});
+
+  function fmtCell(val, col) {
+    if (val === null || val === undefined) return '—';
+    if (isDateType(col.base_type)) return fmtDate(String(val));
+    if (isNumType(col.base_type)) {
+      const dec = pctCfg.get(col.name);
+      if (dec !== undefined) return fmtPct(val, dec);
+      if (isFloatType(col.base_type)) {
+        // 非百分比 Float：显示原始小数值
+        const n = Number(val);
+        return isNaN(n) ? String(val) : n.toLocaleString('zh-CN', { maximumFractionDigits: 4 });
+      }
+      return Number(val).toLocaleString('zh-CN');
+    }
+    return val;
+  }
+
+  // 应用 table.columns 配置：过滤禁用列、按指定顺序排列
+  const tblCols = (vizSettings || {})['table.columns'];
+  let visCols, visIdxs;
+  if (tblCols && tblCols.length) {
+    const enabledNames = tblCols.filter(tc => tc.enabled !== false).map(tc => tc.name);
+    const colByName    = Object.fromEntries(cols.map((c, i) => [c.name, { c, i }]));
+    const ordered      = enabledNames.map(n => colByName[n]).filter(Boolean);
+    visCols  = ordered.map(o => o.c);
+    visIdxs  = ordered.map(o => o.i);
+  } else {
+    visCols  = cols;
+    visIdxs  = cols.map((_, i) => i);
+  }
+
+  const thead = `<thead><tr>${visCols.map(c =>
+    `<th>${c.display_name || c.name}</th>`).join('')}</tr></thead>`;
+  const tbody = `<tbody>${rows.map(row =>
+    `<tr>${visCols.map((col, j) =>
+      `<td class="${isNumType(col.base_type) ? 'num' : ''}">${fmtCell(row[visIdxs[j]], col)}</td>`
+    ).join('')}</tr>`
+  ).join('')}</tbody>`;
+
+  el.innerHTML = `<div class="tbl-wrap"><table class="mb-tbl">${thead}${tbody}</table></div>`;
+}
+
+/* ================================================================
+   ECharts 实例管理
+================================================================ */
+function getChart(el, dcId) {
+  if (chartMap[dcId]) chartMap[dcId].dispose();
+  const c = echarts.init(el, null, { renderer: 'canvas' });
+  chartMap[dcId] = c;
+  return c;
+}
+
+window.addEventListener('resize', () => {
+  Object.values(chartMap).forEach(c => c?.resize());
+});
+
+/* ================================================================
+   状态更新
+================================================================ */
+function setStatus(type, text) {
+  const dot  = document.getElementById('s-dot');
+  const span = document.getElementById('s-text');
+  const bar  = document.getElementById('status-bar');
+  dot.className  = `s-dot ${type}`;
+  bar.className  = `status-bar${type === 'error' ? ' error' : ''}`;
+  span.textContent = text;
+}
+
+function markRefreshed() {
+  const now = new Date();
+  const pad = n => String(n).padStart(2,'0');
+  const ts  = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+  document.getElementById('last-refresh').textContent = '刷新于 ' + ts;
+  setStatus('ok', `数据加载完成  ·  共 ${meta?.dashcards?.filter(d=>d.card_id).length ?? 0} 个图表  ·  看板：${meta?.name ?? ''}`);
+  const btn  = document.getElementById('refresh-btn');
+  const icon = document.getElementById('btn-icon');
+  btn.classList.remove('loading');
+  icon.textContent = '↻';
+}
+
+/* ================================================================
+   主入口
+================================================================ */
+async function init() {
+  if (!DASHBOARD_ID) {
+    document.getElementById('no-db').style.display = 'flex';
+    setStatus('error', '未指定 dashboard_id，请在 URL 中添加 ?dashboard_id=xxx');
+    return;
+  }
+
+  const btn  = document.getElementById('refresh-btn');
+  const icon = document.getElementById('btn-icon');
+  btn.classList.add('loading');
+  icon.innerHTML = '<span class="spin">↻</span>';
+
+  try {
+    const res = await fetch(`/api/meta?dashboard_id=${DASHBOARD_ID}`);
+    meta = await res.json();
+    if (meta.error) throw new Error(meta.error);
+
+    // 更新标题
+    document.title = meta.name + ' — 数据看板';
+    document.getElementById('db-title').textContent = meta.name;
+    document.getElementById('db-sub').textContent =
+      `Dashboard #${DASHBOARD_ID}  ·  ${meta.dashcards?.length ?? 0} 个图表`;
+    document.getElementById('ft-name').textContent = meta.name;
+    document.getElementById('footer').style.display = 'flex';
+
+    // 渲染筛选器
+    renderFilters(meta.parameters);
+    // 初始化 filterState（默认近30天）
+    meta.parameters?.forEach(p => {
+      if (p.type?.startsWith('date/') && !filterState[p.id]) {
+        filterState[p.id] = 'past30days';
+      }
+    });
+
+    // 渲染网格
+    renderGrid(meta.dashcards);
+
+    // 并行加载所有卡片
+    await loadAllCards();
+    markRefreshed();
+
+  } catch (e) {
+    setStatus('error', `加载失败：${e.message}`);
+    btn.classList.remove('loading');
+    icon.textContent = '↻';
+  }
+}
+
+window.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>
