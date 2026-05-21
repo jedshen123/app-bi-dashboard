@@ -17,6 +17,19 @@ from urllib.parse import urlparse, parse_qs
 from urllib.request import urlopen, Request
 from urllib.error import HTTPError
 
+# 加载 .env 文件（仅补充未设置的变量，显式 export 的优先级更高）
+_env_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env")
+if os.path.isfile(_env_file):
+    with open(_env_file, encoding="utf-8") as _f:
+        for _line in _f:
+            _line = _line.strip()
+            if not _line or _line.startswith("#") or "=" not in _line:
+                continue
+            _k, _v = _line.split("=", 1)
+            _k, _v = _k.strip(), _v.strip().strip('"').strip("'")
+            if _k and _k not in os.environ:   # 不覆盖已有的环境变量
+                os.environ[_k] = _v
+
 METABASE_URL  = os.getenv("METABASE_URL",  "http://localhost:3000").rstrip("/")
 METABASE_USER = os.getenv("METABASE_USER", "")
 METABASE_PASS = os.getenv("METABASE_PASS", "")
