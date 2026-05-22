@@ -205,6 +205,15 @@ class Handler(BaseHTTPRequestHandler):
                     "text/html; charset=utf-8"
                 )
 
+            elif path in ("/preview", "/dashboard_preview.html"):
+                self.serve_file(
+                    os.path.join(
+                        os.path.dirname(os.path.abspath(__file__)),
+                        "dashboard_preview.html"
+                    ),
+                    "text/html; charset=utf-8"
+                )
+
             else:
                 self.send_response(404); self.end_headers()
 

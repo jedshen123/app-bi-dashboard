@@ -6,40 +6,58 @@
   <title>数据看板</title>
   <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js"></script>
   <style>
-    /* ============================================================ CSS 变量 */
+    /* 深色 · 科技 · 母婴专业 */
     :root {
-      --bg-deep:   #020c1b;
-      --bg-card:   #071a30;
-      --bg-card2:  #0a2040;
-      --border:    #1a3a60;
-      --border-hi: #1e5fa0;
-      --blue:      #00d4ff;
-      --blue-dim:  #0096c7;
-      --blue-dark: #003a55;
-      --purple:    #9b5de5;
-      --green:     #00f5a0;
-      --green-dim: #00b87a;
-      --amber:     #ffd166;
-      --red:       #ef476f;
-      --text-1:    #ddeeff;
-      --text-2:    #7aa8cc;
-      --text-3:    #3d6a90;
-      --radius:    10px;
-      --radius-sm: 6px;
-      --row-h:     90px;
-      --gap:       10px;
+      --bg-deep:    #060810;
+      --bg-page:    #0a0e18;
+      --bg-card:    #0f1524;
+      --bg-card2:   #141c30;
+      --bg-glass:   rgba(15,21,36,.85);
+      --border:     #1e2d48;
+      --border-hi:  #2a4068;
+      --border-glow:#2a4068;
+      --rose:       #ff5c8a;
+      --rose-soft:  #ff8fab;
+      --rose-dim:   #b85a78;
+      --cyan:       #00e5ff;
+      --cyan-dim:   #00b8d4;
+      --violet:     #a78bfa;
+      --magenta:    #e879f9;
+      --mint:       #34d399;
+      --peach:      #f4b8a8;
+      --green:      #34d399;
+      --amber:      #fbbf24;
+      --red:        #ff5c7a;
+      --accent-dark:#3d2430;
+      --text-1:     #eef2ff;
+      --text-2:     #94a8c8;
+      --text-3:     #5a6d8a;
+      --glow-rose:  rgba(255,92,138,.45);
+      --glow-cyan:  rgba(0,229,255,.35);
+      --radius:     12px;
+      --radius-sm:  8px;
+      --row-h:      90px;
+      --gap:        10px;
     }
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       font-family: 'PingFang SC', 'Microsoft YaHei', 'Segoe UI', sans-serif;
-      background: var(--bg-deep); color: var(--text-1);
+      background:
+        radial-gradient(ellipse 80% 50% at 20% -10%, rgba(255,92,138,.12), transparent 50%),
+        radial-gradient(ellipse 60% 40% at 90% 20%, rgba(0,229,255,.08), transparent 45%),
+        var(--bg-deep);
+      color: var(--text-1);
       min-height: 100vh; overflow-x: hidden;
     }
     body::before {
       content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 0;
-      background: linear-gradient(rgba(0,180,255,.025) 1px, transparent 1px),
-                  linear-gradient(90deg, rgba(0,180,255,.025) 1px, transparent 1px);
+      background: linear-gradient(rgba(0,229,255,.04) 1px, transparent 1px),
+                  linear-gradient(90deg, rgba(0,229,255,.04) 1px, transparent 1px);
       background-size: 40px 40px;
+    }
+    body::after {
+      content: ''; position: fixed; top: 0; left: 0; right: 0; height: 2px; z-index: 100;
+      background: linear-gradient(90deg, transparent, var(--rose), var(--cyan), var(--violet), transparent);
     }
     .page { position: relative; z-index: 1; max-width: 1800px; margin: 0 auto; padding: 0 16px 24px; }
 
@@ -50,27 +68,38 @@
     }
     .hdr-left  { display: flex; align-items: center; gap: 12px; }
     .hdr-icon  {
-      width: 40px; height: 40px; border-radius: 9px; flex-shrink: 0;
-      background: linear-gradient(135deg, var(--blue), var(--purple));
+      width: 42px; height: 42px; border-radius: 12px; flex-shrink: 0;
+      background: linear-gradient(135deg, var(--rose), var(--violet));
       display: flex; align-items: center; justify-content: center;
-      font-size: 20px; box-shadow: 0 0 18px rgba(0,212,255,.4);
+      font-size: 20px; box-shadow: 0 0 20px var(--glow-rose);
     }
     .hdr-title { font-size: 20px; font-weight: 700; letter-spacing: .5px;
-      background: linear-gradient(90deg, #fff, var(--blue));
+      background: linear-gradient(90deg, #fff8fa, var(--rose), var(--peach));
       -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-    .hdr-sub   { font-size: 11px; color: var(--text-3); margin-top: 2px; font-family: 'Courier New', monospace; }
+    .hdr-sub   { font-size: 11px; color: var(--text-2); margin-top: 3px; }
+    .hdr-badge {
+      display: inline-block; margin-left: 8px; padding: 2px 8px; font-size: 10px; font-weight: 600;
+      background: rgba(255,92,138,.18); border: 1px solid rgba(255,92,138,.35);
+      border-radius: 20px; color: var(--rose); vertical-align: middle;
+    }
     .hdr-right { display: flex; align-items: center; gap: 16px; }
-    #live-clock { font-size: 17px; font-weight: 600; color: var(--blue);
+    .hdr-stat {
+      text-align: right; padding: 6px 14px; border-radius: 8px;
+      background: rgba(0,229,255,.08); border: 1px solid rgba(0,229,255,.25);
+    }
+    .hdr-stat-lbl { font-size: 10px; color: var(--text-3); }
+    .hdr-stat-val { font-size: 15px; font-weight: 700; color: var(--cyan); font-family: 'Courier New', monospace; }
+    #live-clock { font-size: 17px; font-weight: 600; color: var(--peach);
       font-family: 'Courier New', monospace; letter-spacing: 2px; }
     #last-refresh { font-size: 11px; color: var(--text-3); margin-top: 2px; text-align: right; }
     #refresh-btn {
       display: flex; align-items: center; gap: 6px; padding: 7px 16px;
-      background: linear-gradient(135deg, var(--blue-dark), #002233);
-      border: 1px solid var(--blue-dim); border-radius: var(--radius-sm);
-      color: var(--blue); font-size: 12px; font-weight: 600; cursor: pointer;
+      background: linear-gradient(135deg, var(--accent-dark), #2a1820);
+      border: 1px solid var(--rose-dim); border-radius: var(--radius-sm);
+      color: var(--rose); font-size: 12px; font-weight: 600; cursor: pointer;
       transition: all .22s; letter-spacing: .5px;
     }
-    #refresh-btn:hover { box-shadow: 0 0 14px rgba(0,212,255,.35); transform: translateY(-1px); }
+    #refresh-btn:hover { box-shadow: 0 0 16px var(--glow-rose); transform: translateY(-1px); }
     #refresh-btn.loading { opacity: .6; pointer-events: none; }
     .spin { display: inline-block; animation: spin 1s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
@@ -79,11 +108,167 @@
     .status-bar {
       display: flex; align-items: center; gap: 8px;
       padding: 7px 12px; margin: 10px 0;
-      background: rgba(0,212,255,.06); border: 1px solid rgba(0,212,255,.15);
+      background: rgba(255,92,138,.08); border: 1px solid rgba(255,92,138,.2);
       border-radius: var(--radius-sm); font-size: 12px; color: var(--text-2);
       min-height: 32px; transition: all .3s;
     }
-    .status-bar.error { background: rgba(239,71,111,.08); border-color: rgba(239,71,111,.3); color: var(--red); }
+    .status-bar.error { background: rgba(232,106,122,.1); border-color: rgba(232,106,122,.35); color: var(--red); }
+    .status-bar.hidden { display: none !important; }
+
+    /* 设计稿布局 */
+    #designed-layout { display: none; }
+    #designed-layout.show { display: block; }
+    #db-grid.fallback { display: grid; }
+    #db-grid.hidden { display: none !important; }
+    .section { margin-top: 28px; }
+    .section-hdr {
+      display: flex; align-items: baseline; gap: 12px; margin-bottom: 14px; flex-wrap: wrap;
+    }
+    .section-num {
+      font-size: 11px; font-weight: 800; letter-spacing: 1.2px;
+      color: #fff; background: linear-gradient(135deg, var(--rose), var(--magenta));
+      padding: 4px 10px; border-radius: 6px;
+    }
+    .section-title { font-size: 18px; font-weight: 700; color: var(--text-1); }
+    .section-hint { font-size: 12px; color: var(--text-3); margin-left: auto; }
+    .section-hint.fixed {
+      color: var(--cyan); font-weight: 500;
+      background: rgba(0,229,255,.08); padding: 4px 10px; border-radius: 6px;
+      border: 1px solid rgba(0,229,255,.25);
+    }
+    .chart-grid { display: grid; gap: var(--gap); }
+    .chart-grid.g1 { grid-template-columns: 1fr; }
+    .chart-grid.g2 { grid-template-columns: 1fr 1fr; }
+    .chart-card {
+      background: linear-gradient(180deg, var(--bg-card), var(--bg-card2));
+      border: 1px solid var(--border); border-radius: var(--radius);
+      overflow: hidden; box-shadow: 0 8px 32px rgba(0,0,0,.45);
+    }
+    .chart-card-hdr {
+      padding: 12px 18px 10px; border-bottom: 1px solid var(--border);
+      background: rgba(0,0,0,.2);
+      display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+    }
+    .chart-card-hdr::before {
+      content: ''; width: 4px; height: 16px; border-radius: 2px;
+      background: linear-gradient(180deg, var(--cyan), var(--violet));
+    }
+    .chart-card-title { font-size: 14px; font-weight: 700; color: var(--text-1); }
+    .chart-legend-hint {
+      display: flex; gap: 14px; margin-left: auto; font-size: 11px; color: var(--text-3);
+    }
+    .chart-legend-hint i { font-style: normal; }
+    .chart-body { height: 300px; padding: 8px 12px 12px; position: relative; }
+    .tech21-canvas { background: #0f172a; border-radius: 8px; }
+    .chart-body.tech21-canvas { background: #0f172a; border-radius: 8px; }
+    .chart-body.sm { height: 260px; }
+    .chart-body .card-loading { background: rgba(15,21,36,.92); }
+    .tab-panels { position: relative; min-height: 300px; height: 300px; }
+    .tab-panel { display: none; position: absolute; inset: 0; padding: 8px 12px 12px; }
+    .tab-panel.active { display: block; }
+    .tab-panel > div { width: 100%; height: 100%; min-height: 280px; }
+    .funnel-wrap { display: grid; grid-template-columns: 1fr 1fr; gap: var(--gap); }
+    .funnel-table-wrap { padding: 12px 18px 18px; overflow: auto; min-height: 380px; max-height: 440px; }
+    .mini-tbl { width: 100%; border-collapse: collapse; font-size: 12px; }
+    .mini-tbl th {
+      text-align: left; padding: 10px 12px;
+      background: rgba(0,229,255,.08); color: var(--text-2); font-weight: 600;
+      border-bottom: 2px solid var(--border-hi);
+    }
+    .mini-tbl td { padding: 8px 12px; border-bottom: 1px solid var(--border); color: var(--text-1); }
+    .mini-tbl td.num { text-align: right; font-family: 'Courier New', monospace; color: var(--cyan-dim); }
+
+    /* PART 01 KPI */
+    .part1-section { margin-top: 8px; }
+    .kpi-grid {
+      display: none; grid-template-columns: repeat(4, 1fr); gap: 10px;
+    }
+    .kpi-grid.show { display: grid; }
+    .kpi-card {
+      background: linear-gradient(145deg, var(--bg-card), var(--bg-card2));
+      border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 16px 18px 14px; box-shadow: 0 8px 32px rgba(0,0,0,.45);
+      position: relative; overflow: hidden;
+    }
+    .kpi-card.loading .kpi-val { opacity: .35; }
+    .kpi-card::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+      background: linear-gradient(90deg, transparent, var(--rose), var(--cyan), transparent);
+    }
+    .kpi-tag { position: absolute; top: 8px; right: 10px; font-size: 10px; color: var(--text-3); }
+    .kpi-name { font-size: 12px; font-weight: 600; color: var(--text-2); margin-bottom: 8px; }
+    .kpi-name span { display: block; font-size: 10px; font-weight: 400; color: var(--text-3); margin-top: 2px; }
+    .kpi-val { font-size: 26px; font-weight: 800; font-family: 'Courier New', monospace; color: var(--rose-soft); text-shadow: 0 0 16px rgba(255,92,138,.4); }
+    .kpi-val.pct { color: var(--cyan); text-shadow: 0 0 16px rgba(0,229,255,.35); }
+    .kpi-unit { font-size: 12px; color: var(--text-3); font-weight: 500; }
+    .kpi-compare { display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
+    .cmp { font-size: 11px; color: var(--text-3); }
+    .cmp b { font-weight: 700; }
+    .cmp.up b { color: #34d399; }
+    .cmp.down b { color: #ff5c7a; }
+
+    .filter-bridge {
+      margin: 20px 0 16px; padding: 16px 20px;
+      background: var(--bg-glass);
+      border: 1px solid var(--border-hi);
+      border-radius: var(--radius);
+      backdrop-filter: blur(12px);
+      box-shadow: 0 8px 32px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.04);
+    }
+    .filter-bridge-top {
+      display: flex; align-items: center; gap: 10px; margin-bottom: 12px;
+      padding-bottom: 12px; border-bottom: 1px dashed var(--border);
+    }
+    .filter-bridge-icon {
+      width: 28px; height: 28px; border-radius: 8px;
+      background: linear-gradient(135deg, var(--cyan), var(--violet));
+      color: #fff; font-size: 14px; display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 0 16px var(--glow-cyan);
+    }
+    .filter-bridge-title { font-size: 14px; font-weight: 700; color: var(--text-1); }
+    .filter-bridge-desc { font-size: 12px; color: var(--text-3); margin-top: 2px; }
+    .flt-inner { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+    .flt-scope {
+      margin-left: auto; font-size: 11px; color: var(--text-3);
+      padding: 4px 10px; background: var(--bg-card); border-radius: 6px; border: 1px solid var(--border);
+    }
+    .flt-scope em { color: var(--cyan); font-style: normal; font-weight: 600; }
+    .chart-tabs { display: flex; gap: 6px; margin-left: auto; }
+    .chart-tab {
+      padding: 5px 14px; border-radius: 8px; font-size: 12px; font-weight: 600;
+      border: 1px solid var(--border); background: var(--bg-card2); color: var(--text-2);
+      cursor: pointer; transition: all .18s;
+    }
+    .chart-tab:hover { border-color: var(--cyan); color: var(--cyan); }
+    .chart-tab.on {
+      background: linear-gradient(135deg, var(--rose), var(--magenta));
+      border-color: transparent; color: #fff;
+      box-shadow: 0 0 14px var(--glow-rose);
+    }
+    .tab-panels { flex: 1; position: relative; min-height: 0; }
+    .tab-panel { display: none; position: absolute; inset: 0; }
+    .tab-panel.active { display: block; }
+    .db-card--tab .card-body { display: flex; flex-direction: column; min-height: 280px; }
+    .funnel-split { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; height: 100%; }
+    .funnel-half { min-height: 0; }
+    .card-legend-hint {
+      margin-left: auto; font-size: 10px; color: var(--text-3);
+      display: flex; gap: 10px;
+    }
+    .card-legend-hint i { font-style: normal; display: inline-flex; align-items: center; gap: 4px; }
+
+    /* ============================================================ 章节标题 */
+    .section-hdr {
+      grid-column: 1 / -1;
+      display: flex; align-items: baseline; gap: 12px;
+      padding: 6px 4px 2px; margin-top: 4px;
+    }
+    .section-hdr .sec-num {
+      font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase;
+      color: var(--rose); opacity: .9;
+    }
+    .section-hdr .sec-title { font-size: 15px; font-weight: 700; color: var(--text-1); }
+    .section-hdr .sec-hint { font-size: 11px; color: var(--text-3); margin-left: auto; }
     .s-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
     .s-dot.ok      { background: var(--green); box-shadow: 0 0 7px var(--green); animation: blink 2s infinite; }
     .s-dot.loading { background: var(--amber); box-shadow: 0 0 7px var(--amber); }
@@ -96,7 +281,7 @@
       background: var(--bg-card); border: 1px solid var(--border);
       border-radius: var(--radius); padding: 10px 14px; margin-bottom: 12px;
     }
-    .flt-bar.filtered { border-color: rgba(0,180,255,.35); box-shadow: 0 0 12px rgba(0,180,255,.08); }
+    .flt-bar.filtered { border-color: rgba(255,92,138,.4); box-shadow: 0 0 14px rgba(255,92,138,.1); }
     .flt-label { font-size: 11px; color: var(--text-3); text-transform: uppercase; letter-spacing: .5px; flex-shrink: 0; }
     .flt-divider { width: 1px; height: 24px; background: var(--border); margin: 0 10px; flex-shrink: 0; }
     .flt-btn {
@@ -104,15 +289,15 @@
       border: 1px solid var(--border); background: transparent; color: var(--text-2);
       cursor: pointer; transition: all .18s; white-space: nowrap;
     }
-    .flt-btn:hover { border-color: var(--blue-dim); color: var(--text-1); }
-    .flt-btn.active { background: rgba(0,180,255,.13); border-color: var(--blue-dim); color: var(--blue); }
+    .flt-btn:hover { border-color: var(--rose-dim); color: var(--text-1); }
+    .flt-btn.active, .flt-btn.on { background: linear-gradient(135deg, var(--rose), var(--magenta)); border-color: transparent; color: #fff; box-shadow: 0 0 12px var(--glow-rose); }
     .flt-custom { display: none; align-items: center; gap: 5px; }
     .flt-custom.show { display: flex; }
     .flt-custom input[type="date"] {
       background: var(--bg-card2); border: 1px solid var(--border); border-radius: 4px;
       color: var(--text-1); padding: 3px 7px; font-size: 12px; outline: none; color-scheme: dark;
     }
-    .flt-custom input:focus { border-color: var(--blue-dim); }
+    .flt-custom input:focus { border-color: var(--rose-dim); }
     .flt-custom em { color: var(--text-3); font-size: 11px; font-style: normal; }
     .flt-actions { margin-left: auto; }
     .btn-reset {
@@ -129,7 +314,7 @@
     }
     .no-dashboard .nd-icon { font-size: 48px; }
     .no-dashboard .nd-text { font-size: 16px; }
-    .no-dashboard code { background: var(--bg-card); padding: 4px 10px; border-radius: 4px; color: var(--blue); font-family: monospace; }
+    .no-dashboard code { background: var(--bg-card); padding: 4px 10px; border-radius: 4px; color: var(--rose); font-family: monospace; }
 
     /* ============================================================ 看板网格 */
     .db-grid {
@@ -147,15 +332,31 @@
       position: relative; transition: border-color .2s;
     }
     .db-card:hover { border-color: var(--border-hi); }
+    .db-card.db-card--hero {
+      border-color: rgba(255,92,138,.45);
+      box-shadow: 0 0 32px rgba(255,92,138,.12), inset 0 0 60px rgba(255,92,138,.04);
+    }
+    .db-card.db-card--hero .card-hdr::before { background: linear-gradient(180deg, var(--rose), var(--violet)); }
+    .db-card.db-card--ref {
+      opacity: .92;
+      border-style: dashed;
+      border-color: rgba(90,56,72,.8);
+    }
     .card-hdr {
       display: flex; align-items: center; gap: 8px;
       padding: 8px 14px 6px; flex-shrink: 0;
-      border-bottom: 1px solid rgba(26,58,96,.6);
+      border-bottom: 1px solid rgba(90,56,72,.5);
     }
     .card-hdr::before {
       content: ''; width: 3px; height: 13px; border-radius: 2px;
-      background: var(--blue); flex-shrink: 0;
+      background: var(--rose); flex-shrink: 0;
     }
+    .card-badge {
+      margin-left: auto; flex-shrink: 0;
+      font-size: 10px; padding: 2px 7px; border-radius: 10px;
+      background: rgba(255,92,138,.15); color: var(--rose); border: 1px solid rgba(255,92,138,.3);
+    }
+    .card-badge.ref { background: rgba(138,106,116,.15); color: var(--text-3); border-color: var(--border); }
     .card-title { font-size: 13px; font-weight: 600; color: var(--text-1); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .card-body  { flex: 1; overflow: hidden; position: relative; }
 
@@ -163,13 +364,13 @@
     .card-loading {
       position: absolute; inset: 0; z-index: 10;
       display: flex; flex-direction: column; align-items: center; justify-content: center;
-      background: rgba(7,26,48,.85); gap: 8px;
+      background: rgba(38,24,32,.9); gap: 8px;
       font-size: 12px; color: var(--text-2);
     }
     .loading-ring {
       width: 28px; height: 28px; border-radius: 50%;
-      border: 3px solid rgba(0,212,255,.15);
-      border-top-color: var(--blue);
+      border: 3px solid rgba(255,92,138,.15);
+      border-top-color: var(--rose);
       animation: spin .8s linear infinite;
     }
     /* 错误状态 */
@@ -186,7 +387,7 @@
     }
     .scalar-val {
       font-size: clamp(24px, 4vw, 44px); font-weight: 800;
-      color: var(--blue); font-family: 'Courier New', monospace;
+      color: var(--rose); font-family: 'Courier New', monospace;
       letter-spacing: -1px; line-height: 1;
     }
     .scalar-lbl { font-size: 12px; color: var(--text-2); margin-top: 6px; text-align: center; }
@@ -198,16 +399,26 @@
     }
     .mb-tbl th {
       padding: 7px 10px; text-align: left; white-space: nowrap;
-      background: rgba(0,180,255,.08); color: var(--text-2);
+      background: rgba(255,92,138,.1); color: var(--text-2);
       border-bottom: 1px solid var(--border); font-weight: 600;
       position: sticky; top: 0; z-index: 1;
     }
     .mb-tbl td {
-      padding: 6px 10px; border-bottom: 1px solid rgba(26,58,96,.4);
+      padding: 6px 10px; border-bottom: 1px solid rgba(90,56,72,.45);
       color: var(--text-1); white-space: nowrap;
     }
     .mb-tbl td.num { text-align: right; font-family: 'Courier New', monospace; font-size: 11px; }
-    .mb-tbl tr:hover td { background: rgba(0,180,255,.05); }
+    .mb-tbl tr:hover td { background: rgba(255,92,138,.06); }
+
+    @media (max-width: 1200px) {
+      .kpi-grid.show { grid-template-columns: repeat(2, 1fr); }
+      .funnel-wrap { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 700px) {
+      .kpi-grid.show { grid-template-columns: 1fr; }
+      .filter-bridge-top { flex-direction: column; align-items: flex-start; }
+      .flt-scope { margin-left: 0; }
+    }
 
     /* ============================================================ 底部 */
     .footer {
@@ -225,13 +436,17 @@
   <!-- 头部 -->
   <header class="hdr">
     <div class="hdr-left">
-      <div class="hdr-icon">📊</div>
+      <div class="hdr-icon">🌸</div>
       <div>
         <div class="hdr-title" id="db-title">数据看板</div>
         <div class="hdr-sub" id="db-sub">Metabase Dashboard</div>
       </div>
     </div>
     <div class="hdr-right">
+      <div class="hdr-stat">
+        <div class="hdr-stat-lbl">核心指标日</div>
+        <div class="hdr-stat-val" id="hdr-stat-date">--</div>
+      </div>
       <div>
         <div id="live-clock">--:--:--</div>
         <div id="last-refresh">等待加载...</div>
@@ -248,11 +463,103 @@
     <span id="s-text">正在连接 Metabase...</span>
   </div>
 
-  <!-- 筛选栏（动态渲染） -->
-  <div class="flt-bar" id="flt-bar" style="display:none"></div>
+  <!-- 设计稿布局（dashboard 14） -->
+  <div id="designed-layout">
+    <section class="section part1-section">
+      <div class="section-hdr">
+        <span class="section-num">PART 01</span>
+        <span class="section-title">吸乳计划 · 核心指标卡</span>
+        <span class="section-hint fixed">固定最近一日 · 不受下方日期筛选影响</span>
+      </div>
+      <div class="kpi-grid" id="kpi-grid"></div>
+    </section>
 
-  <!-- 看板网格（动态渲染） -->
-  <div class="db-grid" id="db-grid"></div>
+    <section class="section" id="part2">
+      <div class="section-hdr">
+        <span class="section-num">PART 02</span>
+        <span class="section-title">趋势类指标</span>
+        <span class="section-hint" id="part2-hint">近30天 · 折线=数值 · 柱形=比率</span>
+      </div>
+      <div class="chart-grid g1" style="margin-bottom:12px">
+        <div class="chart-card">
+          <div class="chart-card-hdr">
+            <span class="chart-card-title">2.1 AI吸乳功能触达与渗透趋势</span>
+            <div class="chart-tabs" data-tab-group="reach">
+              <button type="button" class="chart-tab on" data-tab="pump">吸奶器用户渗透</button>
+              <button type="button" class="chart-tab" data-tab="app">APP大盘用户渗透</button>
+            </div>
+            <div class="chart-legend-hint"><i>折线 · 荧光</i><i>柱形 · 渐变</i></div>
+          </div>
+          <div class="tab-panels" style="height:300px">
+            <div class="tab-panel active" id="panel-reach-pump"><div id="chart-reach-pump" class="tech21-canvas"></div></div>
+            <div class="tab-panel" id="panel-reach-app"><div id="chart-reach-app" class="tech21-canvas"></div></div>
+          </div>
+        </div>
+      </div>
+      <div class="chart-grid g1">
+        <div class="chart-card">
+          <div class="chart-card-hdr">
+            <span class="chart-card-title">2.2 AI吸乳计划完成情况</span>
+            <div class="chart-tabs" data-tab-group="plan">
+              <button type="button" class="chart-tab on" data-tab="c214">按次</button>
+              <button type="button" class="chart-tab" data-tab="c213">按人</button>
+            </div>
+            <div class="chart-legend-hint"><i>折线 · 荧光</i><i>柱形 · 渐变</i></div>
+          </div>
+          <div class="tab-panels">
+            <div class="tab-panel active" id="panel-plan-214"><div id="chart-plan-214" class="tech21-canvas"></div></div>
+            <div class="tab-panel" id="panel-plan-213"><div id="chart-plan-213" class="tech21-canvas"></div></div>
+          </div>
+        </div>
+      </div>
+      <div class="chart-grid g1" style="margin-top:12px">
+        <div class="chart-card">
+          <div class="chart-card-hdr">
+            <span class="chart-card-title">2.3 吸乳计划完成方式</span>
+            <div class="chart-tabs" data-tab-group="method">
+              <button type="button" class="chart-tab on" data-tab="cnt">按次</button>
+              <button type="button" class="chart-tab" data-tab="usr">按人</button>
+              <button type="button" class="chart-tab" data-tab="avg">人均</button>
+            </div>
+            <div class="chart-legend-hint"><i>折线 · 荧光</i></div>
+          </div>
+          <div class="tab-panels" style="height:260px">
+            <div class="tab-panel active" id="panel-method-cnt"><div id="chart-method-cnt" class="tech21-canvas"></div></div>
+            <div class="tab-panel" id="panel-method-usr"><div id="chart-method-usr" class="tech21-canvas"></div></div>
+            <div class="tab-panel" id="panel-method-avg"><div id="chart-method-avg" class="tech21-canvas"></div></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="part3">
+      <div class="section-hdr">
+        <span class="section-num">PART 03</span>
+        <span class="section-title">生成计划漏斗</span>
+        <span class="section-hint" id="part3-hint">受日期筛选 · 入口 → 同步</span>
+      </div>
+      <div class="funnel-wrap">
+        <div class="chart-card">
+          <div class="chart-card-hdr"><span class="chart-card-title">3.1 漏斗总览</span></div>
+          <div class="chart-body tech21-canvas" id="chart-funnel"><div class="card-loading"><div class="loading-ring"></div><span>加载中...</span></div></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-card-hdr">
+            <span class="chart-card-title">3.2 关键转化率趋势</span>
+            <div class="chart-legend-hint"><i>折线 · 荧光</i></div>
+          </div>
+          <div class="chart-body tech21-canvas" id="chart-funnel-trend"><div class="card-loading"><div class="loading-ring"></div><span>加载中...</span></div></div>
+        </div>
+      </div>
+      <div class="chart-card" style="margin-top:12px">
+        <div class="chart-card-hdr"><span class="chart-card-title">3.3 生成明细表</span></div>
+        <div class="funnel-table-wrap" id="funnel-table"><div class="card-loading"><div class="loading-ring"></div><span>加载中...</span></div></div>
+      </div>
+    </section>
+  </div>
+
+  <!-- 通用 Metabase 网格（非设计稿看板） -->
+  <div class="db-grid hidden" id="db-grid"></div>
 
   <!-- 无 dashboard_id 提示 -->
   <div class="no-dashboard" id="no-db" style="display:none">
@@ -261,26 +568,125 @@
     <div>示例：<code>?dashboard_id=14</code></div>
   </div>
 
-  <footer class="footer" id="footer" style="display:none">
-    <div>
-      <span>数据源：Metabase</span>
-      <span id="ft-name"></span>
-    </div>
-    <span>© 数据分析中台 · Metabase 大屏看板</span>
-  </footer>
-
 </div><!-- /page -->
 
 <script>
 /* ================================================================
    全局状态
 ================================================================ */
-const DASHBOARD_ID = new URLSearchParams(location.search).get('dashboard_id');
+const DASHBOARD_ID = new URLSearchParams(location.search).get('dashboard_id') || '14';
 let meta       = null;
 let filterState = {};     // param_id → 值字符串
 let chartMap    = {};     // dashcard_id → echarts instance
+let kpiSnapshot = {};     // label → { value, display }
 
-const COLORS = ['#00d4ff','#ffd166','#00f5a0','#9b5de5','#ef476f','#f8961e','#43aa8b','#4cc9f0','#f72585'];
+const COLORS = ['#FF5C8A','#FF8FAB','#00E5FF','#A78BFA','#E879F9','#FBBF24','#34D399','#7EC8E3'];
+/** 折线：细线 + 高饱和亮色（与柱形色系区分） */
+const LINE_WIDTH = 1.5;
+const LINE_PALETTE = ['#E879F9', '#FBBF24', '#6EE7B7', '#F9A8D4', '#FF9A6C', '#C4B5FD'];
+
+/** 柱形：亮蓝色系 + 高透明（与折线暖色/霓虹色区分） */
+const BAR_STYLES = [
+  { fill: 'rgba(56, 189, 255, 0.34)',  border: 'rgba(56, 189, 255, 0.18)' },
+  { fill: 'rgba(96, 210, 255, 0.34)',  border: 'rgba(96, 210, 255, 0.18)' },
+  { fill: 'rgba(40, 160, 255, 0.34)',  border: 'rgba(40, 160, 255, 0.18)' },
+  { fill: 'rgba(120, 200, 255, 0.34)', border: 'rgba(120, 200, 255, 0.18)' },
+  { fill: 'rgba(72, 175, 255, 0.34)',  border: 'rgba(72, 175, 255, 0.18)' },
+  { fill: 'rgba(140, 220, 255, 0.34)', border: 'rgba(140, 220, 255, 0.18)' },
+];
+
+function barItemStyle(idx) {
+  const b = BAR_STYLES[idx % BAR_STYLES.length];
+  return {
+    color: b.fill,
+    borderColor: b.border,
+    borderWidth: 0.5,
+    borderRadius: [3, 3, 0, 0],
+  };
+}
+const CHART_UI = {
+  grid: '#1e2d48', text2: '#94a8c8', text1: '#eef2ff',
+  tooltipBg: '#141c30', tooltipBorder: '#2a4068',
+};
+
+/** 看板专属叙事配置（dashboard_id → profile） */
+/**
+ * 看板 #14 设计稿映射（仅展示以下 Metabase 卡片，其余 129/130/131 不展示）
+ * 卡片 150→dc132 触达；214→dc187 按次；213→dc186 按人；254→dc212 完成方式
+ * 197→dc170 漏斗趋势；198→dc171 漏斗明细
+ */
+const DASH_PROFILES = {
+  '14': {
+    useDesignedLayout: true,
+    kpiSources: {
+      visitor:     { dashcardId: 132 },              /* card 150 */
+      penetration: { dashcardId: 130 },              /* card 148 */
+      plan:        { dashcardId: 187, pumpUser: true }, /* card 214 */
+      user:        { dashcardId: 186, pumpUser: true }, /* card 213 */
+    },
+    kpis: [
+      { source: 'visitor', field: '吸乳计划功能渗透吸奶器用户数', label: 'AI吸乳计划功能访客数', hint: '绑定吸奶器用户', isPct: false },
+      { source: 'penetration', field: '吸乳计划版本吸奶器用户功能渗透率', label: 'AI吸乳计划日活用户渗透率', hint: '绑定吸奶器用户', isPct: true },
+      { source: 'plan', field: '待完成吸乳计划次数', label: '昨日待完成的AI吸乳计划总数', hint: '', isPct: false },
+      { source: 'plan', field: '完成吸乳计划次数', label: '昨日完成的AI吸乳计划总数', hint: '', isPct: false },
+      { source: 'plan', field: 'AI吸乳计划pv完成率', label: '计划完成率', hint: '按次', isPct: true },
+      { source: 'user', field: '待完成吸乳计划用户数', label: '昨日有待完成的AI吸乳计划的用户总数', hint: '', isPct: false },
+      { source: 'user', field: '完成吸乳计划用户数', label: '昨日有完成AI吸乳计划的用户总数', hint: '', isPct: false },
+      { source: 'user', field: 'AI吸乳计划uv完成率', label: '完成计划用户比例', hint: '按人', isPct: true },
+    ],
+    reachTabs: {
+      pump: {
+        merge: [
+          { dashcardId: 131, bars: ['吸乳计划版本绑定吸奶器DAU', '吸乳计划功能渗透吸奶器用户数'], dim: 'dt' },
+          { dashcardId: 130, lines: ['吸乳计划版本吸奶器用户功能渗透率'], dim: 'dt' },
+        ],
+        rename: {
+          '吸乳计划版本绑定吸奶器DAU': '绑定吸奶器用户的APP日活',
+          '吸乳计划功能渗透吸奶器用户数': '其中使用AI吸乳计划的用户数',
+        },
+      },
+      app: {
+        merge: [
+          { dashcardId: 132, bars: ['DAU', '吸乳计划功能渗透用户数'], dim: 'dt' },
+          { dashcardId: 130, lines: ['吸乳计划版本功能渗透率'], dim: 'dt' },
+        ],
+      },
+    },
+    planTabs: {
+      c214: { dashcardId: 187, pumpUser: true, dim: 'AI吸乳计划日期', cardId: 214 },
+      c213: { dashcardId: 186, pumpUser: true, dim: 'AI吸乳计划日期', cardId: 213 },
+    },
+    methodTabs: {
+      cnt: {
+        dashcardId: 212, pumpUser: true, dim: 'AI吸乳计划日期',
+        bars: ['手动完成吸乳计划次数', '自动完成吸乳计划次数'],
+      },
+      usr: {
+        dashcardId: 212, pumpUser: true, dim: 'AI吸乳计划日期',
+        bars: ['手动完成吸乳计划用户数', '自动完成吸乳计划用户数'],
+        rename: {
+          '手动完成吸乳计划用户数': '手动完成吸乳计划人数',
+          '自动完成吸乳计划用户数': '自动完成吸乳计划人数',
+        },
+      },
+      avg: { dashcardId: 212, pumpUser: true, dim: 'AI吸乳计划日期', derived: true },
+    },
+    slots: {
+      funnelTrend: { dashcardId: 170, dim: 'dt', linesOnly: true },
+      funnelTable: { dashcardId: 171, dim: 'dt' },
+    },
+  },
+};
+
+let activeReachTab = 'pump';
+let activePlanTab = 'c214';
+let activeMethodTab = 'cnt';
+let kpiLatestDate = '';
+let designedCache = {};
+
+function getProfile() {
+  return DASH_PROFILES[DASHBOARD_ID] || null;
+}
 
 /* ================================================================
    时钟
@@ -344,20 +750,45 @@ function fmtPct(v, decimals) {
   return (Number(v) * 100).toFixed(decimals ?? 2) + '%';
 }
 
+/** 百分数两位小数；asRatio=true 表示原值为 0~1 */
+function fmtPct2(v, asRatio = false) {
+  const n = Number(v);
+  if (isNaN(n)) return '--';
+  const pct = asRatio ? n * 100 : (Math.abs(n) <= 1 && !asRatio ? n * 100 : n);
+  return pct.toFixed(2) + '%';
+}
+
+function isRateCol(col, pctCfg) {
+  if (pctCfg.get(col.name) !== undefined) return true;
+  const n = col.display_name || col.name || '';
+  return /率|比例|漏斗/.test(n);
+}
+
+function seriesTypeForCol(col, pctCfg, display) {
+  if (display === 'bar') return 'bar';
+  if (display === 'line' || display === 'area') return 'line';
+  return isRateCol(col, pctCfg) ? 'line' : 'bar';
+}
+
 /* ================================================================
    筛选器渲染
 ================================================================ */
 function renderFilters(parameters) {
-  const bar = document.getElementById('flt-bar');
-  if (!parameters || !parameters.length) { bar.style.display = 'none'; return; }
-  bar.style.display = 'flex';
+  const bridge = document.getElementById('filter-bridge');
+  const inner  = document.getElementById('flt-inner');
+  if (!parameters || !parameters.length || !inner) {
+    if (bridge) bridge.style.display = 'none';
+    initDefaultDateFilter();
+    return;
+  }
+  if (bridge) bridge.style.display = 'block';
 
   let html = '';
   for (const p of parameters) {
     html += renderOneFilter(p);
   }
   html += `<div class="flt-actions"><button class="btn-reset" onclick="resetFilters()">重置</button></div>`;
-  bar.innerHTML = html;
+  inner.innerHTML = html;
 
   // 绑定事件
   for (const p of parameters) {
@@ -373,7 +804,7 @@ function renderOneFilter(p) {
       <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
         <span class="flt-label">${p.name}</span>
         <button class="flt-btn" data-pid="${p.id}" data-v="past7days">近7天</button>
-        <button class="flt-btn active" data-pid="${p.id}" data-v="past30days">近30天</button>
+        <button class="flt-btn on" data-pid="${p.id}" data-v="past30days">近30天</button>
         <button class="flt-btn" data-pid="${p.id}" data-v="thismonth">本月</button>
         <button class="flt-btn" data-pid="${p.id}" data-v="lastmonth">上月</button>
         <button class="flt-btn" data-pid="${p.id}" data-v="custom">自定义</button>
@@ -418,14 +849,13 @@ function bindFilterEvents(p) {
     // 快捷按钮
     document.querySelectorAll(`.flt-btn[data-pid="${p.id}"]`).forEach(btn => {
       btn.addEventListener('click', function() {
-        document.querySelectorAll(`.flt-btn[data-pid="${p.id}"]`).forEach(b => b.classList.remove('active'));
-        this.classList.add('active');
+        document.querySelectorAll(`.flt-btn[data-pid="${p.id}"]`).forEach(b => { b.classList.remove('active'); b.classList.remove('on'); });
+        this.classList.add('on');
         const customEl = document.getElementById(`custom-${p.id}`);
         const isCustom = this.dataset.v === 'custom';
         customEl.classList.toggle('show', isCustom);
         if (!isCustom) {
           filterState[p.id] = this.dataset.v;
-          document.getElementById('flt-bar').classList.add('filtered');
           reloadAllCards();
         }
       });
@@ -439,7 +869,6 @@ function bindFilterEvents(p) {
         const to   = document.getElementById(`dt-${p.id}`).value;
         if (from && to) {
           filterState[p.id] = `${from}~${to}`;
-          document.getElementById('flt-bar').classList.add('filtered');
           reloadAllCards();
         }
       });
@@ -473,7 +902,6 @@ async function loadParamValues(dashboardId, p) {
 
 function onFilterSelect(paramId, value) {
   filterState[paramId] = value || '';
-  document.getElementById('flt-bar').classList.toggle('filtered', !!value);
   reloadAllCards();
 }
 
@@ -488,16 +916,15 @@ function resetFilters() {
   if (meta?.parameters) {
     meta.parameters.forEach(p => {
       if (p.type?.startsWith('date/')) {
-        document.querySelectorAll(`.flt-btn[data-pid="${p.id}"]`).forEach(b => b.classList.remove('active'));
+        document.querySelectorAll(`.flt-btn[data-pid="${p.id}"]`).forEach(b => { b.classList.remove('active'); b.classList.remove('on'); });
         const btn30 = document.querySelector(`.flt-btn[data-pid="${p.id}"][data-v="past30days"]`);
-        if (btn30) btn30.classList.add('active');
+        if (btn30) btn30.classList.add('on');
         const customEl = document.getElementById(`custom-${p.id}`);
         if (customEl) customEl.classList.remove('show');
         filterState[p.id] = 'past30days';
       }
     });
   }
-  document.getElementById('flt-bar').classList.remove('filtered');
   reloadAllCards();
 }
 
@@ -509,85 +936,927 @@ function buildQueryParams() {
 }
 
 /* ================================================================
-   网格布局
+   PART 01 核心指标卡
+================================================================ */
+const KPI_DATE_FIELDS = ['dt', 'AI吸乳计划日期'];
+
+function kpiKey(k) {
+  const id = k.source || k.dashcardId;
+  if (k.sumFields) return `${id}:sum`;
+  return `${id}:${k.field}`;
+}
+
+function getDashcard(dashcardId) {
+  return meta?.dashcards?.find(d => d.id === dashcardId) || null;
+}
+
+function clearLoading(el) {
+  const ld = el?.querySelector?.('.card-loading');
+  if (ld) ld.remove();
+}
+
+function showSlotError(el, msg) {
+  if (!el) return;
+  clearLoading(el);
+  el.innerHTML = `<div class="card-error"><div class="err-icon">⚠</div><div>${msg}</div></div>`;
+}
+
+/** 每张 KPI 用序号作 DOM id（字段名含中文，不能用 \\W 拼 id，否则会撞车） */
+function kpiDomId(index) {
+  return 'kpi-' + index;
+}
+
+function findDateCol(cols) {
+  return cols.find(c => KPI_DATE_FIELDS.includes(c.name) || /日期|dt/i.test(c.name || ''));
+}
+
+function sortRowsByDate(cols, rows) {
+  const dateCol = findDateCol(cols);
+  if (!dateCol || !rows.length) return [...rows];
+  const idx = cols.indexOf(dateCol);
+  return [...rows].sort((a, b) => String(a[idx] ?? '').localeCompare(String(b[idx] ?? '')));
+}
+
+function latestRow(cols, rows, dateFields = KPI_DATE_FIELDS) {
+  const sorted = sortRowsByDate(cols, rows);
+  return sorted.length ? sorted[sorted.length - 1] : null;
+}
+
+function rowAtOffset(cols, rows, offset) {
+  const sorted = sortRowsByDate(cols, rows);
+  const i = sorted.length - 1 - offset;
+  return i >= 0 ? sorted[i] : null;
+}
+
+function valFromRow(cols, row, fieldName) {
+  const col = cols.find(c => c.name === fieldName);
+  if (!col || !row) return null;
+  return row[cols.indexOf(col)];
+}
+
+function kpiRawValue(cols, row, k) {
+  if (!row) return null;
+  if (k.sumFields) {
+    let sum = 0, ok = false;
+    for (const f of k.sumFields) {
+      const v = valFromRow(cols, row, f);
+      if (v !== null && v !== undefined) { sum += Number(v) || 0; ok = true; }
+    }
+    return ok ? sum : null;
+  }
+  return valFromRow(cols, row, k.field);
+}
+
+function formatKpiValue(v, isPct) {
+  if (v === null || v === undefined) return '--';
+  const n = Number(v);
+  if (isNaN(n)) return String(v);
+  if (isPct) return fmtPct2(n, Math.abs(n) <= 1);
+  return fmtShort(n);
+}
+
+function fmtCmpPct(pct) {
+  if (pct === null || pct === undefined || isNaN(pct)) return '<span class="cmp">--</span>';
+  const cls = pct >= 0 ? 'up' : 'down';
+  const arrow = pct >= 0 ? '↑' : '↓';
+  return `<span class="cmp ${cls}">较昨日 <b>${arrow}${Math.abs(pct).toFixed(2)}%</b></span>`;
+}
+
+function fmtCmpWeek(pct) {
+  if (pct === null || pct === undefined || isNaN(pct)) return '<span class="cmp">--</span>';
+  const cls = pct >= 0 ? 'up' : 'down';
+  const arrow = pct >= 0 ? '↑' : '↓';
+  return `<span class="cmp ${cls}">较上周 <b>${arrow}${Math.abs(pct).toFixed(2)}%</b></span>`;
+}
+
+function cmpChange(cur, prev) {
+  const c = Number(cur), p = Number(prev);
+  if (isNaN(c) || isNaN(p) || p === 0) return null;
+  return ((c - p) / Math.abs(p)) * 100;
+}
+
+function renderKpiGrid(profile) {
+  const grid = document.getElementById('kpi-grid');
+  if (!profile?.kpis?.length) { grid.classList.remove('show'); return; }
+  grid.innerHTML = profile.kpis.map((k, i) => `
+    <div class="kpi-card loading" id="${kpiDomId(i)}">
+      <div class="kpi-name">${k.label}${k.hint ? `<span>${k.hint}</span>` : ''}</div>
+      <div class="kpi-val ${k.isPct ? 'pct' : ''}">--</div>
+      <div class="kpi-compare"><span class="cmp">加载中…</span></div>
+    </div>`).join('');
+  grid.classList.add('show');
+}
+
+function applyKpiValues(profile) {
+  if (!profile?.kpis) return;
+  profile.kpis.forEach((k, i) => {
+    const snap = kpiSnapshot[kpiKey(k)];
+    const box  = document.getElementById(kpiDomId(i));
+    if (!box) return;
+    box.classList.remove('loading');
+    const valEl = box.querySelector('.kpi-val');
+    const cmpEl = box.querySelector('.kpi-compare');
+    if (valEl) {
+      const unitHtml = !k.isPct && snap
+        ? `<span class="kpi-unit">${k.label.includes('用户') ? '人' : '次'}</span>` : '';
+      valEl.innerHTML = (snap ? snap.display : '--') + unitHtml;
+    }
+    if (cmpEl && snap) {
+      cmpEl.innerHTML = fmtCmpPct(snap.dayCmp) + fmtCmpWeek(snap.weekCmp);
+    }
+  });
+  if (kpiLatestDate) {
+    const el = document.getElementById('hdr-stat-date');
+    if (el) el.textContent = kpiLatestDate;
+  }
+}
+
+async function fetchCardSnapshot(dc, params) {
+  const mappedIds = new Set((dc.parameter_mappings || []).map(m => String(m.parameter_id)));
+  const cardParams = params.filter(p => mappedIds.size === 0 || mappedIds.has(String(p.id)));
+  const res = await fetch(
+    `/api/card_data?dashboard_id=${DASHBOARD_ID}&dashcard_id=${dc.id}&card_id=${dc.card_id}`,
+    { method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ parameters: cardParams }) }
+  );
+  const data = await res.json();
+  if (data.error) throw new Error(data.error);
+  return { cols: data.cols || [], rows: data.rows || [] };
+}
+
+/** Metabase 字段 is_chosoe：1 = 绑定吸奶器用户 */
+function filterPumpUserRows(cols, rows) {
+  const col = cols.find(c => /chosoe|choose/i.test(c.name || ''));
+  if (!col) return rows;
+  const idx = cols.indexOf(col);
+  return rows.filter(r => r[idx] === 1 || r[idx] === true || Number(r[idx]) === 1);
+}
+
+async function fetchDashcardData(dc, params) {
+  const mappedIds = new Set((dc.parameter_mappings || []).map(m => String(m.parameter_id)));
+  const cardParams = params.filter(p => mappedIds.size === 0 || mappedIds.has(String(p.id)));
+  const { cols, rows } = await fetchCardSnapshot(dc, cardParams);
+  return { cols, rows };
+}
+
+async function loadKpiStrip(profile) {
+  if (!profile?.kpis?.length || !meta?.dashcards) return;
+  renderKpiGrid(profile);
+  const params = [];
+  const cache = {};
+
+  for (const [name, src] of Object.entries(profile.kpiSources || {})) {
+    const dc = getDashcard(src.dashcardId);
+    if (!dc?.card_id) continue;
+    let { cols, rows } = await fetchDashcardData(dc, params);
+    if (src.pumpUser) rows = filterPumpUserRows(cols, rows);
+    cache[name] = { cols, rows };
+  }
+
+  profile.kpis.forEach(k => {
+    const { cols, rows } = cache[k.source] || {};
+    const rowT  = latestRow(cols, rows);
+    const rowD1 = rowAtOffset(cols, rows, 1);
+    const rowD7 = rowAtOffset(cols, rows, 7);
+    const dateCol = findDateCol(cols);
+    if (dateCol && rowT) {
+      const d = fmtDate(rowT[cols.indexOf(dateCol)]);
+      if (d && d >= (kpiLatestDate || '')) kpiLatestDate = d;
+    }
+    const raw  = kpiRawValue(cols, rowT, k);
+    const raw1 = kpiRawValue(cols, rowD1, k);
+    const raw7 = kpiRawValue(cols, rowD7, k);
+    kpiSnapshot[kpiKey(k)] = {
+      value: raw,
+      display: formatKpiValue(raw, k.isPct),
+      dayCmp: cmpChange(raw, raw1),
+      weekCmp: cmpChange(raw, raw7),
+    };
+  });
+  applyKpiValues(profile);
+}
+
+/* ================================================================
+   设计稿布局 · 按槽位加载指定 Metabase 卡片
+================================================================ */
+function bindTabGroup(group, onSwitch) {
+  document.querySelectorAll(`.chart-tabs[data-tab-group="${group}"] .chart-tab`).forEach(btn => {
+    btn.addEventListener('click', () => {
+      const tab = btn.dataset.tab;
+      document.querySelectorAll(`.chart-tabs[data-tab-group="${group}"] .chart-tab`).forEach(b => {
+        b.classList.toggle('on', b.dataset.tab === tab);
+      });
+      onSwitch(tab);
+    });
+  });
+}
+
+function bindDesignedUI(profile) {
+  bindTabGroup('reach', (tab) => {
+    activeReachTab = tab;
+    document.getElementById('panel-reach-pump').classList.toggle('active', tab === 'pump');
+    document.getElementById('panel-reach-app').classList.toggle('active', tab === 'app');
+    setTimeout(() => chartMap['reach-' + tab]?.resize(), 50);
+  });
+  bindTabGroup('plan', (tab) => {
+    activePlanTab = tab;
+    document.getElementById('panel-plan-213').classList.toggle('active', tab === 'c213');
+    document.getElementById('panel-plan-214').classList.toggle('active', tab === 'c214');
+    const dcId = profile.planTabs[tab].dashcardId;
+    setTimeout(() => chartMap[dcId]?.resize(), 50);
+  });
+  bindTabGroup('method', (tab) => {
+    activeMethodTab = tab;
+    ['cnt', 'usr', 'avg'].forEach(t => {
+      document.getElementById('panel-method-' + t).classList.toggle('active', t === tab);
+    });
+    setTimeout(() => chartMap['method-' + tab]?.resize(), 50);
+  });
+}
+
+/** 按日期合并多卡数据，供 2.1 双 Tab 使用 */
+async function fetchMergedReach(tabCfg, params) {
+  const dim = 'dt';
+  const dateMap = new Map();
+
+  for (const part of tabCfg.merge) {
+    const dc = getDashcard(part.dashcardId);
+    if (!dc) continue;
+    let { cols, rows } = await fetchDashcardData(dc, params);
+    const dimCol = cols.find(c => c.name === part.dim) || findDateCol(cols);
+    if (!dimCol) continue;
+    const dimIdx = cols.indexOf(dimCol);
+    const barNames = part.bars || [];
+    const lineNames = part.lines || [];
+
+    rows.forEach(row => {
+      const d = fmtDate(row[dimIdx]) || String(row[dimIdx]);
+      if (!dateMap.has(d)) dateMap.set(d, { date: d });
+      const rec = dateMap.get(d);
+      [...barNames, ...lineNames].forEach(name => {
+        const col = cols.find(c => c.name === name);
+        if (col) rec[name] = row[cols.indexOf(col)];
+      });
+    });
+  }
+
+  const dates = [...dateMap.keys()].sort();
+  const allMetrics = tabCfg.merge.flatMap(p => [...(p.bars || []), ...(p.lines || [])]);
+  const bars = tabCfg.merge.flatMap(p => p.bars || []);
+  const lines = tabCfg.merge.flatMap(p => p.lines || []);
+  const cols = [
+    { name: dim, display_name: dim },
+    ...allMetrics.map(n => ({ name: n, display_name: n })),
+  ];
+  const rows = dates.map(d => {
+    const rec = dateMap.get(d);
+    return [rec.date, ...allMetrics.map(n => rec[n] ?? null)];
+  });
+  return { cols, rows, slot: { dim, bars, lines } };
+}
+
+function appendDerivedAvgMetrics(cols, rows) {
+  const dimCol = findDateCol(cols);
+  const dimIdx = cols.indexOf(dimCol);
+  const pairs = [
+    ['手动完成吸乳计划次数', '手动完成吸乳计划用户数', '手动完成人均次数'],
+    ['自动完成吸乳计划次数', '自动完成吸乳计划用户数', '自动完成人均次数'],
+  ];
+  const newNames = pairs.map(p => p[2]);
+  const newCols = [...cols, ...newNames.map(n => ({ name: n, display_name: n }))];
+  const idx = Object.fromEntries(pairs.map(p => [
+    p[2],
+    { a: cols.findIndex(c => c.name === p[0]), b: cols.findIndex(c => c.name === p[1]) },
+  ]));
+  const newRows = rows.map(row => {
+    const ext = newNames.map(n => {
+      const { a, b } = idx[n];
+      const av = Number(row[a]), bv = Number(row[b]);
+      return bv > 0 ? av / bv : null;
+    });
+    return [...row, ...ext];
+  });
+  return {
+    cols: newCols, rows: newRows,
+    slot: {
+      dim: dimCol.name, bars: newNames, lines: [],
+      rename: { '手动完成人均次数': '手动完成人均次数', '自动完成人均次数': '自动完成人均次数' },
+    },
+  };
+}
+
+function initDefaultDateFilter() {
+  filterState = {};
+  meta?.parameters?.forEach(p => {
+    if (p.type?.startsWith('date/')) filterState[p.id] = 'past30days';
+  });
+}
+
+function updatePartHints() {
+  const p2 = document.getElementById('part2-hint');
+  const p3 = document.getElementById('part3-hint');
+  if (p2) p2.textContent = '近30天 · 荧光折线 · 渐变柱形';
+  if (p3) p3.textContent = '近30天 · 入口 → 同步';
+}
+
+function renderExplicitCombo(el, chartKey, cols, rows, slot, vizSettings, legendBottom) {
+  const pctCfg = getPctConfig(vizSettings);
+  const vs = vizSettings || {};
+  const dimName = slot.dim || (vs['graph.dimensions'] || [])[0];
+  const dimCol = cols.find(c => c.name === dimName) || cols[0];
+  if (!dimCol) return;
+
+  let barNames = slot.bars || [];
+  let lineNames = slot.lines || [];
+  if (!barNames.length && !lineNames.length) {
+    const metrics = vs['graph.metrics'] || cols.slice(1).map(c => c.name);
+    metrics.forEach(n => {
+      const col = cols.find(c => c.name === n);
+      if (!col) return;
+      (isRateCol(col, pctCfg) ? lineNames : barNames).push(n);
+    });
+  }
+  if (slot.linesOnly) {
+    lineNames = vs['graph.metrics'] || lineNames;
+    barNames = [];
+  }
+
+  const dimIdx = cols.indexOf(dimCol);
+  const sorted = sortRowsByDate(cols, rows);
+  const xData = sorted.map(r => fmtDate(r[dimIdx]) || r[dimIdx]);
+
+  const metCols = [...barNames, ...lineNames].map(n => cols.find(c => c.name === n)).filter(Boolean);
+  if (!metCols.length) { renderTable(el, cols, rows, vizSettings); return; }
+
+  const hasRate = metCols.some(c => isRateCol(c, pctCfg));
+  const hasCount = metCols.some(c => !isRateCol(c, pctCfg));
+  const dualAxis = hasRate && hasCount;
+
+  function chartTypeFor(col) {
+    const rate = isRateCol(col, pctCfg);
+    if (slot.swapBarLine) return rate ? 'bar' : 'line';
+    return rate ? 'line' : 'bar';
+  }
+
+  let barColorIdx = 0, lineColorIdx = 0;
+  const useStack = slot.stack && slot.stack.length;
+  const series = metCols.map((col) => {
+    const colIdx = cols.indexOf(col);
+    const sType = chartTypeFor(col);
+    const isLine = sType === 'line';
+    const isRate = isRateCol(col, pctCfg);
+    const lineColor = LINE_PALETTE[lineColorIdx % LINE_PALETTE.length];
+    if (isLine) lineColorIdx++;
+    const displayName = (slot.rename && slot.rename[col.name]) || col.display_name || col.name;
+    const s = {
+      name: displayName,
+      type: sType,
+      yAxisIndex: dualAxis && isRate ? 1 : 0,
+      data: sorted.map(r => r[colIdx]),
+      smooth: isLine,
+      symbol: isLine ? 'circle' : undefined,
+      symbolSize: isLine ? 4 : 0,
+      lineStyle: isLine ? { color: lineColor, width: LINE_WIDTH } : undefined,
+      itemStyle: isLine ? { color: lineColor } : barItemStyle(barColorIdx++),
+      barMaxWidth: isLine ? undefined : 20,
+    };
+    if (useStack && slot.stack.includes(col.name) && !isLine) s.stack = 'total';
+    else if (!isLine && metCols.filter(c => chartTypeFor(c) === 'bar').length > 1) s.barGap = '25%';
+    return s;
+  });
+
+  const yAxisBase = {
+    splitLine: { lineStyle: { color: CHART_UI.grid, type: 'dashed' } },
+    axisLabel: { color: CHART_UI.text2, fontSize: 10 },
+    axisLine: { show: false }, axisTick: { show: false },
+  };
+  const yAxes = dualAxis
+    ? [
+        { ...yAxisBase, type: 'value', axisLabel: { ...yAxisBase.axisLabel, formatter: v => fmtShort(v) } },
+        { ...yAxisBase, type: 'value', position: 'right', splitLine: { show: false },
+          axisLabel: { ...yAxisBase.axisLabel, formatter: v => (Number(v) * 100).toFixed(2) + '%' } },
+      ]
+    : [{ ...yAxisBase, type: 'value',
+         axisLabel: { ...yAxisBase.axisLabel,
+           formatter: v => hasRate && !hasCount ? (Number(v) * 100).toFixed(2) + '%' : fmtShort(v) } }];
+
+  const chart = getChart(el, chartKey);
+  chart.setOption({
+    backgroundColor: 'transparent',
+    tooltip: {
+      trigger: 'axis',
+      backgroundColor: CHART_UI.tooltipBg, borderColor: CHART_UI.tooltipBorder,
+      textStyle: { color: CHART_UI.text1, fontSize: 12 },
+      formatter(params) {
+        if (!params?.length) return '';
+        let html = `<b>${params[0].axisValue}</b><br/>`;
+        params.forEach(p => {
+          const col = metCols.find(c => (c.display_name || c.name) === p.seriesName);
+          const val = col && isRateCol(col, pctCfg)
+            ? fmtPct2(p.value, Math.abs(p.value) <= 1) : fmtShort(p.value);
+          html += `${p.marker}${p.seriesName}：<b>${val}</b><br/>`;
+        });
+        return html;
+      },
+    },
+    legend: legendBottom ? {
+      show: true, type: 'scroll', orient: 'horizontal', bottom: 4, left: 'center', width: '92%',
+      textStyle: { color: CHART_UI.text2, fontSize: 10 },
+      pageTextStyle: { color: CHART_UI.text2 },
+      itemGap: 12,
+    } : { show: metCols.length > 1, top: 4, textStyle: { color: CHART_UI.text2, fontSize: 11 } },
+    grid: {
+      left: 56, right: dualAxis ? 52 : 16,
+      top: legendBottom ? 52 : 40,
+      bottom: legendBottom ? 52 : 36,
+    },
+    xAxis: {
+      type: 'category', data: xData,
+      axisLine: { lineStyle: { color: CHART_UI.grid } },
+      axisLabel: { color: CHART_UI.text2, fontSize: 10, rotate: xData.length > 20 ? 30 : 0 },
+      axisTick: { show: false },
+      barCategoryGap: !useStack && barNames.length > 1 ? '32%' : '20%',
+    },
+    yAxis: yAxes,
+    series,
+  });
+}
+
+/** 2.1 专用：冷色底 + 荧光折线 + 渐变胶囊柱 */
+const TECH21 = {
+  bg: '#0F172A',
+  grid: 'rgba(51, 65, 85, 0.4)',
+  axis: '#64748B',
+  text: '#94A3B8',
+  cyan: '#06B6D4',
+  cyanHi: '#00F2FE',
+  blue: '#3B82F6',
+  violet: '#8B5CF6',
+  pink: '#EC4899',
+  mute: '#64748B',
+  tooltipBg: 'rgba(15, 23, 42, 0.72)',
+  tooltipBorder: '#06B6D4',
+};
+
+function techBarGradient() {
+  return new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+    { offset: 0, color: 'rgba(0, 242, 254, 0.88)' },
+    { offset: 0.45, color: 'rgba(6, 182, 212, 0.38)' },
+    { offset: 1, color: 'rgba(59, 130, 246, 0.04)' },
+  ]);
+}
+
+/** 折线用暖色/紫粉系，与柱形电光青蓝拉开 */
+const TECH21_LINE_COLORS = ['#EC4899', '#F59E0B', '#94A3B8'];
+
+function techBarGradientAlt(barIdx) {
+  if (barIdx % 2 === 1) {
+    return new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+      { offset: 0, color: 'rgba(236, 72, 153, 0.82)' },
+      { offset: 0.5, color: 'rgba(139, 92, 246, 0.35)' },
+      { offset: 1, color: 'rgba(59, 130, 246, 0.04)' },
+    ]);
+  }
+  return techBarGradient();
+}
+
+function buildTech21LineSeries(col, cols, sorted, lineIdx, displayName) {
+  const colIdx = cols.indexOf(col);
+  const data = sorted.map(r => r[colIdx]);
+  const color = TECH21_LINE_COLORS[lineIdx % TECH21_LINE_COLORS.length];
+  const isCore = lineIdx === 0;
+  return {
+    name: displayName,
+    type: 'line',
+    yAxisIndex: 0,
+    data,
+    smooth: true,
+    showSymbol: true,
+    symbol: 'circle',
+    symbolSize: 3,
+    lineStyle: {
+      color,
+      width: isCore ? 1.2 : 1,
+      shadowColor: color,
+      shadowBlur: 6,
+    },
+    itemStyle: {
+      color: '#ffffff',
+      borderColor: color,
+      borderWidth: 1.5,
+    },
+    emphasis: {
+      focus: 'series',
+      lineStyle: { width: isCore ? 1.6 : 1.2, shadowBlur: 10 },
+      itemStyle: { borderWidth: 2, shadowBlur: 8, shadowColor: color },
+      scale: 1.15,
+    },
+    z: 10 + lineIdx,
+  };
+}
+
+/** 柱顶标签稀疏间隔：点多则隔几格显示，始终保留最后一个点 */
+function barLabelStep(dataLen) {
+  if (dataLen <= 6) return 1;
+  if (dataLen <= 12) return 2;
+  if (dataLen <= 20) return 3;
+  return 5;
+}
+
+function shouldShowBarLabel(dataIndex, dataLen) {
+  const step = barLabelStep(dataLen);
+  return dataIndex % step === 0 || dataIndex === dataLen - 1;
+}
+
+function formatBarDataLabel(value, isRate, asRatio) {
+  if (value === null || value === undefined || value === '') return '';
+  if (isRate) return fmtPct2(value, asRatio);
+  return fmtShort(value);
+}
+
+function buildTech21BarSeries(col, cols, sorted, barIdx, opts = {}) {
+  const colIdx = cols.indexOf(col);
+  const data = sorted.map(r => r[colIdx]);
+  const dataLen = data.length;
+  const isRate = opts.isRate;
+  const asRatio = opts.rateAsRatio !== false;
+  const s = {
+    name: opts.displayName || col.display_name || col.name,
+    type: 'bar',
+    yAxisIndex: opts.yAxisIndex ?? 1,
+    data,
+    barMaxWidth: opts.stack ? 28 : 24,
+    label: {
+      show: true,
+      position: opts.stack ? 'inside' : 'top',
+      distance: opts.stack ? 2 : 4,
+      fontSize: 9,
+      fontWeight: 500,
+      color: opts.stack ? 'rgba(255,255,255,0.92)' : TECH21.text,
+      formatter(p) {
+        if (!shouldShowBarLabel(p.dataIndex, dataLen)) return '';
+        return formatBarDataLabel(p.value, isRate, asRatio);
+      },
+    },
+    itemStyle: {
+      color: techBarGradientAlt(barIdx),
+      borderRadius: [3, 3, 0, 0],
+      borderColor: 'rgba(255, 255, 255, 0.45)',
+      borderWidth: 1,
+    },
+    emphasis: {
+      itemStyle: {
+        borderColor: TECH21.cyanHi,
+        borderWidth: 2,
+        shadowBlur: 14,
+        shadowColor: 'rgba(6, 182, 212, 0.55)',
+      },
+      label: { show: true, fontSize: 10, color: '#E2E8F0' },
+    },
+    z: 2 + barIdx,
+  };
+  if (opts.stack) s.stack = 'total';
+  return s;
+}
+
+/** 设计稿图表：2.1 / 2.2 / 2.3 / 3.2 共用科技风 */
+function renderTechComboChart(el, chartKey, cols, rows, slot, vizSettings, legendBottom) {
+  const pctCfg = getPctConfig(vizSettings || {});
+  const vs = vizSettings || {};
+  const dimName = slot.dim || (vs['graph.dimensions'] || [])[0];
+  const dimCol = cols.find(c => c.name === dimName) || findDateCol(cols) || cols[0];
+  if (!dimCol || !rows.length) return;
+
+  let barNames = slot.bars || [];
+  let lineNames = slot.lines || [];
+  if (!barNames.length && !lineNames.length) {
+    const metrics = vs['graph.metrics'] || cols.slice(1).map(c => c.name);
+    metrics.forEach(n => {
+      const col = cols.find(c => c.name === n);
+      if (!col) return;
+      (isRateCol(col, pctCfg) ? lineNames : barNames).push(n);
+    });
+  }
+  if (slot.linesOnly) {
+    lineNames = vs['graph.metrics'] || lineNames;
+    barNames = [];
+  }
+
+  const dimIdx = cols.indexOf(dimCol);
+  const sorted = sortRowsByDate(cols, rows);
+  const xData = sorted.map(r => fmtDate(r[dimIdx]) || r[dimIdx]);
+
+  const chartTypeFor = (col) => {
+    const rate = isRateCol(col, pctCfg);
+    if (slot.swapBarLine) return rate ? 'bar' : 'line';
+    return rate ? 'line' : 'bar';
+  };
+
+  const lineCols = [];
+  const barCols = [];
+  [...barNames, ...lineNames].forEach(n => {
+    const c = cols.find(x => x.name === n);
+    if (!c) return;
+    const dn = (slot.rename && slot.rename[c.name]) || c.display_name || c.name;
+    const entry = { col: c, displayName: dn };
+    (chartTypeFor(c) === 'bar' ? barCols : lineCols).push(entry);
+  });
+  if (!lineCols.length && !barCols.length) return;
+
+  const useStack = slot.stack && slot.stack.length;
+  const hasRate = [...lineCols, ...barCols].some(x => isRateCol(x.col, pctCfg));
+  const hasCount = [...lineCols, ...barCols].some(x => !isRateCol(x.col, pctCfg));
+  const dualAxis = lineCols.length > 0 && barCols.length > 0;
+  const rateOnly = hasRate && !hasCount;
+
+  const series = [];
+  lineCols.forEach((x, i) => series.push(buildTech21LineSeries(x.col, cols, sorted, i, x.displayName)));
+  barCols.forEach((x, i) => {
+    const isRate = isRateCol(x.col, pctCfg);
+    const yIdx = dualAxis && isRate ? 1 : 0;
+    const stacked = useStack && slot.stack.includes(x.col.name);
+    const vals = sorted.map(r => r[cols.indexOf(x.col)]).filter(v => v != null && !isNaN(Number(v)));
+    const rateAsRatio = isRate && vals.length ? Math.max(...vals.map(v => Math.abs(Number(v)))) <= 1.5 : true;
+    series.push(buildTech21BarSeries(x.col, cols, sorted, i, {
+      displayName: x.displayName,
+      yAxisIndex: yIdx,
+      stack: stacked,
+      isRate,
+      rateAsRatio,
+    }));
+  });
+
+  const metCols = [...lineCols, ...barCols].map(x => x.col);
+  const axisBase = {
+    axisLine: { show: false },
+    axisTick: { show: false },
+    axisLabel: { color: TECH21.axis, fontSize: 10 },
+    splitLine: { lineStyle: { color: TECH21.grid, type: 'dashed' } },
+  };
+
+  const yAxes = dualAxis
+    ? [
+        { ...axisBase, type: 'value', axisLabel: { ...axisBase.axisLabel, formatter: v => fmtShort(v) } },
+        { ...axisBase, type: 'value', position: 'right', splitLine: { show: false },
+          axisLabel: { ...axisBase.axisLabel, formatter: v => (Number(v) * 100).toFixed(2) + '%' } },
+      ]
+    : [{
+        ...axisBase,
+        type: 'value',
+        axisLabel: {
+          ...axisBase.axisLabel,
+          formatter: v => rateOnly ? (Number(v) * 100).toFixed(2) + '%' : fmtShort(v),
+        },
+      }];
+
+  const chart = getChart(el, chartKey);
+  chart.setOption({
+    backgroundColor: TECH21.bg,
+    tooltip: {
+      trigger: 'axis',
+      backgroundColor: TECH21.tooltipBg,
+      borderColor: TECH21.tooltipBorder,
+      borderWidth: 1,
+      padding: [10, 14],
+      extraCssText: 'backdrop-filter:blur(8px);border-radius:8px;box-shadow:0 8px 32px rgba(0,0,0,.45);',
+      textStyle: {
+        color: '#E2E8F0',
+        fontFamily: "'JetBrains Mono', 'Roboto Mono', 'Courier New', monospace",
+        fontSize: 12,
+      },
+      formatter(params) {
+        if (!params?.length) return '';
+        let html = `<div style="font-weight:700;color:${TECH21.cyanHi};margin-bottom:6px">${params[0].axisValue}</div>`;
+        params.forEach(p => {
+          const entry = [...lineCols, ...barCols].find(x => x.displayName === p.seriesName);
+          const col = entry?.col;
+          const val = col && isRateCol(col, pctCfg)
+            ? fmtPct2(p.value, Math.abs(p.value) <= 1)
+            : fmtShort(p.value);
+          html += `<div style="margin:4px 0"><span style="color:${TECH21.text}">${p.seriesName}</span> <b style="color:#fff;font-size:14px">${val}</b></div>`;
+        });
+        return html;
+      },
+    },
+    legend: legendBottom ? {
+      show: true, type: 'scroll', orient: 'horizontal', bottom: 4, left: 'center', width: '92%',
+      textStyle: { color: TECH21.text, fontSize: 10 },
+      pageTextStyle: { color: TECH21.text },
+      itemGap: 12,
+    } : {
+      show: series.length > 1,
+      top: 6,
+      textStyle: { color: TECH21.text, fontSize: 11 },
+      itemGap: 14,
+    },
+    grid: {
+      left: 56,
+      right: dualAxis ? 54 : 18,
+      top: legendBottom ? 52 : (barCols.length ? 50 : 44),
+      bottom: legendBottom ? 52 : 36,
+    },
+    xAxis: {
+      type: 'category',
+      data: xData,
+      axisLine: { lineStyle: { color: 'rgba(51, 65, 85, 0.55)' } },
+      axisLabel: { color: TECH21.text, fontSize: 10, rotate: xData.length > 18 ? 28 : 0 },
+      axisTick: { show: false },
+      barCategoryGap: useStack ? '18%' : '28%',
+    },
+    yAxis: yAxes,
+    series,
+  });
+}
+
+async function loadReachTabs(profile, params) {
+  for (const [key, tabCfg] of Object.entries(profile.reachTabs)) {
+    const el = document.getElementById('chart-reach-' + key);
+    if (!el) continue;
+    try {
+      const { cols, rows, slot } = await fetchMergedReach(tabCfg, params);
+      clearLoading(el);
+      renderTechComboChart(el, 'reach-' + key, cols, rows, { ...slot, swapBarLine: true, rename: tabCfg.rename }, {});
+      designedCache['reach-' + key] = true;
+    } catch (e) {
+      showSlotError(el, e.message);
+    }
+  }
+}
+
+async function loadPlanTabs(profile, params) {
+  for (const [key, slot] of Object.entries(profile.planTabs)) {
+    const el = document.getElementById('chart-plan-' + (key === 'c213' ? '213' : '214'));
+    const dc = getDashcard(slot.dashcardId);
+    if (!el || !dc) continue;
+    try {
+      let { cols, rows } = await fetchDashcardData(dc, params);
+      if (slot.pumpUser) rows = filterPumpUserRows(cols, rows);
+      clearLoading(el);
+      renderTechComboChart(el, slot.dashcardId, cols, rows, { ...slot, swapBarLine: true }, dc.viz_settings || {});
+      designedCache['plan-' + key] = true;
+    } catch (e) {
+      showSlotError(el, e.message);
+    }
+  }
+}
+
+async function loadMethodTabs(profile, params) {
+  const dc = getDashcard(profile.methodTabs.cnt.dashcardId);
+  if (!dc) return;
+  let baseCols, baseRows;
+  try {
+    ({ cols: baseCols, rows: baseRows } = await fetchDashcardData(dc, params));
+    if (profile.methodTabs.cnt.pumpUser) baseRows = filterPumpUserRows(baseCols, baseRows);
+  } catch (e) {
+    ['cnt', 'usr', 'avg'].forEach(t => showSlotError(document.getElementById('chart-method-' + t), e.message));
+    return;
+  }
+
+  for (const [key, slot] of Object.entries(profile.methodTabs)) {
+    const el = document.getElementById('chart-method-' + key);
+    if (!el) continue;
+    try {
+      clearLoading(el);
+      let cols = baseCols, rows = baseRows, renderSlot = { ...slot };
+      if (slot.derived) {
+        const derived = appendDerivedAvgMetrics(cols, rows);
+        cols = derived.cols;
+        rows = derived.rows;
+        renderSlot = derived.slot;
+      }
+      renderTechComboChart(el, 'method-' + key, cols, rows, { ...renderSlot, swapBarLine: true }, dc.viz_settings || {});
+    } catch (e) {
+      showSlotError(el, e.message);
+    }
+  }
+}
+
+async function loadFunnelSlots(profile, params) {
+  const slot = profile.slots.funnelTable;
+  const dc = getDashcard(slot.dashcardId);
+  const elTable = document.getElementById('funnel-table');
+  const elFunnel = document.getElementById('chart-funnel');
+  const elTrend = document.getElementById('chart-funnel-trend');
+  if (!dc) return;
+  try {
+    let { cols, rows } = await fetchDashcardData(dc, params);
+    if (elTable) {
+      clearLoading(elTable);
+      renderTable(elTable, cols, rows, dc.viz_settings || {}, 'mini-tbl', { maxRows: 10 });
+    }
+    if (elFunnel) {
+      clearLoading(elFunnel);
+      renderFunnelChart(elFunnel, 'funnel-viz', buildFunnelSteps(cols, latestRow(cols, rows)));
+    }
+  } catch (e) {
+    if (elTable) showSlotError(elTable, e.message);
+    if (elFunnel) showSlotError(elFunnel, e.message);
+  }
+  const dcTrend = getDashcard(profile.slots.funnelTrend.dashcardId);
+  if (dcTrend && elTrend) {
+    try {
+      let { cols, rows } = await fetchDashcardData(dcTrend, params);
+      clearLoading(elTrend);
+      renderTechComboChart(elTrend, 'funnel-trend', cols, rows, profile.slots.funnelTrend, dcTrend.viz_settings || {}, true);
+    } catch (e) {
+      showSlotError(elTrend, e.message);
+    }
+  }
+}
+
+async function loadDesignedDashboard(profile) {
+  const params = buildQueryParams();
+  updatePartHints();
+  designedCache = {};
+  await loadKpiStrip(profile);
+  await Promise.allSettled([
+    loadReachTabs(profile, params),
+    loadPlanTabs(profile, params),
+    loadMethodTabs(profile, params),
+    loadFunnelSlots(profile, params),
+  ]);
+  setTimeout(() => {
+    chartMap['reach-' + activeReachTab]?.resize();
+    chartMap[profile.planTabs[activePlanTab].dashcardId]?.resize();
+    chartMap['method-' + activeMethodTab]?.resize();
+  }, 120);
+}
+
+/* ================================================================
+   通用 Metabase 网格（非设计稿看板）
 ================================================================ */
 function renderGrid(dashcards) {
   const grid = document.getElementById('db-grid');
   grid.innerHTML = '';
   chartMap = {};
-
-  dashcards.forEach(dc => {
+  const sorted = [...dashcards].sort((a, b) => (a.row - b.row) || (a.col - b.col));
+  sorted.forEach(dc => {
+    if (dc.display === 'text' || !dc.card_id) return;
     const el = document.createElement('div');
     el.className = 'db-card';
     el.id = `card-${dc.id}`;
     el.style.gridColumn = `${dc.col + 1} / span ${dc.size_x}`;
     el.style.gridRow    = `${dc.row + 1} / span ${dc.size_y}`;
-
     el.innerHTML = `
-      <div class="card-hdr">
-        <div class="card-title" title="${dc.name}">${dc.name || '（无标题）'}</div>
-      </div>
+      <div class="card-hdr"><div class="card-title">${dc.name || ''}</div></div>
       <div class="card-body" id="body-${dc.id}">
-        <div class="card-loading" id="loading-${dc.id}">
-          <div class="loading-ring"></div>
-          <span>加载中...</span>
-        </div>
+        <div class="card-loading"><div class="loading-ring"></div><span>加载中...</span></div>
       </div>`;
     grid.appendChild(el);
   });
 }
 
-/* ================================================================
-   卡片数据加载
-================================================================ */
 async function loadAllCards() {
   if (!meta?.dashcards) return;
   const params = buildQueryParams();
-  // 并行加载，失败的单独处理
   await Promise.allSettled(
-    meta.dashcards
-      .filter(dc => dc.card_id)          // 跳过纯文本/标题卡片
-      .map(dc => loadCard(dc, params))
+    meta.dashcards.filter(dc => dc.card_id).map(dc => loadCard(dc, params))
   );
 }
 
 async function loadCard(dc, params) {
-  const bodyEl    = document.getElementById(`body-${dc.id}`);
-  const loadingEl = document.getElementById(`loading-${dc.id}`);
+  const bodyEl = document.getElementById(`body-${dc.id}`);
+  const loadingEl = bodyEl?.querySelector('.card-loading');
   if (!bodyEl) return;
-
-  // 只传与该卡片有 mapping 的参数
-  const mappedIds = new Set((dc.parameter_mappings || []).map(m => String(m.parameter_id)));
-  const cardParams = params.filter(p => mappedIds.size === 0 || mappedIds.has(String(p.id)));
-
   try {
-    const res = await fetch(
-      `/api/card_data?dashboard_id=${DASHBOARD_ID}&dashcard_id=${dc.id}&card_id=${dc.card_id}`,
-      { method: 'POST', headers: {'Content-Type':'application/json'},
-        body: JSON.stringify({ parameters: cardParams }) }
-    );
-    const data = await res.json();
-    if (data.error) throw new Error(data.error);
+    const { cols, rows } = await fetchDashcardData(dc, params);
     if (loadingEl) loadingEl.remove();
-    renderCard(bodyEl, dc, data.cols || [], data.rows || []);
+    renderCard(bodyEl, dc, cols, rows);
   } catch (e) {
     if (loadingEl) loadingEl.remove();
     bodyEl.innerHTML = `<div class="card-error"><div class="err-icon">⚠</div><div>${e.message}</div></div>`;
   }
 }
 
+function resetDesignedLoading() {
+  Object.keys(chartMap).forEach(k => { chartMap[k]?.dispose(); delete chartMap[k]; });
+  ['chart-reach-pump', 'chart-reach-app', 'chart-plan-213', 'chart-plan-214',
+   'chart-method-cnt', 'chart-method-usr', 'chart-method-avg',
+   'chart-funnel', 'chart-funnel-trend', 'funnel-table'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.innerHTML = '<div class="card-loading"><div class="loading-ring"></div><span>加载中...</span></div>';
+  });
+}
+
 async function reloadAllCards() {
   setStatus('loading', '正在刷新数据...');
-  // 恢复卡片加载状态
-  meta?.dashcards?.filter(dc => dc.card_id).forEach(dc => {
-    const body = document.getElementById(`body-${dc.id}`);
-    if (body) {
-      // 销毁旧图表
-      if (chartMap[dc.id]) { chartMap[dc.id].dispose(); delete chartMap[dc.id]; }
-      body.innerHTML = `<div class="card-loading" id="loading-${dc.id}"><div class="loading-ring"></div><span>加载中...</span></div>`;
-    }
-  });
-  await loadAllCards();
+  const profile = getProfile();
+  if (profile?.useDesignedLayout) {
+    kpiSnapshot = {};
+    kpiLatestDate = '';
+    resetDesignedLoading();
+    await loadDesignedDashboard(profile);
+  } else {
+    meta?.dashcards?.filter(dc => dc.card_id).forEach(dc => {
+      const body = document.getElementById(`body-${dc.id}`);
+      if (body) {
+        if (chartMap[dc.id]) { chartMap[dc.id].dispose(); delete chartMap[dc.id]; }
+        body.innerHTML = '<div class="card-loading"><div class="loading-ring"></div><span>加载中...</span></div>';
+      }
+    });
+    await loadAllCards();
+  }
   markRefreshed();
 }
 
@@ -633,7 +1902,7 @@ function renderScalar(el, cols, rows, vizSettings) {
   const dec    = pctCfg.get(col.name);
   const isPct  = dec !== undefined;
   const disp   = val === null ? '--'
-    : isPct ? fmtPct(val, dec)
+    : isPct ? fmtPct2(val, true)
     : fmtShort(val);
   el.innerHTML = `
     <div class="scalar-wrap">
@@ -672,9 +1941,8 @@ function renderLineCombo(el, dcId, cols, rows, display, vizSettings) {
   const dimIdx         = cols.indexOf(dimCols[0]);
   const xData          = rows.map(r => fmtDate(r[dimIdx]) || r[dimIdx]);
 
-  // 百分比/整数/小数 分类（只从 column_settings 判断，不依赖 Float 类型）
-  const hasInt  = metCols.some(c => isNumType(c.base_type) && pctCfg.get(c.name) === undefined);
-  const hasPct  = metCols.some(c => pctCfg.get(c.name) !== undefined);
+  const hasPct  = metCols.some(c => isRateCol(c, pctCfg));
+  const hasInt  = metCols.some(c => !isRateCol(c, pctCfg));
   const dualAxis = hasInt && hasPct;
 
   const series = metCols.map((col, i) => {
@@ -683,41 +1951,45 @@ function renderLineCombo(el, dcId, cols, rows, display, vizSettings) {
     const dec     = pctCfg.get(col.name);
     const isPct   = dec !== undefined;
     const yIdx    = dualAxis && isPct ? 1 : 0;
-    const color   = ss.color || COLORS[i % COLORS.length];
+    const lineColor = ss.color || LINE_PALETTE[i % LINE_PALETTE.length];
 
-    // 决定图表类型
     let sType;
-    if (display === 'combo') sType = (ss.display || 'line');
+    if (display === 'combo') sType = ss.display || seriesTypeForCol(col, pctCfg, 'line');
     else if (display === 'bar' || display === 'row') sType = 'bar';
-    else sType = 'line';
+    else sType = seriesTypeForCol(col, pctCfg, display);
 
+    const isBar = sType === 'bar';
     const s = {
       name:       ss.title || col.display_name || col.name,
       type:       sType,
       yAxisIndex: yIdx,
       data:       rows.map(r => r[colIdx]),
-      itemStyle:  { color },
-      lineStyle:  { color, width: 2.5 },
-      smooth:     true,
-      symbol:     'circle',
-      symbolSize: 0,
+      itemStyle:  isBar ? barItemStyle(i) : { color: lineColor },
+      lineStyle:  isBar ? undefined : { color: lineColor, width: LINE_WIDTH },
+      smooth:     !isBar,
+      symbol:     isBar ? undefined : 'circle',
+      symbolSize: isBar ? 0 : 4,
     };
 
-    if (display === 'area') {
+    if (display === 'area' && !isBar) {
       s.areaStyle = { color: { type:'linear', x:0, y:0, x2:0, y2:1,
-        colorStops: [{ offset:0, color: color+'44' }, { offset:1, color: color+'08' }] }};
+        colorStops: [{ offset:0, color: lineColor+'44' }, { offset:1, color: lineColor+'08' }] }};
     }
-    if (sType === 'bar') {
+    if (isBar) {
       s.barMaxWidth = 40;
-      s.itemStyle   = { color, borderRadius: display === 'row' ? [0,3,3,0] : [3,3,0,0] };
+      const bs = barItemStyle(i);
+      s.itemStyle = {
+        ...bs,
+        borderRadius: display === 'row' ? [0, 3, 3, 0] : bs.borderRadius,
+      };
     }
     return s;
   });
 
   // Y 轴配置
   const yAxisBase = {
-    splitLine: { lineStyle: { color: '#1a3a60', type:'dashed' } },
-    axisLabel: { color:'#7aa8cc', fontSize:10 },
+    splitLine: { lineStyle: { color: CHART_UI.grid, type:'dashed' } },
+    axisLabel: { color: CHART_UI.text2, fontSize:10 },
     axisLine:  { show: false }, axisTick: { show: false }
   };
   const yAxes = dualAxis
@@ -725,11 +1997,11 @@ function renderLineCombo(el, dcId, cols, rows, display, vizSettings) {
         { ...yAxisBase, type:'value',
           axisLabel: { ...yAxisBase.axisLabel, formatter: v => fmtShort(v) } },
         { ...yAxisBase, type:'value', position:'right', splitLine:{show:false},
-          axisLabel: { ...yAxisBase.axisLabel, formatter: v => (v * 100).toFixed(1) + '%' } }
+          axisLabel: { ...yAxisBase.axisLabel, formatter: v => (Number(v) * 100).toFixed(2) + '%' } }
       ]
     : [{ ...yAxisBase, type:'value',
          axisLabel: { ...yAxisBase.axisLabel, formatter: hasPct && !hasInt
-           ? v => (v * 100).toFixed(1) + '%'
+           ? v => (Number(v) * 100).toFixed(2) + '%'
            : v => fmtShort(v) }
        }];
 
@@ -741,8 +2013,8 @@ function renderLineCombo(el, dcId, cols, rows, display, vizSettings) {
     backgroundColor: 'transparent',
     tooltip: {
       trigger: 'axis',
-      backgroundColor: '#071a30', borderColor: '#1a3a60',
-      textStyle: { color: '#ddeeff', fontSize: 12 },
+      backgroundColor: CHART_UI.tooltipBg, borderColor: CHART_UI.tooltipBorder,
+      textStyle: { color: CHART_UI.text1, fontSize: 12 },
       formatter(params) {
         if (!params?.length) return '';
         let html = `<b style="color:${COLORS[0]}">${params[0].axisValue}</b><br/>`;
@@ -750,7 +2022,9 @@ function renderLineCombo(el, dcId, cols, rows, display, vizSettings) {
           const matchCol = metCols.find(c =>
             (seriesSettings[c.name]?.title || c.display_name || c.name) === p.seriesName);
           const dec = matchCol ? pctCfg.get(matchCol.name) : undefined;
-          const val = dec !== undefined ? fmtPct(p.value, dec) : fmtShort(p.value);
+          const isRate = matchCol && isRateCol(matchCol, pctCfg);
+          const val = isRate ? fmtPct2(p.value, dec !== undefined || Math.abs(p.value) <= 1)
+            : fmtShort(p.value);
           html += `${p.marker}${p.seriesName}：<b>${val}</b><br/>`;
         });
         return html;
@@ -758,8 +2032,8 @@ function renderLineCombo(el, dcId, cols, rows, display, vizSettings) {
     },
     legend: {
       show: metCols.length > 1,
-      textStyle: { color:'#7aa8cc', fontSize:11 },
-      type: 'scroll', top: 4, pageTextStyle:{ color:'#7aa8cc' }
+      textStyle: { color: CHART_UI.text2, fontSize:11 },
+      type: 'scroll', top: 4, pageTextStyle:{ color: CHART_UI.text2 }
     },
     grid: {
       left:   isHorz ? 100 : 55,
@@ -768,15 +2042,15 @@ function renderLineCombo(el, dcId, cols, rows, display, vizSettings) {
       bottom: 38
     },
     xAxis: isHorz
-      ? { type:'value', ...yAxisBase, axisLabel:{ color:'#7aa8cc', fontSize:10, formatter: v => fmtShort(v) } }
+      ? { type:'value', ...yAxisBase, axisLabel:{ color: CHART_UI.text2, fontSize:10, formatter: v => fmtShort(v) } }
       : { type:'category', data: xData,
-          axisLine:  { lineStyle:{ color:'#1a3a60' } },
-          axisLabel: { color:'#7aa8cc', fontSize:10, rotate: xData.length > 20 ? 30 : 0 },
+          axisLine:  { lineStyle:{ color: CHART_UI.grid } },
+          axisLabel: { color: CHART_UI.text2, fontSize:10, rotate: xData.length > 20 ? 30 : 0 },
           axisTick:  { show:false } },
     yAxis: isHorz
       ? [{ type:'category', data:[...xData].reverse(),
            axisLine:{show:false}, axisTick:{show:false},
-           axisLabel:{ color:'#7aa8cc', fontSize:10 } }]
+           axisLabel:{ color: CHART_UI.text2, fontSize:10 } }]
       : yAxes,
     series: isHorz
       ? series.map(s => ({ ...s, data:[...s.data].reverse() }))
@@ -799,11 +2073,11 @@ function renderPie(el, dcId, cols, rows, vizSettings) {
   chart.setOption({
     backgroundColor: 'transparent',
     tooltip: {
-      trigger:'item', backgroundColor:'#071a30', borderColor:'#1a3a60',
-      textStyle:{ color:'#ddeeff', fontSize:12 },
+      trigger:'item', backgroundColor: CHART_UI.tooltipBg, borderColor: CHART_UI.tooltipBorder,
+      textStyle:{ color: CHART_UI.text1, fontSize:12 },
       formatter: p => `${p.marker}${p.name}<br/>值：<b>${fmtShort(p.value)}</b>　占比：<b>${p.percent}%</b>`
     },
-    legend: { orient:'vertical', right:8, top:'middle', textStyle:{ color:'#7aa8cc', fontSize:11 }, type:'scroll' },
+    legend: { orient:'vertical', right:8, top:'middle', textStyle:{ color: CHART_UI.text2, fontSize:11 }, type:'scroll' },
     series: [{
       type:'pie', radius:['42%','68%'], center:['40%','52%'],
       data,
@@ -815,17 +2089,139 @@ function renderPie(el, dcId, cols, rows, vizSettings) {
 }
 
 /* ================================================================
+   漏斗 + 明细表（卡片 171）
+================================================================ */
+const FUNNEL_UV_STEPS = [
+  ['生成计划入口总点击UV', '入口点击'],
+  ['问卷开始填写UV', '开始填写'],
+  ['问卷填写完成UV', '填写完成'],
+  ['计划生成成功UV', '计划生成'],
+  ['日程同步日UV', '同步日历'],
+];
+
+function buildFunnelSteps(cols, row) {
+  if (!row) return [];
+  return FUNNEL_UV_STEPS.map(([field, name]) => {
+    const v = valFromRow(cols, row, field);
+    return { name, value: Number(v) || 0 };
+  }).filter(s => s.value > 0);
+}
+
+/** 按漏斗层级选用对比色：顶层块最亮，用深色字；下层用白字+轻阴影 */
+function buildFunnelLabelRich(steps) {
+  const palettes = [
+    { title: '#0F172A', rate: '#334155', shadow: false },
+    { title: '#FFFFFF', rate: 'rgba(255,255,255,0.92)', shadow: true },
+    { title: '#FFFFFF', rate: 'rgba(248,250,252,0.88)', shadow: true },
+    { title: '#FFFFFF', rate: 'rgba(241,245,249,0.88)', shadow: true },
+    { title: '#FFFFFF', rate: 'rgba(241,245,249,0.85)', shadow: true },
+  ];
+  const rich = {};
+  steps.forEach((_, i) => {
+    const p = palettes[Math.min(i, palettes.length - 1)];
+    const shadow = p.shadow ? {
+      textShadowColor: 'rgba(15, 23, 42, 0.65)',
+      textShadowBlur: 4,
+      textShadowOffsetY: 1,
+    } : {};
+    rich[`h${i}`] = { fontSize: 12, fontWeight: 400, color: p.title, lineHeight: 17, align: 'center', ...shadow };
+    rich[`r${i}`] = { fontSize: 10, fontWeight: 400, color: p.rate, lineHeight: 14, align: 'center', ...shadow };
+  });
+  return rich;
+}
+
+function funnelLabelFormatter(steps) {
+  return (params) => {
+    const i = params.dataIndex;
+    const v = steps[i].value;
+    const top = steps[0].value;
+    const prev = i > 0 ? steps[i - 1].value : v;
+    const convPrev = i > 0 ? ((v / prev) * 100).toFixed(2) : '100.00';
+    const convTop = ((v / top) * 100).toFixed(2);
+    return `{h${i}|${steps[i].name}  ${fmtShort(v)}}\n{r${i}|较上步 ${convPrev}% · 较入口 ${convTop}%}`;
+  };
+}
+
+const FUNNEL_TECH_COLORS = [
+  'rgba(0, 242, 254, 0.92)',
+  'rgba(6, 182, 212, 0.88)',
+  'rgba(59, 130, 246, 0.85)',
+  'rgba(139, 92, 246, 0.82)',
+  'rgba(236, 72, 153, 0.78)',
+];
+
+function funnelTooltip(steps) {
+  return (p) => {
+    const i = p.dataIndex;
+    const v = steps[i].value;
+    const top = steps[0].value;
+    const prev = i > 0 ? steps[i - 1].value : v;
+    const convPrev = i > 0 ? fmtPct2(v / prev, true) : '100.00%';
+    const convTop = fmtPct2(v / top, true);
+    return `${p.name}<br/>UV：<b>${fmtShort(v)}</b><br/>较上步转化：<b>${convPrev}</b><br/>较入口转化：<b>${convTop}</b>`;
+  };
+}
+
+function renderFunnelChart(el, dcId, steps) {
+  if (!steps.length) {
+    el.innerHTML = '<div class="card-error"><div>暂无漏斗数据</div></div>';
+    return;
+  }
+  const chart = getChart(el, 'funnel-' + dcId);
+  const labelRich = buildFunnelLabelRich(steps);
+  chart.setOption({
+    backgroundColor: TECH21.bg,
+    tooltip: {
+      trigger: 'item',
+      backgroundColor: TECH21.tooltipBg,
+      borderColor: TECH21.tooltipBorder,
+      borderWidth: 1,
+      extraCssText: 'backdrop-filter:blur(8px);border-radius:8px;',
+      textStyle: { color: '#E2E8F0', fontSize: 12 },
+      formatter: funnelTooltip(steps),
+    },
+    series: [{
+      type: 'funnel', left: '6%', right: '6%', top: 12, bottom: 12,
+      sort: 'descending', gap: 6,
+      label: {
+        show: true, position: 'inside', fontSize: 11, fontWeight: 400,
+        formatter: funnelLabelFormatter(steps),
+        rich: labelRich,
+      },
+      labelLine: { show: false },
+      emphasis: {
+        label: {
+          fontWeight: 400,
+          rich: labelRich,
+        },
+        itemStyle: { borderColor: 'rgba(15, 23, 42, 0.6)', borderWidth: 1 },
+      },
+      itemStyle: { borderColor: 'rgba(15, 23, 42, 0.6)', borderWidth: 1 },
+      data: steps.map((s, i) => ({
+        ...s,
+        itemStyle: { color: FUNNEL_TECH_COLORS[i % FUNNEL_TECH_COLORS.length] },
+      })),
+    }],
+  });
+}
+
+/* ================================================================
    表格渲染
 ================================================================ */
-function renderTable(el, cols, rows, vizSettings) {
+function renderTable(el, cols, rows, vizSettings, tableClass = 'mb-tbl', tableOpts = {}) {
   const pctCfg = getPctConfig(vizSettings || {});
+  let dataRows = rows;
+  if (tableOpts.maxRows && rows.length) {
+    dataRows = sortRowsByDate(cols, rows).slice(-tableOpts.maxRows);
+  }
 
   function fmtCell(val, col) {
     if (val === null || val === undefined) return '—';
     if (isDateType(col.base_type)) return fmtDate(String(val));
     if (isNumType(col.base_type)) {
       const dec = pctCfg.get(col.name);
-      if (dec !== undefined) return fmtPct(val, dec);
+      if (dec !== undefined) return fmtPct2(val, true);
+      if (isRateCol(col, pctCfg)) return fmtPct2(val, Math.abs(Number(val)) <= 1);
       if (isFloatType(col.base_type)) {
         // 非百分比 Float：显示原始小数值
         const n = Number(val);
@@ -852,13 +2248,15 @@ function renderTable(el, cols, rows, vizSettings) {
 
   const thead = `<thead><tr>${visCols.map(c =>
     `<th>${c.display_name || c.name}</th>`).join('')}</tr></thead>`;
-  const tbody = `<tbody>${rows.map(row =>
+  const tbody = `<tbody>${dataRows.map(row =>
     `<tr>${visCols.map((col, j) =>
       `<td class="${isNumType(col.base_type) ? 'num' : ''}">${fmtCell(row[visIdxs[j]], col)}</td>`
     ).join('')}</tr>`
   ).join('')}</tbody>`;
 
-  el.innerHTML = `<div class="tbl-wrap"><table class="mb-tbl">${thead}${tbody}</table></div>`;
+  el.innerHTML = tableClass === 'mini-tbl'
+    ? `<table class="mini-tbl">${thead}${tbody}</table>`
+    : `<div class="tbl-wrap"><table class="mb-tbl">${thead}${tbody}</table></div>`;
 }
 
 /* ================================================================
@@ -882,6 +2280,12 @@ function setStatus(type, text) {
   const dot  = document.getElementById('s-dot');
   const span = document.getElementById('s-text');
   const bar  = document.getElementById('status-bar');
+  if (!bar) return;
+  if (type === 'ok') {
+    bar.classList.add('hidden');
+    return;
+  }
+  bar.classList.remove('hidden');
   dot.className  = `s-dot ${type}`;
   bar.className  = `status-bar${type === 'error' ? ' error' : ''}`;
   span.textContent = text;
@@ -892,7 +2296,7 @@ function markRefreshed() {
   const pad = n => String(n).padStart(2,'0');
   const ts  = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
   document.getElementById('last-refresh').textContent = '刷新于 ' + ts;
-  setStatus('ok', `数据加载完成  ·  共 ${meta?.dashcards?.filter(d=>d.card_id).length ?? 0} 个图表  ·  看板：${meta?.name ?? ''}`);
+  setStatus('ok');
   const btn  = document.getElementById('refresh-btn');
   const icon = document.getElementById('btn-icon');
   btn.classList.remove('loading');
@@ -919,28 +2323,32 @@ async function init() {
     meta = await res.json();
     if (meta.error) throw new Error(meta.error);
 
+    const profile = getProfile();
+
     // 更新标题
     document.title = meta.name + ' — 数据看板';
-    document.getElementById('db-title').textContent = meta.name;
-    document.getElementById('db-sub').textContent =
-      `Dashboard #${DASHBOARD_ID}  ·  ${meta.dashcards?.length ?? 0} 个图表`;
-    document.getElementById('ft-name').textContent = meta.name;
-    document.getElementById('footer').style.display = 'flex';
+    document.getElementById('db-title').textContent = meta.name.replace(/^🗓️\s*/, '');
+    const subEl = document.getElementById('db-sub');
+    if (profile?.useDesignedLayout) {
+      subEl.textContent = '';
+      subEl.style.display = 'none';
+    } else {
+      subEl.style.display = '';
+      subEl.textContent = `Dashboard #${DASHBOARD_ID}  ·  ${meta.dashcards?.length ?? 0} 个图表`;
+    }
+    initDefaultDateFilter();
 
-    // 渲染筛选器
-    renderFilters(meta.parameters);
-    // 初始化 filterState（默认近30天）
-    meta.parameters?.forEach(p => {
-      if (p.type?.startsWith('date/') && !filterState[p.id]) {
-        filterState[p.id] = 'past30days';
-      }
-    });
-
-    // 渲染网格
-    renderGrid(meta.dashcards);
-
-    // 并行加载所有卡片
-    await loadAllCards();
+    if (profile?.useDesignedLayout) {
+      document.getElementById('designed-layout').classList.add('show');
+      document.getElementById('db-grid').classList.add('hidden');
+      bindDesignedUI(profile);
+      await loadDesignedDashboard(profile);
+    } else {
+      renderFilters(meta.parameters);
+      document.getElementById('db-grid').classList.remove('hidden');
+      renderGrid(meta.dashcards);
+      await loadAllCards();
+    }
     markRefreshed();
 
   } catch (e) {

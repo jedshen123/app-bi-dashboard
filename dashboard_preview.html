@@ -1,0 +1,854 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI 吸乳计划看板 · 结构预览（虚拟数据）</title>
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js"></script>
+  <style>
+    /* 深色 · 科技 · 母婴专业 · 酷炫 */
+    :root {
+      --bg-deep:    #060810;
+      --bg-page:    #0a0e18;
+      --bg-card:    #0f1524;
+      --bg-card2:   #141c30;
+      --bg-glass:   rgba(15,21,36,.85);
+      --border:     #1e2d48;
+      --border-glow:#2a4068;
+      --text-1:     #eef2ff;
+      --text-2:     #94a8c8;
+      --text-3:     #5a6d8a;
+      --rose:       #ff5c8a;
+      --rose-soft:  #ff8fab;
+      --cyan:       #00e5ff;
+      --cyan-dim:   #00b8d4;
+      --violet:     #a78bfa;
+      --magenta:    #e879f9;
+      --mint:       #34d399;
+      --gold:       #fbbf24;
+      --up:         #34d399;
+      --down:       #ff5c7a;
+      --glow-rose:  rgba(255,92,138,.45);
+      --glow-cyan:  rgba(0,229,255,.35);
+      --shadow:     0 8px 32px rgba(0,0,0,.45);
+      --shadow-lg:  0 12px 48px rgba(0,0,0,.55);
+      --radius:     12px;
+      --gap:        12px;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'PingFang SC', 'Helvetica Neue', 'Microsoft YaHei', sans-serif;
+      background:
+        radial-gradient(ellipse 80% 50% at 20% -10%, rgba(255,92,138,.12), transparent 50%),
+        radial-gradient(ellipse 60% 40% at 90% 20%, rgba(0,229,255,.08), transparent 45%),
+        radial-gradient(ellipse 50% 30% at 50% 100%, rgba(167,139,250,.06), transparent 40%),
+        var(--bg-deep);
+      color: var(--text-1);
+      min-height: 100vh;
+    }
+    body::before {
+      content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 0;
+      background:
+        linear-gradient(rgba(0,229,255,.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,229,255,.04) 1px, transparent 1px);
+      background-size: 40px 40px;
+    }
+    body::after {
+      content: ''; position: fixed; top: 0; left: 0; right: 0; height: 2px; z-index: 100;
+      background: linear-gradient(90deg, transparent, var(--rose), var(--cyan), var(--violet), transparent);
+      box-shadow: 0 0 20px var(--glow-cyan);
+    }
+    .page { position: relative; z-index: 1; max-width: 1680px; margin: 0 auto; padding: 0 24px 40px; }
+
+    .banner {
+      margin: 20px 0 0; padding: 8px 14px;
+      background: rgba(0,229,255,.06); border-left: 3px solid var(--cyan);
+      border-radius: 0 var(--radius) var(--radius) 0;
+      font-size: 12px; color: var(--text-2);
+      box-shadow: inset 0 0 20px rgba(0,229,255,.04);
+    }
+
+    .hdr {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 24px 0 20px; flex-wrap: wrap; gap: 12px;
+      border-bottom: 1px solid var(--border);
+    }
+    .hdr-left { display: flex; align-items: center; gap: 16px; }
+    .hdr-logo {
+      width: 48px; height: 48px; border-radius: 14px;
+      background: linear-gradient(135deg, var(--rose), var(--magenta));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; font-weight: 800; color: #fff; letter-spacing: -.5px;
+      box-shadow: 0 0 28px var(--glow-rose), 0 8px 24px rgba(0,0,0,.4);
+      border: 1px solid rgba(255,143,171,.3);
+    }
+    .hdr h1 {
+      font-size: 24px; font-weight: 700; letter-spacing: .5px;
+      background: linear-gradient(90deg, #fff, var(--rose-soft), var(--cyan));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .hdr-sub { font-size: 13px; color: var(--text-2); margin-top: 4px; }
+    .hdr-badge {
+      display: inline-block; margin-left: 10px; padding: 3px 10px; font-size: 11px; font-weight: 600;
+      background: rgba(255,92,138,.12); border: 1px solid rgba(255,92,138,.35);
+      border-radius: 20px; color: var(--rose-soft);
+      box-shadow: 0 0 12px rgba(255,92,138,.15);
+    }
+    .hdr-stat {
+      text-align: right; font-size: 12px; color: var(--text-3);
+      padding: 10px 16px; background: var(--bg-glass);
+      border: 1px solid var(--border); border-radius: var(--radius);
+      backdrop-filter: blur(8px);
+    }
+    .hdr-stat strong {
+      display: block; font-size: 16px; color: var(--cyan);
+      font-family: 'Courier New', monospace; margin-top: 4px;
+      text-shadow: 0 0 12px var(--glow-cyan);
+    }
+
+    .section { margin-top: 28px; }
+    .section-hdr {
+      display: flex; align-items: baseline; gap: 12px; margin-bottom: 14px;
+    }
+    .section-num {
+      font-size: 11px; font-weight: 800; letter-spacing: 1.2px;
+      color: #fff; background: linear-gradient(135deg, var(--rose), var(--magenta));
+      padding: 4px 10px; border-radius: 6px;
+      box-shadow: 0 0 16px var(--glow-rose);
+    }
+    .section-title { font-size: 18px; font-weight: 700; color: var(--text-1); }
+    .section-hint { font-size: 12px; color: var(--text-3); margin-left: auto; }
+    .section-hint.fixed {
+      color: var(--cyan); font-weight: 500;
+      background: rgba(0,229,255,.08); padding: 4px 10px; border-radius: 6px;
+      border: 1px solid rgba(0,229,255,.25);
+      box-shadow: 0 0 12px rgba(0,229,255,.1);
+    }
+
+    /* Part 1 KPI */
+    .kpi-grid {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--gap);
+    }
+    .kpi-card {
+      background: linear-gradient(145deg, var(--bg-card), var(--bg-card2));
+      border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 18px 20px 16px;
+      box-shadow: var(--shadow); position: relative; overflow: hidden;
+      transition: transform .2s, box-shadow .2s, border-color .2s;
+    }
+    .kpi-card:hover {
+      transform: translateY(-3px);
+      border-color: var(--border-glow);
+      box-shadow: var(--shadow-lg), 0 0 24px rgba(0,229,255,.08);
+    }
+    .kpi-card::after {
+      content: ''; position: absolute; top: -50%; right: -30%; width: 80%; height: 80%;
+      background: radial-gradient(circle, rgba(255,92,138,.06), transparent 70%);
+      pointer-events: none;
+    }
+    .kpi-card::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+      background: linear-gradient(90deg, transparent, var(--rose), var(--cyan), transparent);
+    }
+    .kpi-card:nth-child(2)::before { background: linear-gradient(90deg, transparent, var(--cyan), var(--violet), transparent); }
+    .kpi-card:nth-child(3)::before { background: linear-gradient(90deg, transparent, var(--violet), var(--magenta), transparent); }
+    .kpi-card:nth-child(4)::before { background: linear-gradient(90deg, transparent, var(--magenta), var(--rose), transparent); }
+    .kpi-card:nth-child(n+5)::before { background: linear-gradient(90deg, transparent, var(--mint), var(--cyan), transparent); }
+    .kpi-tag {
+      position: absolute; top: 10px; right: 12px; font-size: 10px; font-weight: 600;
+      color: var(--text-3); text-transform: uppercase; letter-spacing: .5px;
+    }
+    .kpi-name { font-size: 13px; font-weight: 600; color: var(--text-2); margin-bottom: 10px; padding-right: 36px; }
+    .kpi-name span { display: block; font-size: 10px; font-weight: 400; color: var(--text-3); margin-top: 3px; }
+    .kpi-val {
+      font-size: 30px; font-weight: 800; line-height: 1;
+      font-family: 'Courier New', monospace;
+      color: var(--rose-soft);
+      text-shadow: 0 0 20px var(--glow-rose);
+    }
+    .kpi-val.pct {
+      color: var(--cyan);
+      text-shadow: 0 0 20px var(--glow-cyan);
+    }
+    .kpi-unit { font-size: 13px; font-weight: 500; color: var(--text-3); }
+    .kpi-compare { display: flex; gap: 12px; margin-top: 14px; flex-wrap: wrap; }
+    .cmp { font-size: 11px; color: var(--text-3); }
+    .cmp b { font-weight: 700; }
+    .cmp.up b { color: var(--up); }
+    .cmp.down b { color: var(--down); }
+
+    /* 筛选分隔区：仅作用于 Part 2/3 */
+    .filter-bridge {
+      margin: 28px 0 20px; padding: 16px 20px;
+      background: var(--bg-glass);
+      border: 1px solid var(--border-glow);
+      border-radius: var(--radius);
+      backdrop-filter: blur(12px);
+      box-shadow: var(--shadow), inset 0 1px 0 rgba(255,255,255,.04);
+    }
+    .filter-bridge-top {
+      display: flex; align-items: center; gap: 10px; margin-bottom: 12px;
+      padding-bottom: 12px; border-bottom: 1px dashed var(--border);
+    }
+    .filter-bridge-icon {
+      width: 28px; height: 28px; border-radius: 8px;
+      background: linear-gradient(135deg, var(--cyan), var(--violet));
+      color: #fff; font-size: 14px; display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 0 16px var(--glow-cyan);
+    }
+    .filter-bridge-title { font-size: 14px; font-weight: 700; color: var(--text-1); }
+    .filter-bridge-desc { font-size: 12px; color: var(--text-3); margin-top: 2px; }
+    .flt-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .flt-label { font-size: 11px; font-weight: 600; color: var(--text-3); text-transform: uppercase; letter-spacing: .5px; }
+    .flt-btn {
+      padding: 6px 14px; border-radius: 8px; font-size: 12px; font-weight: 500;
+      border: 1px solid var(--border); background: var(--bg-card2); color: var(--text-2);
+      cursor: pointer; transition: all .18s;
+    }
+    .flt-btn:hover { border-color: var(--cyan); color: var(--cyan); box-shadow: 0 0 12px rgba(0,229,255,.15); }
+    .flt-btn.on {
+      background: linear-gradient(135deg, var(--rose), var(--magenta));
+      border-color: transparent; color: #fff;
+      box-shadow: 0 4px 20px var(--glow-rose);
+    }
+    .flt-scope {
+      margin-left: auto; font-size: 11px; color: var(--text-3);
+      padding: 4px 10px; background: var(--bg-card); border-radius: 6px; border: 1px solid var(--border);
+    }
+    .flt-scope em { color: var(--cyan); font-style: normal; font-weight: 600; }
+
+    /* Charts */
+    .chart-grid { display: grid; gap: var(--gap); }
+    .chart-grid.g2 { grid-template-columns: 1fr 1fr; }
+    .chart-grid.g1 { grid-template-columns: 1fr; }
+    .chart-card {
+      background: linear-gradient(180deg, var(--bg-card), var(--bg-card2));
+      border: 1px solid var(--border);
+      border-radius: var(--radius); overflow: hidden;
+      box-shadow: var(--shadow);
+      transition: border-color .2s;
+    }
+    .chart-card:hover { border-color: var(--border-glow); }
+    .chart-card-hdr {
+      padding: 12px 18px 10px; border-bottom: 1px solid var(--border);
+      background: rgba(0,0,0,.2);
+      display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+      row-gap: 8px;
+    }
+    .chart-card-hdr .chart-legend-hint { flex: 1 1 100%; margin-left: 0; margin-top: 2px; }
+    .chart-card-hdr::before {
+      content: ''; width: 4px; height: 16px; border-radius: 2px;
+      background: linear-gradient(180deg, var(--cyan), var(--violet));
+      box-shadow: 0 0 8px var(--glow-cyan);
+    }
+    .chart-card-title { font-size: 14px; font-weight: 700; color: var(--text-1); }
+    .chart-legend-hint {
+      display: flex; gap: 14px; margin-left: auto; font-size: 11px; color: var(--text-3);
+    }
+    .chart-legend-hint i { display: inline-flex; align-items: center; gap: 5px; font-style: normal; }
+    .chart-legend-hint .dot-bar {
+      width: 12px; height: 8px; border-radius: 2px;
+      background: linear-gradient(180deg, var(--rose), var(--rose-soft));
+      box-shadow: 0 0 6px var(--glow-rose);
+    }
+    .chart-legend-hint .dot-line {
+      width: 14px; height: 0; border-top: 2px solid var(--cyan);
+      box-shadow: 0 0 6px var(--glow-cyan);
+    }
+    .chart-body { height: 300px; padding: 8px 12px 12px; }
+    .chart-body.sm { height: 260px; }
+
+    /* 2.2 / 2.3 Tab */
+    .chart-tabs {
+      display: flex; gap: 6px; margin-left: auto;
+    }
+    .chart-tab {
+      padding: 5px 14px; border-radius: 8px; font-size: 12px; font-weight: 600;
+      border: 1px solid var(--border); background: var(--bg-card2); color: var(--text-2);
+      cursor: pointer; transition: all .18s;
+    }
+    .chart-tab:hover { border-color: var(--cyan); color: var(--cyan); }
+    .chart-tab.on {
+      background: linear-gradient(135deg, var(--rose), var(--magenta));
+      border-color: transparent; color: #fff;
+      box-shadow: 0 0 14px var(--glow-rose);
+    }
+    .tab-panels { position: relative; }
+    .tab-panel { display: none; height: 300px; padding: 8px 12px 12px; }
+    .tab-panel.active { display: block; }
+
+    .funnel-wrap { display: grid; grid-template-columns: 1fr 1fr; gap: var(--gap); }
+    .mini-tbl { width: 100%; border-collapse: collapse; font-size: 12px; }
+    .mini-tbl th {
+      text-align: left; padding: 10px 12px;
+      background: rgba(0,229,255,.08);
+      color: var(--text-2); font-weight: 600;
+      border-bottom: 2px solid var(--border-glow);
+    }
+    .mini-tbl td {
+      padding: 8px 12px; border-bottom: 1px solid var(--border); color: var(--text-1);
+    }
+    .mini-tbl td.num { text-align: right; font-family: 'Courier New', monospace; color: var(--cyan-dim); }
+    .mini-tbl tr:hover td { background: rgba(0,229,255,.06); }
+
+    .footer {
+      margin-top: 32px; padding-top: 16px; border-top: 1px solid var(--border);
+      font-size: 11px; color: var(--text-3); text-align: center;
+    }
+
+    @media (max-width: 1100px) {
+      .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+      .chart-grid.g2, .funnel-wrap { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 600px) {
+      .kpi-grid { grid-template-columns: 1fr; }
+      .filter-bridge-top { flex-direction: column; align-items: flex-start; }
+      .flt-scope { margin-left: 0; }
+    }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <div class="banner">
+    结构预览 · 虚拟数据 · 深色科技 + 母婴专业 + 酷炫视觉
+  </div>
+
+  <header class="hdr">
+    <div class="hdr-left">
+      <div class="hdr-logo">MC</div>
+      <div>
+        <h1>AI 吸乳计划看板</h1>
+        <p class="hdr-sub">
+          绑定吸奶器用户
+          <span class="hdr-badge">深色预览 v4</span>
+        </p>
+      </div>
+    </div>
+    <div class="hdr-stat">
+      核心指标统计日
+      <strong>2026-05-20</strong>
+    </div>
+  </header>
+
+  <!-- ========== PART 01：不受日期筛选 ========== -->
+  <section class="section" id="part1">
+    <div class="section-hdr">
+      <span class="section-num">PART 01</span>
+      <span class="section-title">吸乳计划 · 核心指标卡</span>
+      <span class="section-hint fixed">固定最近一日 · 不受下方日期筛选影响</span>
+    </div>
+    <div class="kpi-grid" id="kpi-grid"></div>
+  </section>
+
+  <!-- ========== 筛选桥：仅 Part 2 / 3 ========== -->
+  <div class="filter-bridge" id="filter-bridge">
+    <div class="filter-bridge-top">
+      <div class="filter-bridge-icon">⚙</div>
+      <div>
+        <div class="filter-bridge-title">趋势与漏斗 · 日期筛选</div>
+        <div class="filter-bridge-desc">本筛选仅作用于第二部分（趋势）与第三部分（生成漏斗），不改变上方核心指标卡</div>
+      </div>
+    </div>
+    <div class="flt-row">
+      <span class="flt-label">范围</span>
+      <button type="button" class="flt-btn" data-range="7">近7天</button>
+      <button type="button" class="flt-btn on" data-range="30">近30天</button>
+      <button type="button" class="flt-btn" data-range="month">本月</button>
+      <button type="button" class="flt-btn" data-range="custom">自定义</button>
+      <span class="flt-scope">生效范围：<em>PART 02 · PART 03</em></span>
+    </div>
+  </div>
+
+  <!-- ========== PART 02 ========== -->
+  <section class="section" id="part2">
+    <div class="section-hdr">
+      <span class="section-num">PART 02</span>
+      <span class="section-title">趋势类指标</span>
+      <span class="section-hint" id="part2-hint">近30天 · 柱形=数值 · 折线=比率</span>
+    </div>
+
+    <div class="chart-grid g1" style="margin-bottom:12px">
+      <div class="chart-card">
+        <div class="chart-card-hdr">
+          <span class="chart-card-title">2.1 触达与渗透趋势</span>
+          <div class="chart-legend-hint">
+            <i><span class="dot-bar"></span>柱形 · 人数</i>
+            <i><span class="dot-line"></span>折线 · 渗透率</i>
+          </div>
+        </div>
+        <div class="chart-body" id="chart-reach"></div>
+      </div>
+    </div>
+
+    <div class="chart-grid g1">
+      <div class="chart-card">
+        <div class="chart-card-hdr">
+          <span class="chart-card-title">2.2 / 2.3 计划执行趋势</span>
+          <div class="chart-tabs">
+            <button type="button" class="chart-tab on" data-tab="pv">2.2 按次</button>
+            <button type="button" class="chart-tab" data-tab="uv">2.3 按人</button>
+          </div>
+          <div class="chart-legend-hint" id="plan-tab-legend">
+            <i><span class="dot-bar"></span>柱形 · 数值</i>
+            <i><span class="dot-line"></span>折线 · 比率（两位小数）</i>
+          </div>
+        </div>
+        <div class="tab-panels">
+          <div class="tab-panel active" id="panel-pv"><div id="chart-plan-pv" style="width:100%;height:100%"></div></div>
+          <div class="tab-panel" id="panel-uv"><div id="chart-plan-uv" style="width:100%;height:100%"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="chart-grid g1" style="margin-top:12px">
+      <div class="chart-card">
+        <div class="chart-card-hdr">
+          <span class="chart-card-title">2.4 完成方式结构（可选）</span>
+          <div class="chart-legend-hint"><i><span class="dot-bar"></span>堆叠柱形 · 次数</i></div>
+        </div>
+        <div class="chart-body sm" id="chart-method"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== PART 03 ========== -->
+  <section class="section" id="part3">
+    <div class="section-hdr">
+      <span class="section-num">PART 03</span>
+      <span class="section-title">生成计划漏斗</span>
+      <span class="section-hint" id="part3-hint">受日期筛选 · 入口 → 同步</span>
+    </div>
+
+    <div class="funnel-wrap">
+      <div class="chart-card">
+        <div class="chart-card-hdr">
+          <span class="chart-card-title">3.1 漏斗总览</span>
+        </div>
+        <div class="chart-body" id="chart-funnel"></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-card-hdr">
+          <span class="chart-card-title">3.2 关键转化率趋势</span>
+          <div class="chart-legend-hint"><i><span class="dot-line"></span>折线 · 比率</i></div>
+        </div>
+        <div class="chart-body" id="chart-funnel-trend"></div>
+      </div>
+    </div>
+
+    <div class="chart-card" style="margin-top:12px">
+      <div class="chart-card-hdr">
+        <span class="chart-card-title">3.3 生成明细表</span>
+      </div>
+      <div style="padding:12px 18px 18px; overflow:auto; max-height:220px">
+        <table class="mini-tbl" id="funnel-table"></table>
+      </div>
+    </div>
+  </section>
+
+  <footer class="footer">dashboard_preview.html · 虚拟数据 · 确认结构后接入 Metabase</footer>
+</div>
+
+<script>
+/* 深色酷炫图表色板 */
+const COLORS = {
+  bar1: '#FF5C8A',
+  bar2: '#FF8FAB',
+  bar3: '#00E5FF',
+  bar4: '#A78BFA',
+  line1: '#00E5FF',
+  line2: '#E879F9',
+  line3: '#FBBF24',
+  stack1: '#FF5C8A',
+  stack2: '#00E5FF',
+};
+const CHART = {
+  grid: '#1e2d48',
+  text: '#5a6d8a',
+  textDark: '#94a8c8',
+  bg: 'transparent',
+  tooltipBg: '#141c30',
+  tooltipBorder: '#2a4068',
+};
+
+const KPIS = [
+  { tag: '规模', name: '访客数', hint: '功能渗透吸奶器用户', value: 6576, unit: '人', day: 2.3, week: -1.1, isPct: false },
+  { tag: '规模', name: 'APP 功能渗透率', hint: '渗透/绑定DAU', value: 20.06, unit: '', day: 0.8, week: 3.2, isPct: true },
+  { tag: '规模', name: '计划数', hint: '待完成+完成 次数', value: 28420, unit: '次', day: 5.6, week: 12.4, isPct: false },
+  { tag: '规模', name: '计划完成数', hint: '完成次数', value: 9832, unit: '次', day: 4.1, week: 8.7, isPct: false },
+  { tag: '执行', name: '计划完成率', hint: '按次', value: 34.62, unit: '', day: -1.2, week: 0.5, isPct: true },
+  { tag: '执行', name: '待完成用户数', hint: '有待办计划', value: 4218, unit: '人', day: 3.0, week: 6.2, isPct: false },
+  { tag: '执行', name: '完成用户数', hint: '至少完成1条', value: 3341, unit: '人', day: 2.8, week: 7.1, isPct: false },
+  { tag: '执行', name: '完成用户比例', hint: '按人', value: 44.18, unit: '', day: 0.6, week: -0.3, isPct: true },
+];
+
+/** 百分数：保留两位小数。asRatio=true 表示原值为 0~1 */
+function fmtPct2(v, asRatio = false) {
+  const n = Number(v);
+  if (isNaN(n)) return '--';
+  const pct = asRatio ? n * 100 : n;
+  return pct.toFixed(2) + '%';
+}
+
+function fmtCount(v) {
+  const n = Number(v);
+  if (isNaN(n)) return '--';
+  return n.toLocaleString('zh-CN');
+}
+
+function fmtCmp(v, label) {
+  const cls = v >= 0 ? 'up' : 'down';
+  const arrow = v >= 0 ? '↑' : '↓';
+  return `<span class="cmp ${cls}">${label} <b>${arrow}${Math.abs(v).toFixed(2)}%</b></span>`;
+}
+
+function renderKpis() {
+  document.getElementById('kpi-grid').innerHTML = KPIS.map(k => {
+    const disp = k.isPct ? fmtPct2(k.value) : fmtCount(k.value);
+    const unitHtml = k.isPct ? '' : `<span class="kpi-unit">${k.unit}</span>`;
+    return `
+    <div class="kpi-card">
+      <span class="kpi-tag">${k.tag}</span>
+      <div class="kpi-name">${k.name}<span>${k.hint}</span></div>
+      <div class="kpi-val ${k.isPct ? 'pct' : ''}">${disp}${unitHtml}</div>
+      <div class="kpi-compare">${fmtCmp(k.day,'较昨日')}${fmtCmp(k.week,'较上周')}</div>
+    </div>`;
+  }).join('');
+}
+
+/* 日期 & 筛选（仅模拟 Part2/3 刷新） */
+let dateRange = 30;
+function genDates(n) {
+  const arr = [];
+  for (let i = n - 1; i >= 0; i--) {
+    const d = new Date(2026, 4, 20 - i);
+    arr.push(`${d.getMonth()+1}/${d.getDate()}`);
+  }
+  return arr;
+}
+let DATES = genDates(30);
+
+function randSeries(n, base, vol) {
+  return Array.from({ length: n }, (_, i) => Math.round(base + Math.sin(i / 4) * vol + (Math.random() - .5) * vol * 0.35));
+}
+function randPct(n, base) {
+  return Array.from({ length: n }, (_, i) => +(base + Math.sin(i / 5) * 0.03 + (Math.random() - .5) * 0.02).toFixed(3));
+}
+
+const baseOpt = () => ({
+  backgroundColor: CHART.bg,
+  grid: { left: 56, right: 52, top: 40, bottom: 36 },
+  tooltip: {
+    trigger: 'axis',
+    backgroundColor: CHART.tooltipBg,
+    borderColor: CHART.tooltipBorder,
+    textStyle: { color: '#eef2ff', fontSize: 12 },
+    extraCssText: 'box-shadow:0 8px 32px rgba(0,0,0,.5);border-radius:8px;',
+  },
+  xAxis: {
+    type: 'category', data: DATES,
+    axisLine: { lineStyle: { color: CHART.grid } },
+    axisLabel: { color: CHART.text, fontSize: 10, interval: Math.max(0, Math.floor(DATES.length / 8) - 1) },
+    axisTick: { show: false },
+  },
+});
+
+const yCount = {
+  type: 'value', name: '人数/次数',
+  nameTextStyle: { color: CHART.text, fontSize: 10 },
+  splitLine: { lineStyle: { color: CHART.grid, type: 'dashed' } },
+  axisLabel: { color: CHART.text, fontSize: 10 },
+  axisLine: { show: false },
+};
+/** maxPct>1 表示 Y 轴已是百分数（如 60），否则为 0~1 小数 */
+const yRate = (maxPct) => ({
+  type: 'value', name: '比率', position: 'right',
+  nameTextStyle: { color: CHART.text, fontSize: 10 },
+  splitLine: { show: false },
+  axisLabel: {
+    color: COLORS.line1, fontSize: 10,
+    formatter: v => (maxPct > 1 ? Number(v) : Number(v) * 100).toFixed(2) + '%',
+  },
+  max: maxPct > 1 ? maxPct : undefined,
+  axisLine: { show: false },
+});
+
+/** 组合图 tooltip：比率系列两位小数百分数 */
+const RATE_SERIES = new Set(['功能渗透率', '计划完成率', '完成用户比例', '入口→同步', '填写→生成', '入口→开始']);
+
+function formatSeriesVal(name, value) {
+  if (!RATE_SERIES.has(name)) return fmtCount(value);
+  const asRatio = name === '功能渗透率' || String(name).includes('→');
+  return fmtPct2(value, asRatio);
+}
+
+function axisTooltipFormatter(params) {
+  if (!params?.length) return '';
+  let html = `<b style="color:${COLORS.line1}">${params[0].axisValue}</b><br/>`;
+  params.forEach(p => {
+    html += `${p.marker}${p.seriesName}：<b>${formatSeriesVal(p.seriesName, p.value)}</b><br/>`;
+  });
+  return html;
+}
+
+const charts = {};
+let activePlanTab = 'pv';
+
+/** 2.1：柱形=DAU+渗透用户，折线=渗透率 */
+function renderReach() {
+  const el = document.getElementById('chart-reach');
+  if (charts.reach) charts.reach.dispose();
+  const c = echarts.init(el);
+  charts.reach = c;
+  const dau = randSeries(DATES.length, 33000, 2500);
+  const pen = randSeries(DATES.length, 6500, 800);
+  const rate = randPct(DATES.length, 0.2);
+  const opt = baseOpt();
+  opt.tooltip.formatter = axisTooltipFormatter;
+  c.setOption({
+    ...opt,
+    legend: { top: 6, textStyle: { color: CHART.textDark, fontSize: 11 } },
+    yAxis: [yCount, yRate(0.35)],
+    series: [
+      { name: '绑定吸奶器DAU', type: 'bar', data: dau, barMaxWidth: 16, barGap: '20%',
+        itemStyle: { color: COLORS.bar1, borderRadius: [4, 4, 0, 0] } },
+      { name: '渗透用户数', type: 'bar', data: pen, barMaxWidth: 16,
+        itemStyle: { color: COLORS.bar3, borderRadius: [4, 4, 0, 0] } },
+      { name: '功能渗透率', type: 'line', yAxisIndex: 1, data: rate, smooth: true,
+        symbol: 'circle', symbolSize: 6,
+        lineStyle: { color: COLORS.line1, width: 3 },
+        itemStyle: { color: COLORS.line1, borderWidth: 2, borderColor: '#0f1524' } },
+    ],
+  });
+}
+
+/** 2.2：柱形=计划数+完成数，折线=完成率 */
+function renderPlanPv() {
+  const el = document.getElementById('chart-plan-pv');
+  if (charts.pv) charts.pv.dispose();
+  const c = echarts.init(el);
+  charts.pv = c;
+  const plan = randSeries(DATES.length, 28000, 4000);
+  const done = plan.map((v, i) => Math.round(v * (0.32 + Math.sin(i / 6) * 0.05)));
+  const rate = plan.map((v, i) => +((done[i] / v) * 100).toFixed(2));
+  const opt = baseOpt();
+  opt.tooltip.formatter = axisTooltipFormatter;
+  c.setOption({
+    ...opt,
+    legend: { top: 6, textStyle: { color: CHART.textDark, fontSize: 11 } },
+    yAxis: [yCount, yRate(60)],
+    series: [
+      { name: '计划数', type: 'bar', data: plan, barMaxWidth: 14,
+        itemStyle: { color: COLORS.bar2, borderRadius: [4, 4, 0, 0] } },
+      { name: '计划完成数', type: 'bar', data: done, barMaxWidth: 14,
+        itemStyle: { color: COLORS.bar4, borderRadius: [4, 4, 0, 0] } },
+      { name: '计划完成率', type: 'line', yAxisIndex: 1, data: rate, smooth: true,
+        symbol: 'circle', symbolSize: 6,
+        lineStyle: { color: COLORS.line2, width: 3 },
+        itemStyle: { color: COLORS.line2, borderWidth: 2, borderColor: '#0f1524' } },
+    ],
+  });
+}
+
+/** 2.3：柱形=待完成+完成用户，折线=用户比例 */
+function renderPlanUv() {
+  const el = document.getElementById('chart-plan-uv');
+  if (charts.uv) charts.uv.dispose();
+  const c = echarts.init(el);
+  charts.uv = c;
+  const pending = randSeries(DATES.length, 4200, 600);
+  const doneU = pending.map((v, i) => Math.round(v * (0.42 + Math.sin(i / 5) * 0.06)));
+  const rateU = pending.map((v, i) => +((doneU[i] / (v + doneU[i])) * 100).toFixed(2));
+  const opt = baseOpt();
+  opt.tooltip.formatter = axisTooltipFormatter;
+  c.setOption({
+    ...opt,
+    legend: { top: 6, textStyle: { color: CHART.textDark, fontSize: 11 } },
+    yAxis: [yCount, yRate(70)],
+    series: [
+      { name: '待完成用户', type: 'bar', data: pending, barMaxWidth: 14,
+        itemStyle: { color: COLORS.bar1, borderRadius: [4, 4, 0, 0] } },
+      { name: '完成用户', type: 'bar', data: doneU, barMaxWidth: 14,
+        itemStyle: { color: COLORS.bar3, borderRadius: [4, 4, 0, 0] } },
+      { name: '完成用户比例', type: 'line', yAxisIndex: 1, data: rateU, smooth: true,
+        symbol: 'circle', symbolSize: 6,
+        lineStyle: { color: COLORS.line3, width: 3 },
+        itemStyle: { color: COLORS.line3, borderWidth: 2, borderColor: '#0f1524' } },
+    ],
+  });
+}
+
+function renderMethod() {
+  const el = document.getElementById('chart-method');
+  if (charts.method) charts.method.dispose();
+  const c = echarts.init(el);
+  charts.method = c;
+  c.setOption({
+    ...baseOpt(),
+    legend: { top: 6, textStyle: { color: CHART.textDark, fontSize: 11 } },
+    yAxis: yCount,
+    series: [
+      { name: '手动完成', type: 'bar', stack: 's', data: randSeries(DATES.length, 3200, 500),
+        itemStyle: { color: COLORS.stack1 } },
+      { name: '自动完成', type: 'bar', stack: 's', data: randSeries(DATES.length, 6600, 900),
+        itemStyle: { color: COLORS.stack2 } },
+    ],
+  });
+}
+
+function buildFunnelSteps() {
+  return [
+    { name: '入口点击', value: 12580 },
+    { name: '开始填写', value: 5240 },
+    { name: '填写完成', value: 3460 },
+    { name: '计划生成成功', value: 2950 },
+    { name: '同步日历', value: 2410 },
+  ];
+}
+
+function funnelLabelFormatter(steps) {
+  return (params) => {
+    const i = params.dataIndex;
+    const v = steps[i].value;
+    const top = steps[0].value;
+    const prev = i > 0 ? steps[i - 1].value : v;
+    const convPrev = i > 0 ? ((v / prev) * 100).toFixed(2) : '100.00';
+    const convTop = ((v / top) * 100).toFixed(2);
+    return `{name|${steps[i].name}}\n{val|${v.toLocaleString('zh-CN')}}\n{rate|较上步 ${convPrev}% · 较入口 ${convTop}%}`;
+  };
+}
+
+function funnelTooltip(steps) {
+  return (p) => {
+    const i = p.dataIndex;
+    const v = steps[i].value;
+    const top = steps[0].value;
+    const prev = i > 0 ? steps[i - 1].value : v;
+    const convPrev = i > 0 ? fmtPct2(v / prev, true) : '100.00%';
+    const convTop = fmtPct2(v / top, true);
+    return `${p.name}<br/>UV：<b>${fmtCount(v)}</b><br/>较上步转化：<b>${convPrev}</b><br/>较入口转化：<b>${convTop}</b>`;
+  };
+}
+
+function renderFunnel() {
+  const el = document.getElementById('chart-funnel');
+  if (charts.funnel) charts.funnel.dispose();
+  const c = echarts.init(el);
+  charts.funnel = c;
+  const steps = buildFunnelSteps();
+  const funnelColors = [COLORS.bar1, COLORS.bar2, COLORS.bar3, COLORS.bar4, COLORS.line1];
+  c.setOption({
+    backgroundColor: CHART.bg,
+    tooltip: {
+      trigger: 'item',
+      backgroundColor: CHART.tooltipBg, borderColor: CHART.tooltipBorder,
+      textStyle: { color: '#eef2ff' },
+      formatter: funnelTooltip(steps),
+    },
+    series: [{
+      type: 'funnel', left: '8%', right: '8%', top: 16, bottom: 16,
+      sort: 'descending', gap: 8,
+      label: {
+        show: true, position: 'inside',
+        color: '#eef2ff', fontSize: 11,
+        formatter: funnelLabelFormatter(steps),
+        rich: {
+          name: { fontSize: 12, fontWeight: 700, color: '#fff', lineHeight: 18 },
+          val: { fontSize: 13, fontWeight: 800, color: '#fff', lineHeight: 20 },
+          rate: { fontSize: 10, color: 'rgba(255,255,255,.85)', lineHeight: 16 },
+        },
+      },
+      labelLine: { show: false },
+      itemStyle: { borderColor: '#0f1524', borderWidth: 2 },
+      data: steps.map((s, i) => ({ ...s, itemStyle: { color: funnelColors[i] } })),
+    }],
+  });
+}
+
+function renderFunnelTrend() {
+  const el = document.getElementById('chart-funnel-trend');
+  if (charts.funnelTrend) charts.funnelTrend.dispose();
+  const c = echarts.init(el);
+  charts.funnelTrend = c;
+  const opt = baseOpt();
+  opt.tooltip.formatter = axisTooltipFormatter;
+  c.setOption({
+    ...opt,
+    legend: { top: 6, textStyle: { color: CHART.textDark, fontSize: 11 }, type: 'scroll' },
+    yAxis: yRate(0.35),
+    series: [
+      { name: '入口→同步', type: 'line', data: randPct(DATES.length, 0.19), smooth: true,
+        lineStyle: { color: COLORS.line1, width: 3 }, itemStyle: { color: COLORS.line1 } },
+      { name: '填写→生成', type: 'line', data: randPct(DATES.length, 0.85), smooth: true,
+        lineStyle: { color: COLORS.line2, width: 3 }, itemStyle: { color: COLORS.line2 } },
+      { name: '入口→开始', type: 'line', data: randPct(DATES.length, 0.42), smooth: true,
+        lineStyle: { color: COLORS.line3, width: 3 }, itemStyle: { color: COLORS.line3 } },
+    ],
+  });
+}
+
+function renderFunnelTable() {
+  const rows = [
+    ['2026-05-20', '12,580', '5,240', '41.6%', '3,460', '66.0%', '2,950', '85.3%', '2,410', '19.2%'],
+    ['2026-05-19', '11,920', '4,980', '41.8%', '3,210', '64.5%', '2,780', '86.6%', '2,290', '19.2%'],
+    ['2026-05-18', '12,100', '5,050', '41.7%', '3,320', '65.7%', '2,860', '86.1%', '2,350', '19.4%'],
+  ];
+  const heads = ['日期', '入口UV', '开始UV', '→开始', '完成UV', '→完成', '生成UV', '→生成', '同步UV', '→同步'];
+  document.getElementById('funnel-table').innerHTML =
+    `<thead><tr>${heads.map(h => `<th>${h}</th>`).join('')}</tr></thead>
+     <tbody>${rows.map(r => `<tr>${r.map((c, i) => `<td class="${i > 0 ? 'num' : ''}">${c}</td>`).join('')}</tr>`).join('')}</tbody>`;
+}
+
+function switchPlanTab(tab) {
+  activePlanTab = tab;
+  document.querySelectorAll('.chart-tab[data-tab]').forEach(b => {
+    b.classList.toggle('on', b.dataset.tab === tab);
+  });
+  document.getElementById('panel-pv').classList.toggle('active', tab === 'pv');
+  document.getElementById('panel-uv').classList.toggle('active', tab === 'uv');
+  if (tab === 'pv') {
+    renderPlanPv();
+    setTimeout(() => charts.pv?.resize(), 50);
+  } else {
+    renderPlanUv();
+    setTimeout(() => charts.uv?.resize(), 50);
+  }
+}
+
+function refreshPart23() {
+  renderReach();
+  if (activePlanTab === 'pv') renderPlanPv(); else renderPlanUv();
+  renderMethod();
+  renderFunnelTrend();
+  const hints = { 7: '近7天', 30: '近30天', month: '本月', custom: '自定义' };
+  const label = hints[dateRange] || '近30天';
+  document.getElementById('part2-hint').textContent = `${label} · 柱形=数值 · 折线=比率（两位小数）`;
+  document.getElementById('part3-hint').textContent = `受日期筛选 · ${label}`;
+}
+
+document.querySelectorAll('.chart-tab[data-tab]').forEach(btn => {
+  btn.addEventListener('click', () => switchPlanTab(btn.dataset.tab));
+});
+
+document.querySelectorAll('.flt-btn[data-range]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.flt-btn[data-range]').forEach(b => b.classList.remove('on'));
+    btn.classList.add('on');
+    const r = btn.dataset.range;
+    dateRange = r === '7' ? 7 : r === 'month' ? 30 : 30;
+    if (r === '7') dateRange = 7;
+    DATES = genDates(dateRange);
+    refreshPart23();
+  });
+});
+
+window.addEventListener('DOMContentLoaded', () => {
+  renderKpis();
+  renderFunnel();
+  renderFunnelTable();
+  refreshPart23();
+});
+window.addEventListener('resize', () => Object.values(charts).forEach(c => c?.resize()));
+</script>
+</body>
+</html>
