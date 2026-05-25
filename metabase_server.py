@@ -4,16 +4,18 @@ Metabase 通用大屏看板 - 后端代理服务
 
 环境变量：
   METABASE_URL      Metabase 地址，如 https://app-data.luteos.site
-  METABASE_USER     账号邮箱
-  METABASE_PASS     密码
+  METABASE_USER     服务账号邮箱（用于后台数据拉取）
+  METABASE_PASS     服务账号密码
   MB_PORT           服务端口，默认 5001
   CACHE_TTL         卡片数据缓存秒数，默认 300（5分钟）；设为 0 禁用缓存
   CACHE_TTL_META    看板元信息/筛选器选项缓存秒数，默认 600（10分钟）
+  SESSION_TTL       用户登录会话时长（秒），默认 28800（8小时）
 
-访问示例：http://localhost:5001/?dashboard_id=14
+访问示例：http://localhost:5001/
 """
 
-import os, json, time, hashlib
+import os, json, time, hashlib, secrets
+import http.cookies
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from urllib.parse import urlparse, parse_qs
 from urllib.request import urlopen, Request
@@ -38,6 +40,8 @@ METABASE_PASS = os.getenv("METABASE_PASS", "")
 SERVER_PORT   = int(os.getenv("MB_PORT",   "5001"))
 CACHE_TTL      = int(os.getenv("CACHE_TTL",      "300"))   # 卡片数据缓存，秒
 CACHE_TTL_META = int(os.getenv("CACHE_TTL_META", "600"))   # 元信息缓存，秒
+SESSION_TTL    = int(os.getenv("SESSION_TTL",    str(8 * 3600)))  # 用户会话时长，秒
+SESSION_COOKIE = "mb_sess"
 
 # Session 缓存（Metabase session 默认 14 天，这里 12h 主动刷新）
 _session = {"token": None, "expires_at": 0}
@@ -70,6 +74,70 @@ def _make_key(*parts) -> str:
     raw = json.dumps(parts, ensure_ascii=False, sort_keys=True, default=str)
     digest = hashlib.md5(raw.encode()).hexdigest()[:8]
     return f"{digest}:{raw[:80]}"
+
+
+# ================================================================
+# 用户会话管理
+# ================================================================
+_user_sessions: dict = {}
+
+
+def _sess_create(mb_token: str, email: str, first_name: str = "") -> str:
+    """创建用户会话，返回会话 token。"""
+    token = secrets.token_urlsafe(32)
+    _user_sessions[token] = {
+        "mb_token":   mb_token,
+        "email":      email,
+        "first_name": first_name,
+        "expires_at": time.time() + SESSION_TTL,
+    }
+    return token
+
+
+def _sess_get(cookie_header: str):
+    """从 Cookie 头解析会话，过期或不存在返回 None。"""
+    if not cookie_header:
+        return None
+    try:
+        jar = http.cookies.SimpleCookie(cookie_header)
+        morsel = jar.get(SESSION_COOKIE)
+        if not morsel:
+            return None
+        sess = _user_sessions.get(morsel.value)
+        if not sess:
+            return None
+        if time.time() > sess["expires_at"]:
+            del _user_sessions[morsel.value]
+            return None
+        return sess
+    except Exception:
+        return None
+
+
+def _sess_delete(cookie_header: str):
+    """删除 Cookie 对应的会话记录。"""
+    if not cookie_header:
+        return
+    try:
+        jar = http.cookies.SimpleCookie(cookie_header)
+        morsel = jar.get(SESSION_COOKIE)
+        if morsel:
+            _user_sessions.pop(morsel.value, None)
+    except Exception:
+        pass
+
+
+def _mb_check_permission(dashboard_id: str, user_token: str) -> bool:
+    """用用户自己的 Metabase token 检查是否有权访问指定看板。"""
+    req = Request(
+        f"{METABASE_URL}/api/dashboard/{dashboard_id}",
+        headers={"X-Metabase-Session": user_token, "Accept": "application/json"}
+    )
+    try:
+        with urlopen(req, timeout=10) as r:
+            return r.status == 200
+    except HTTPError as e:
+        return False
 
 
 def _do_login() -> str:
@@ -145,6 +213,9 @@ def mb_post(path: str, body: dict) -> dict:
 # HTTP 处理器
 # ================================================================
 
+# 不需要登录即可访问的路径
+_PUBLIC_PATHS = {"/login", "/api/login"}
+
 class Handler(BaseHTTPRequestHandler):
 
     def log_message(self, fmt, *args):
@@ -159,6 +230,12 @@ class Handler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(body)
 
+    def send_redirect(self, location: str):
+        self.send_response(302)
+        self.send_header("Location", location)
+        self.send_header("Content-Length", "0")
+        self.end_headers()
+
     def serve_file(self, fp: str, ct: str):
         try:
             body = open(fp, "rb").read()
@@ -169,6 +246,24 @@ class Handler(BaseHTTPRequestHandler):
         self.send_header("Content-Length", str(len(body)))
         self.end_headers()
         self.wfile.write(body)
+
+    def _base_dir(self):
+        return os.path.dirname(os.path.abspath(__file__))
+
+    def _current_session(self):
+        return _sess_get(self.headers.get("Cookie", ""))
+
+    def _require_auth(self) -> bool:
+        """返回 True 表示已登录可继续；False 表示已发送 401/302 响应。"""
+        sess = self._current_session()
+        if sess:
+            return True
+        # API 请求返回 401 JSON；页面请求重定向到登录页
+        if self.path.startswith("/api/"):
+            self.send_json({"error": "未登录", "code": "unauthenticated"}, 401)
+        else:
+            self.send_redirect("/login")
+        return False
 
     def do_OPTIONS(self):
         self.send_response(204)
@@ -184,12 +279,49 @@ class Handler(BaseHTTPRequestHandler):
         q      = parse_qs(parsed.query)
         def qs(k): return q.get(k, [""])[0]
 
+        # 公开路径：登录页
+        if path == "/login":
+            # 已登录则直接跳首页
+            if self._current_session():
+                return self.send_redirect("/")
+            return self.serve_file(
+                os.path.join(self._base_dir(), "login.html"),
+                "text/html; charset=utf-8"
+            )
+
+        # 其余所有路径需鉴权
+        if not self._require_auth():
+            return
+
         try:
+            # ---- 登出 ----
+            if path == "/logout":
+                _sess_delete(self.headers.get("Cookie", ""))
+                self.send_response(302)
+                self.send_header("Location", "/login")
+                self.send_header("Set-Cookie",
+                    f"{SESSION_COOKIE}=; Path=/; HttpOnly; Max-Age=0")
+                self.send_header("Content-Length", "0")
+                self.end_headers()
+
+            # ---- 当前用户信息 ----
+            elif path == "/api/me":
+                sess = self._current_session()
+                self.send_json({
+                    "email":      sess["email"],
+                    "first_name": sess.get("first_name", ""),
+                })
+
             # ---- 看板元信息 ----
-            if path == "/api/meta":
+            elif path == "/api/meta":
                 did = qs("dashboard_id")
                 if not did:
                     return self.send_json({"error": "缺少 dashboard_id"}, 400)
+
+                # 用用户 token 检查权限
+                sess = self._current_session()
+                if not _mb_check_permission(did, sess["mb_token"]):
+                    return self.send_json({"error": "无查看看板权限", "code": "forbidden"}, 403)
 
                 cache_key = _make_key("meta", did)
                 cached = _cache_get(cache_key)
@@ -216,7 +348,6 @@ class Handler(BaseHTTPRequestHandler):
                         "parameter_mappings": dc.get("parameter_mappings", []),
                     })
 
-                # 按布局顺序排列（先行后列）
                 dashcards.sort(key=lambda x: (x["row"], x["col"]))
 
                 result = {
@@ -247,39 +378,26 @@ class Handler(BaseHTTPRequestHandler):
 
             # ---- 前端页面 ----
             elif path in ("/", "/nav", "/nav.html"):
-                # 根路径：有 dashboard_id 参数时服务看板页，否则服务导航页
                 if path == "/" and qs("dashboard_id"):
                     self.serve_file(
-                        os.path.join(
-                            os.path.dirname(os.path.abspath(__file__)),
-                            "metabase_dashboard.html"
-                        ),
+                        os.path.join(self._base_dir(), "metabase_dashboard.html"),
                         "text/html; charset=utf-8"
                     )
                 else:
                     self.serve_file(
-                        os.path.join(
-                            os.path.dirname(os.path.abspath(__file__)),
-                            "nav.html"
-                        ),
+                        os.path.join(self._base_dir(), "nav.html"),
                         "text/html; charset=utf-8"
                     )
 
             elif path in ("/dashboard", "/metabase_dashboard.html"):
                 self.serve_file(
-                    os.path.join(
-                        os.path.dirname(os.path.abspath(__file__)),
-                        "metabase_dashboard.html"
-                    ),
+                    os.path.join(self._base_dir(), "metabase_dashboard.html"),
                     "text/html; charset=utf-8"
                 )
 
             elif path in ("/preview", "/dashboard_preview.html"):
                 self.serve_file(
-                    os.path.join(
-                        os.path.dirname(os.path.abspath(__file__)),
-                        "dashboard_preview.html"
-                    ),
+                    os.path.join(self._base_dir(), "dashboard_preview.html"),
                     "text/html; charset=utf-8"
                 )
 
@@ -302,6 +420,62 @@ class Handler(BaseHTTPRequestHandler):
         body    = json.loads(self.rfile.read(length) if length else b"{}")
         def qs(k): return q.get(k, [""])[0]
 
+        # ---- 登录接口（公开） ----
+        if path == "/api/login":
+            email    = (body.get("email") or "").strip()
+            password = (body.get("password") or "").strip()
+            if not email or not password:
+                return self.send_json({"error": "请输入邮箱和密码"}, 400)
+            try:
+                payload = json.dumps({"username": email, "password": password}).encode()
+                req = Request(
+                    f"{METABASE_URL}/api/session", data=payload,
+                    headers={"Content-Type": "application/json"}, method="POST"
+                )
+                with urlopen(req, timeout=15) as r:
+                    mb_resp = json.loads(r.read())
+                mb_token = mb_resp.get("id", "")
+
+                # 取用户信息
+                first_name = ""
+                try:
+                    me_req = Request(
+                        f"{METABASE_URL}/api/user/current",
+                        headers={"X-Metabase-Session": mb_token, "Accept": "application/json"}
+                    )
+                    with urlopen(me_req, timeout=10) as r:
+                        me = json.loads(r.read())
+                    first_name = me.get("first_name") or me.get("email") or email
+                except Exception:
+                    first_name = email
+
+                sess_token = _sess_create(mb_token, email, first_name)
+                print(f"[login] {email} 登录成功")
+
+                # 返回响应并设置 Cookie
+                resp_body = json.dumps({"ok": True, "name": first_name}, ensure_ascii=False).encode()
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json; charset=utf-8")
+                self.send_header("Content-Length", str(len(resp_body)))
+                self.send_header("Set-Cookie",
+                    f"{SESSION_COOKIE}={sess_token}; Path=/; HttpOnly; Max-Age={SESSION_TTL}")
+                self.end_headers()
+                self.wfile.write(resp_body)
+
+            except HTTPError as e:
+                print(f"[login] {email} 登录失败: HTTP {e.code}")
+                if e.code in (400, 401):
+                    self.send_json({"error": "邮箱或密码错误"}, 401)
+                else:
+                    self.send_json({"error": f"Metabase 服务异常（{e.code}）"}, 502)
+            except OSError as e:
+                self.send_json({"error": f"无法连接 Metabase：{e}"}, 502)
+            return
+
+        # 其余 POST 需鉴权
+        if not self._require_auth():
+            return
+
         try:
             # ---- 卡片数据查询 ----
             if path == "/api/card_data":
@@ -323,7 +497,6 @@ class Handler(BaseHTTPRequestHandler):
                     {"parameters": req_params}
                 )
                 data = result.get("data", {})
-                # 精简 cols，只保留前端需要的字段
                 slim_cols = [
                     {
                         "name":         c.get("name"),

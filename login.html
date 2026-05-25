@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>登录 — 数据看板</title>
+  <style>
+    :root {
+      --bg-deep:  #060810;
+      --bg-card:  #0f1524;
+      --bg-card2: #141c30;
+      --border:   #1e2d48;
+      --rose:     #ff5c8a;
+      --rose-dim: #b85a78;
+      --cyan:     #00e5ff;
+      --violet:   #a78bfa;
+      --peach:    #f4b8a8;
+      --text-1:   #eef2ff;
+      --text-2:   #94a8c8;
+      --text-3:   #5a6d8a;
+      --red:      #ff5c7a;
+      --glow-rose:rgba(255,92,138,.4);
+      --radius:   12px;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      height: 100%;
+      font-family: 'PingFang SC', 'Microsoft YaHei', 'Segoe UI', sans-serif;
+    }
+    body {
+      background:
+        radial-gradient(ellipse 80% 50% at 20% -10%, rgba(255,92,138,.12), transparent 50%),
+        radial-gradient(ellipse 60% 40% at 90% 20%, rgba(0,229,255,.08), transparent 45%),
+        var(--bg-deep);
+      color: var(--text-1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      overflow: hidden;
+    }
+    /* 网格背景 */
+    body::before {
+      content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 0;
+      background:
+        linear-gradient(rgba(0,229,255,.035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,229,255,.035) 1px, transparent 1px);
+      background-size: 40px 40px;
+    }
+    /* 顶部光线 */
+    body::after {
+      content: ''; position: fixed; top: 0; left: 0; right: 0; height: 2px; z-index: 100;
+      background: linear-gradient(90deg, transparent, var(--rose), var(--cyan), var(--violet), transparent);
+    }
+
+    .card {
+      position: relative; z-index: 1;
+      width: 380px;
+      background: linear-gradient(180deg, var(--bg-card), var(--bg-card2));
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 40px 36px 36px;
+      box-shadow: 0 24px 64px rgba(0,0,0,.6), 0 0 80px rgba(255,92,138,.06);
+    }
+    /* 卡片顶部光线 */
+    .card::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+      border-radius: 16px 16px 0 0;
+      background: linear-gradient(90deg, transparent, var(--rose), var(--violet), transparent);
+    }
+
+    /* Logo */
+    .logo {
+      display: flex; flex-direction: column; align-items: center; margin-bottom: 32px;
+    }
+    .logo-icon {
+      width: 56px; height: 56px; border-radius: 16px;
+      background: linear-gradient(135deg, var(--rose), var(--violet));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 26px;
+      box-shadow: 0 0 28px var(--glow-rose), 0 0 60px rgba(255,92,138,.12);
+      margin-bottom: 16px;
+    }
+    .logo-title {
+      font-size: 20px; font-weight: 800; letter-spacing: .3px;
+      background: linear-gradient(90deg, #fff8fa, var(--rose), var(--peach));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .logo-sub { font-size: 12px; color: var(--text-3); margin-top: 6px; }
+
+    /* 表单 */
+    .form-group { margin-bottom: 18px; }
+    label {
+      display: block;
+      font-size: 12px; font-weight: 600; color: var(--text-2);
+      margin-bottom: 7px; letter-spacing: .3px;
+    }
+    input {
+      width: 100%;
+      background: rgba(255,255,255,.04);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text-1);
+      font-size: 14px;
+      padding: 11px 14px;
+      outline: none;
+      transition: border-color .2s, box-shadow .2s;
+      font-family: inherit;
+    }
+    input::placeholder { color: var(--text-3); }
+    input:focus {
+      border-color: rgba(255,92,138,.5);
+      box-shadow: 0 0 0 3px rgba(255,92,138,.1);
+      background: rgba(255,255,255,.06);
+    }
+
+    /* 错误提示 */
+    .error-msg {
+      display: none;
+      align-items: center; gap: 8px;
+      margin-bottom: 16px;
+      padding: 10px 14px;
+      border-radius: var(--radius);
+      background: rgba(255,92,122,.1);
+      border: 1px solid rgba(255,92,122,.3);
+      font-size: 13px; color: var(--red);
+    }
+    .error-msg.show { display: flex; }
+    .error-icon { font-size: 15px; flex-shrink: 0; }
+
+    /* 登录按钮 */
+    .btn-login {
+      width: 100%; padding: 13px;
+      border-radius: var(--radius);
+      border: none; cursor: pointer;
+      background: linear-gradient(135deg, var(--rose), var(--rose-dim), var(--violet));
+      background-size: 200% 100%;
+      background-position: 0% 0%;
+      color: #fff; font-size: 15px; font-weight: 700;
+      letter-spacing: .5px;
+      box-shadow: 0 0 20px var(--glow-rose);
+      transition: opacity .2s, transform .15s, box-shadow .2s;
+      margin-top: 8px;
+      font-family: inherit;
+      position: relative; overflow: hidden;
+    }
+    .btn-login:hover:not(:disabled) {
+      opacity: .92; transform: translateY(-1px);
+      box-shadow: 0 4px 24px var(--glow-rose);
+    }
+    .btn-login:active:not(:disabled) { transform: translateY(0); }
+    .btn-login:disabled { opacity: .55; cursor: not-allowed; transform: none; }
+
+    /* 加载动画 */
+    .btn-login .spinner {
+      display: none;
+      width: 16px; height: 16px;
+      border: 2px solid rgba(255,255,255,.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+      margin: 0 auto;
+    }
+    .btn-login.loading .btn-text { display: none; }
+    .btn-login.loading .spinner { display: block; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .footer-note {
+      margin-top: 22px; text-align: center;
+      font-size: 11px; color: var(--text-3); line-height: 1.7;
+    }
+    .footer-note a { color: var(--text-2); text-decoration: none; }
+    .footer-note a:hover { color: var(--rose); }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="logo">
+      <div class="logo-icon">🌸</div>
+      <div class="logo-title">数据看板</div>
+      <div class="logo-sub">请使用 Metabase 账户登录</div>
+    </div>
+
+    <div class="error-msg" id="error-msg">
+      <span class="error-icon">⚠</span>
+      <span id="error-text"></span>
+    </div>
+
+    <form id="login-form" onsubmit="doLogin(event)">
+      <div class="form-group">
+        <label for="email">邮箱</label>
+        <input id="email" type="email" placeholder="your@email.com"
+               autocomplete="email" required />
+      </div>
+      <div class="form-group">
+        <label for="password">密码</label>
+        <input id="password" type="password" placeholder="••••••••"
+               autocomplete="current-password" required />
+      </div>
+      <button type="submit" class="btn-login" id="btn-login">
+        <span class="btn-text">登 录</span>
+        <span class="spinner"></span>
+      </button>
+    </form>
+
+    <div class="footer-note">
+      使用 Metabase 账户凭据登录<br/>
+      登录状态将保持 <strong style="color:var(--text-2)">8 小时</strong>
+    </div>
+  </div>
+
+<script>
+async function doLogin(e) {
+  e.preventDefault();
+  const btn = document.getElementById('btn-login');
+  const errEl = document.getElementById('error-msg');
+  const errTxt = document.getElementById('error-text');
+  const email = document.getElementById('email').value.trim();
+  const password = document.getElementById('password').value;
+
+  btn.classList.add('loading');
+  btn.disabled = true;
+  errEl.classList.remove('show');
+
+  try {
+    const res = await fetch('/api/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password }),
+    });
+    const data = await res.json();
+    if (res.ok && data.ok) {
+      window.location.replace('/');
+    } else {
+      errTxt.textContent = data.error || '登录失败，请重试';
+      errEl.classList.add('show');
+    }
+  } catch (err) {
+    errTxt.textContent = '网络错误，请检查连接后重试';
+    errEl.classList.add('show');
+  } finally {
+    btn.classList.remove('loading');
+    btn.disabled = false;
+  }
+}
+</script>
+</body>
+</html>

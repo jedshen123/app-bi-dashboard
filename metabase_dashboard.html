@@ -568,6 +568,13 @@
     <div>示例：<code>?dashboard_id=14</code></div>
   </div>
 
+  <!-- 无权限提示 -->
+  <div class="no-dashboard" id="no-perm" style="display:none">
+    <div class="nd-icon">🔒</div>
+    <div class="nd-text">无查看看板权限</div>
+    <div style="font-size:13px;color:var(--text-3)">你的账户无权访问此看板，请联系管理员</div>
+  </div>
+
 </div><!-- /page -->
 
 <script>
@@ -2320,6 +2327,14 @@ async function init() {
 
   try {
     const res = await fetch(`/api/meta?dashboard_id=${DASHBOARD_ID}`);
+    if (res.status === 401) { window.location.replace('/login'); return; }
+    if (res.status === 403) {
+      document.getElementById('no-perm').style.display = 'flex';
+      setStatus('error', '无查看看板权限');
+      btn.classList.remove('loading');
+      icon.textContent = '↻';
+      return;
+    }
     meta = await res.json();
     if (meta.error) throw new Error(meta.error);
 
