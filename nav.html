@@ -45,37 +45,6 @@
       background: var(--bg-deep);
     }
 
-    /* 无法嵌入时的占位提示 */
-    #frame-blocked {
-      display: none;
-      position: fixed;
-      inset: 0;
-      z-index: 5;
-      background: var(--bg-deep);
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 16px;
-      color: var(--text-2);
-    }
-    #frame-blocked .fb-icon { font-size: 48px; }
-    #frame-blocked .fb-title { font-size: 18px; font-weight: 700; color: var(--text-1); }
-    #frame-blocked .fb-desc  { font-size: 13px; color: var(--text-3); text-align: center; line-height: 1.8; }
-    #frame-blocked .fb-btn {
-      margin-top: 8px;
-      padding: 10px 24px;
-      border-radius: var(--radius);
-      background: linear-gradient(135deg, var(--rose), var(--violet));
-      color: #fff;
-      font-size: 14px;
-      font-weight: 600;
-      cursor: pointer;
-      border: none;
-      box-shadow: 0 0 20px var(--glow-rose);
-      transition: opacity .2s;
-    }
-    #frame-blocked .fb-btn:hover { opacity: .85; }
-
     /* ============================================================ 左边缘触发条 */
     #sidebar-trigger {
       position: fixed;
@@ -238,14 +207,6 @@
   <!-- iframe 内容区 -->
   <iframe id="main-frame" src="/dashboard" allowfullscreen></iframe>
 
-  <!-- 无法嵌入时的占位 -->
-  <div id="frame-blocked">
-    <div class="fb-icon">🔒</div>
-    <div class="fb-title">该页面不支持嵌入显示</div>
-    <div class="fb-desc">此看板的服务器限制了页面嵌入。<br />点击下方按钮在新标签页中打开。</div>
-    <button class="fb-btn" id="fb-open-btn">在新标签页中打开 ↗</button>
-  </div>
-
   <!-- 左边缘触发条 -->
   <div id="sidebar-trigger"></div>
 
@@ -269,11 +230,11 @@
         <span class="nav-arrow">›</span>
       </div>
 
-      <div class="nav-item cyan" id="nav-platform" onclick="loadExternal(this)">
+      <a class="nav-item cyan" id="nav-platform" href="https://app-data.luteos.site/" target="_blank" rel="noopener">
         <div class="nav-icon cyan">🔮</div>
         <span class="nav-title">数据平台看板</span>
         <span class="ext-icon">↗</span>
-      </div>
+      </a>
     </nav>
 
     <div class="sidebar-footer">
@@ -282,15 +243,12 @@
   </aside>
 
 <script>
-const sidebar      = document.getElementById('sidebar');
-const trigger      = document.getElementById('sidebar-trigger');
-const mask         = document.getElementById('sidebar-mask');
-const frame        = document.getElementById('main-frame');
-const frameBlocked = document.getElementById('frame-blocked');
-const fbOpenBtn    = document.getElementById('fb-open-btn');
+const sidebar = document.getElementById('sidebar');
+const trigger = document.getElementById('sidebar-trigger');
+const mask    = document.getElementById('sidebar-mask');
+const frame   = document.getElementById('main-frame');
 
 let hideTimer = null;
-let currentExtUrl = '';
 
 /* ---- 侧栏开关 ---- */
 function openSidebar() {
@@ -307,69 +265,17 @@ function scheduleClose() {
   hideTimer = setTimeout(closeSidebar, 300);
 }
 
-/* 触发条：悬停或点击打开 */
 trigger.addEventListener('mouseenter', openSidebar);
 trigger.addEventListener('click', openSidebar);
-
-/* 侧栏：鼠标进入取消关闭计时器 */
 sidebar.addEventListener('mouseenter', () => clearTimeout(hideTimer));
-
-/* 侧栏：鼠标离开后延迟关闭 */
 sidebar.addEventListener('mouseleave', scheduleClose);
-
-/* 点击遮罩关闭 */
 mask.addEventListener('click', closeSidebar);
 
 /* ---- 加载内部看板 ---- */
 function loadDashboard(el) {
   setActive(el);
-  frameBlocked.style.display = 'none';
-  frame.style.display = 'block';
   frame.src = '/dashboard';
   scheduleClose();
-}
-
-/* ---- 加载外部看板（尝试 iframe，失败则提示新标签页） ---- */
-const EXT_URL = 'https://app-data.luteos.site/';
-
-function loadExternal(el) {
-  setActive(el);
-  currentExtUrl = EXT_URL;
-  fbOpenBtn.onclick = () => window.open(currentExtUrl, '_blank', 'noopener');
-
-  /* 先尝试放入 iframe */
-  frameBlocked.style.display = 'none';
-  frame.style.display = 'block';
-  frame.src = EXT_URL;
-
-  /* iframe 加载完成后检测是否被拦截 */
-  frame.onload = function () {
-    let blocked = false;
-    try {
-      /* 跨域会抛 SecurityError；若 contentDocument 为 null 通常也是被拦截 */
-      if (!frame.contentDocument && !frame.contentWindow?.location?.href) blocked = true;
-    } catch (e) {
-      /* SecurityError = 跨域但已加载（大概率可以显示）；其他错误视为拦截 */
-      blocked = !(e instanceof DOMException && e.name === 'SecurityError');
-    }
-    if (blocked) showBlocked();
-    frame.onload = null;
-  };
-
-  /* 5s 后如果 frame 内容为空则也判定为拦截 */
-  setTimeout(() => {
-    if (frame.src !== EXT_URL) return;
-    try {
-      if (!frame.contentWindow?.location?.href) showBlocked();
-    } catch (_) { /* 跨域正常，不处理 */ }
-  }, 5000);
-
-  scheduleClose();
-}
-
-function showBlocked() {
-  frame.style.display = 'none';
-  frameBlocked.style.display = 'flex';
 }
 
 /* ---- 激活态切换 ---- */
