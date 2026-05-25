@@ -9,8 +9,23 @@
 
 import os
 import json
+import time
+import hashlib
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from urllib.parse import urlparse, parse_qs
+
+# ===================== 加载 .env =====================
+_env_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env")
+if os.path.isfile(_env_file):
+    with open(_env_file, encoding="utf-8") as _f:
+        for _line in _f:
+            _line = _line.strip()
+            if not _line or _line.startswith("#") or "=" not in _line:
+                continue
+            _k, _v = _line.split("=", 1)
+            _k, _v = _k.strip(), _v.strip().strip('"').strip("'")
+            if _k and _k not in os.environ:
+                os.environ[_k] = _v
 
 # ===================== 数据库配置 =====================
 DB_HOST     = os.getenv("STARROCKS_HOST",     "starrocks-us.cozyinnov.com")
@@ -20,7 +35,34 @@ DB_PASSWORD = os.getenv("STARROCKS_PASSWORD", "")   # ← 必须通过环境变�
 DB_DATABASE = os.getenv("STARROCKS_DB",       "lute_app_dw")
 TABLE_NAME  = "dwd_app_user_flag_info"
 SERVER_PORT = int(os.getenv("PORT", "5000"))
+CACHE_TTL      = int(os.getenv("CACHE_TTL",      "300"))   # 看板数据缓存，秒
+CACHE_TTL_META = int(os.getenv("CACHE_TTL_META", "600"))   # filter_options 缓存，秒
 # =====================================================
+
+# ================================================================
+# 内存缓存
+# ================================================================
+_cache: dict = {}
+
+
+def _cache_get(key: str):
+    entry = _cache.get(key)
+    if entry and time.time() < entry["expires_at"]:
+        return entry["data"]
+    if entry:
+        del _cache[key]
+    return None
+
+
+def _cache_set(key: str, data, ttl: int):
+    if ttl > 0:
+        _cache[key] = {"data": data, "expires_at": time.time() + ttl}
+
+
+def _make_key(*parts) -> str:
+    raw = json.dumps(parts, ensure_ascii=False, sort_keys=True, default=str)
+    digest = hashlib.md5(raw.encode()).hexdigest()[:8]
+    return f"{digest}:{raw[:80]}"
 
 
 def get_conn():
@@ -348,7 +390,13 @@ class DashboardHandler(BaseHTTPRequestHandler):
         if path == "/api/dashboard":
             try:
                 filters = parse_filters(parsed.query)
-                data    = build_dashboard_data(filters)
+                cache_key = _make_key("dashboard", filters)
+                cached = _cache_get(cache_key)
+                if cached:
+                    print(f"[cache] HIT  /api/dashboard query={parsed.query[:60]}")
+                    return self.send_json(cached)
+                data = build_dashboard_data(filters)
+                _cache_set(cache_key, data, CACHE_TTL)
                 self.send_json(data)
             except Exception as e:
                 import traceback; traceback.print_exc()
@@ -356,7 +404,14 @@ class DashboardHandler(BaseHTTPRequestHandler):
 
         elif path == "/api/filter_options":
             try:
-                self.send_json(build_filter_options())
+                cache_key = _make_key("filter_options")
+                cached = _cache_get(cache_key)
+                if cached:
+                    print("[cache] HIT  /api/filter_options")
+                    return self.send_json(cached)
+                data = build_filter_options()
+                _cache_set(cache_key, data, CACHE_TTL_META)
+                self.send_json(data)
             except Exception as e:
                 import traceback; traceback.print_exc()
                 self.send_json({"error": str(e)}, status=500)
@@ -383,6 +438,10 @@ if __name__ == "__main__":
     print(f"  数据库:         {DB_DATABASE}")
     print(f"  用户名:         {DB_USER}")
     print(f"  数据表:         {TABLE_NAME}")
+    if CACHE_TTL > 0:
+        print(f"  缓存:           看板数据 {CACHE_TTL}s · filter_options {CACHE_TTL_META}s")
+    else:
+        print(f"  缓存:           已禁用（CACHE_TTL=0）")
     print(f"  看板地址:       http://localhost:{SERVER_PORT}")
     print("=" * 55)
     server = HTTPServer(("0.0.0.0", SERVER_PORT), DashboardHandler)

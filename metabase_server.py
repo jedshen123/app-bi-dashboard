@@ -7,11 +7,13 @@ Metabase 通用大屏看板 - 后端代理服务
   METABASE_USER     账号邮箱
   METABASE_PASS     密码
   MB_PORT           服务端口，默认 5001
+  CACHE_TTL         卡片数据缓存秒数，默认 300（5分钟）；设为 0 禁用缓存
+  CACHE_TTL_META    看板元信息/筛选器选项缓存秒数，默认 600（10分钟）
 
 访问示例：http://localhost:5001/?dashboard_id=14
 """
 
-import os, json, time
+import os, json, time, hashlib
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from urllib.parse import urlparse, parse_qs
 from urllib.request import urlopen, Request
@@ -34,9 +36,40 @@ METABASE_URL  = os.getenv("METABASE_URL",  "http://localhost:3000").rstrip("/")
 METABASE_USER = os.getenv("METABASE_USER", "")
 METABASE_PASS = os.getenv("METABASE_PASS", "")
 SERVER_PORT   = int(os.getenv("MB_PORT",   "5001"))
+CACHE_TTL      = int(os.getenv("CACHE_TTL",      "300"))   # 卡片数据缓存，秒
+CACHE_TTL_META = int(os.getenv("CACHE_TTL_META", "600"))   # 元信息缓存，秒
 
 # Session 缓存（Metabase session 默认 14 天，这里 12h 主动刷新）
 _session = {"token": None, "expires_at": 0}
+
+# ================================================================
+# 内存缓存
+# ================================================================
+# 结构：{ key: {"data": ..., "expires_at": float} }
+_cache: dict = {}
+
+
+def _cache_get(key: str):
+    """命中且未过期返回缓存数据，否则返回 None。"""
+    entry = _cache.get(key)
+    if entry and time.time() < entry["expires_at"]:
+        return entry["data"]
+    if entry:
+        del _cache[key]   # 过期主动清除
+    return None
+
+
+def _cache_set(key: str, data, ttl: int):
+    """写入缓存；ttl<=0 时不缓存。"""
+    if ttl > 0:
+        _cache[key] = {"data": data, "expires_at": time.time() + ttl}
+
+
+def _make_key(*parts) -> str:
+    """将任意参数序列化为稳定的缓存键（MD5 前缀 + 原文截断，便于调试）。"""
+    raw = json.dumps(parts, ensure_ascii=False, sort_keys=True, default=str)
+    digest = hashlib.md5(raw.encode()).hexdigest()[:8]
+    return f"{digest}:{raw[:80]}"
 
 
 def _do_login() -> str:
@@ -158,6 +191,12 @@ class Handler(BaseHTTPRequestHandler):
                 if not did:
                     return self.send_json({"error": "缺少 dashboard_id"}, 400)
 
+                cache_key = _make_key("meta", did)
+                cached = _cache_get(cache_key)
+                if cached:
+                    print(f"[cache] HIT  meta dashboard_id={did}")
+                    return self.send_json(cached)
+
                 raw = mb_get(f"/api/dashboard/{did}")
 
                 dashcards = []
@@ -180,12 +219,14 @@ class Handler(BaseHTTPRequestHandler):
                 # 按布局顺序排列（先行后列）
                 dashcards.sort(key=lambda x: (x["row"], x["col"]))
 
-                self.send_json({
+                result = {
                     "name":        raw.get("name", ""),
                     "description": raw.get("description") or "",
                     "parameters":  raw.get("parameters", []),
                     "dashcards":   dashcards,
-                })
+                }
+                _cache_set(cache_key, result, CACHE_TTL_META)
+                self.send_json(result)
 
             # ---- 筛选器可选值 ----
             elif path == "/api/param_values":
@@ -193,10 +234,38 @@ class Handler(BaseHTTPRequestHandler):
                 pkey = qs("param_key")
                 if not did or not pkey:
                     return self.send_json({"error": "缺少参数"}, 400)
-                self.send_json(mb_get(f"/api/dashboard/{did}/params/{pkey}/values"))
+
+                cache_key = _make_key("param_values", did, pkey)
+                cached = _cache_get(cache_key)
+                if cached:
+                    print(f"[cache] HIT  param_values dashboard_id={did} param_key={pkey}")
+                    return self.send_json(cached)
+
+                result = mb_get(f"/api/dashboard/{did}/params/{pkey}/values")
+                _cache_set(cache_key, result, CACHE_TTL_META)
+                self.send_json(result)
 
             # ---- 前端页面 ----
-            elif path in ("/", "/metabase_dashboard.html"):
+            elif path in ("/", "/nav", "/nav.html"):
+                # 根路径：有 dashboard_id 参数时服务看板页，否则服务导航页
+                if path == "/" and qs("dashboard_id"):
+                    self.serve_file(
+                        os.path.join(
+                            os.path.dirname(os.path.abspath(__file__)),
+                            "metabase_dashboard.html"
+                        ),
+                        "text/html; charset=utf-8"
+                    )
+                else:
+                    self.serve_file(
+                        os.path.join(
+                            os.path.dirname(os.path.abspath(__file__)),
+                            "nav.html"
+                        ),
+                        "text/html; charset=utf-8"
+                    )
+
+            elif path in ("/dashboard", "/metabase_dashboard.html"):
                 self.serve_file(
                     os.path.join(
                         os.path.dirname(os.path.abspath(__file__)),
@@ -242,9 +311,16 @@ class Handler(BaseHTTPRequestHandler):
                 if not all([did, dcid, cid]):
                     return self.send_json({"error": "缺少参数"}, 400)
 
+                req_params = body.get("parameters", [])
+                cache_key = _make_key("card_data", did, dcid, cid, req_params)
+                cached = _cache_get(cache_key)
+                if cached:
+                    print(f"[cache] HIT  card_data dashcard_id={dcid}")
+                    return self.send_json(cached)
+
                 result = mb_post(
                     f"/api/dashboard/{did}/dashcard/{dcid}/card/{cid}/query",
-                    {"parameters": body.get("parameters", [])}
+                    {"parameters": req_params}
                 )
                 data = result.get("data", {})
                 # 精简 cols，只保留前端需要的字段
@@ -256,11 +332,13 @@ class Handler(BaseHTTPRequestHandler):
                     }
                     for c in data.get("cols", [])
                 ]
-                self.send_json({
+                response = {
                     "cols":  slim_cols,
                     "rows":  data.get("rows", []),
                     "error": result.get("error"),
-                })
+                }
+                _cache_set(cache_key, response, CACHE_TTL)
+                self.send_json(response)
             else:
                 self.send_response(404); self.end_headers()
 
@@ -280,7 +358,12 @@ if __name__ == "__main__":
     print(f"  Metabase:   {METABASE_URL}")
     print(f"  账号:       {METABASE_USER or '(未设置 METABASE_USER)'}")
     print(f"  端口:       {SERVER_PORT}")
-    print(f"  访问示例:   http://localhost:{SERVER_PORT}/?dashboard_id=14")
+    if CACHE_TTL > 0:
+        print(f"  缓存:       卡片数据 {CACHE_TTL}s · 元信息 {CACHE_TTL_META}s")
+    else:
+        print(f"  缓存:       已禁用（CACHE_TTL=0）")
+    print(f"  导航页:     http://localhost:{SERVER_PORT}/")
+    print(f"  看板示例:   http://localhost:{SERVER_PORT}/?dashboard_id=14")
     print("=" * 58)
 
     # 启动前验证登录，出错时给出具体原因
