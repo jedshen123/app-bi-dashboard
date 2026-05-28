@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>数据看板</title>
+  <title>Momcozy数据平台</title>
   <style>
     :root {
       --bg-deep:   #060810;
@@ -23,7 +23,7 @@
       --text-3:    #5a6d8a;
       --glow-rose: rgba(255,92,138,.4);
       --glow-cyan: rgba(0,229,255,.3);
-      --sidebar-w: 240px;
+      --sidebar-w: 260px;
       --radius:    12px;
     }
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -43,6 +43,93 @@
       height: 100%;
       border: none;
       background: var(--bg-deep);
+      opacity: 1;
+      transition: opacity .18s ease;
+    }
+    body.frame-loading #main-frame { opacity: 0; }
+
+    #frame-loading-screen {
+      position: fixed;
+      inset: 0;
+      z-index: 50;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+      background: linear-gradient(180deg, #f4f7fb, #e9eff7);
+    }
+    body.frame-loading #frame-loading-screen { display: flex; }
+    .loading-panel {
+      width: min(360px, calc(100vw - 48px));
+      padding: 22px 24px 20px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: rgba(255,255,255,.96);
+      box-shadow: 0 16px 40px rgba(30,45,72,.12);
+    }
+    .loading-top {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    .loading-mark {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      border: 1px solid var(--border-hi);
+      display: grid;
+      place-items: center;
+      color: #526274;
+    }
+    .loading-mark::before {
+      content: '';
+      width: 15px;
+      height: 14px;
+      border-bottom: 3px solid currentColor;
+      border-left: 3px solid currentColor;
+      box-shadow: 6px 3px 0 -1px currentColor, 12px -3px 0 -1px currentColor;
+      opacity: .9;
+    }
+    .loading-title {
+      color: #172033;
+      font-size: 14px;
+      font-weight: 700;
+    }
+    .loading-sub {
+      margin-top: 3px;
+      color: #8491a3;
+      font-size: 11px;
+    }
+    .loading-track {
+      height: 4px;
+      overflow: hidden;
+      border-radius: 999px;
+      background: #d9e1ea;
+    }
+    .loading-bar {
+      width: 42%;
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, #2f6f7e, #6f8f9d);
+      animation: loading-slide 1.05s ease-in-out infinite;
+    }
+    .loading-skeleton {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 16px;
+    }
+    .loading-skeleton span {
+      height: 42px;
+      border-radius: 8px;
+      border: 1px solid #d9e1ea;
+      background: #f8fafc;
+    }
+    .loading-skeleton span:first-child { grid-column: span 2; height: 30px; }
+    @keyframes loading-slide {
+      0% { transform: translateX(-110%); }
+      55%, 100% { transform: translateX(245%); }
     }
 
     /* ============================================================ 左边缘触发条 */
@@ -113,20 +200,40 @@
     }
     .logo-icon {
       width: 36px; height: 36px; border-radius: 10px; flex-shrink: 0;
-      background: linear-gradient(135deg, var(--rose), var(--violet));
+      background: rgba(255,255,255,.96);
       display: flex; align-items: center; justify-content: center;
-      font-size: 17px;
       box-shadow: 0 0 14px var(--glow-rose);
+      padding: 6px;
+      overflow: hidden;
+    }
+    .logo-icon img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      display: block;
     }
     .logo-name {
       font-size: 14px; font-weight: 700;
       background: linear-gradient(90deg, #fff8fa, var(--rose), var(--peach));
       -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      white-space: nowrap;
     }
     .logo-sub { font-size: 10px; color: var(--text-3); margin-top: 2px; }
 
     /* 导航列表 */
     .nav-list { display: flex; flex-direction: column; gap: 6px; }
+    .nav-platform-section {
+      margin-top: auto;
+      padding-top: 16px;
+      border-top: 1px solid var(--border);
+    }
+    .nav-section-label {
+      margin: 0 2px 8px;
+      color: var(--text-3);
+      font-size: 10px;
+      letter-spacing: .8px;
+      text-transform: uppercase;
+    }
 
     .nav-item {
       display: flex; align-items: center; gap: 10px;
@@ -168,13 +275,74 @@
       width: 32px; height: 32px; border-radius: 8px; flex-shrink: 0;
       display: flex; align-items: center; justify-content: center; font-size: 15px;
     }
-    .nav-icon.rose {
-      background: linear-gradient(135deg, rgba(255,92,138,.22), rgba(167,139,250,.1));
-      border: 1px solid rgba(255,92,138,.28);
+    .nav-icon.data-logo {
+      background: rgba(20,28,48,.85);
+      border: 1px solid var(--border-hi);
+      box-shadow: none;
+      position: relative;
+      color: var(--text-2);
     }
-    .nav-icon.cyan {
-      background: linear-gradient(135deg, rgba(0,229,255,.18), rgba(0,184,212,.08));
-      border: 1px solid rgba(0,229,255,.28);
+    .nav-icon.data-bars i,
+    .nav-icon.data-bars i::before,
+    .nav-icon.data-bars i::after {
+      display: block;
+      width: 4px;
+      border-radius: 2px 2px 1px 1px;
+      background: currentColor;
+      content: '';
+    }
+    .nav-icon.data-bars i { height: 14px; position: relative; }
+    .nav-icon.data-bars i::before {
+      position: absolute;
+      left: -7px;
+      bottom: 0;
+      height: 9px;
+      opacity: .75;
+    }
+    .nav-icon.data-bars i::after {
+      position: absolute;
+      right: -7px;
+      bottom: 0;
+      height: 18px;
+      opacity: .9;
+    }
+    .nav-icon.data-grid i {
+      width: 17px;
+      height: 17px;
+      border: 1px solid currentColor;
+      border-radius: 3px;
+      background:
+        linear-gradient(currentColor, currentColor) 50% 0 / 1px 100% no-repeat,
+        linear-gradient(currentColor, currentColor) 0 50% / 100% 1px no-repeat;
+      opacity: .9;
+    }
+    .nav-icon.data-stack i,
+    .nav-icon.data-stack i::before,
+    .nav-icon.data-stack i::after {
+      display: block;
+      height: 4px;
+      border: 1px solid currentColor;
+      border-radius: 999px;
+      content: '';
+    }
+    .nav-icon.data-stack i {
+      width: 18px;
+      position: relative;
+      opacity: .95;
+    }
+    .nav-icon.data-stack i::before,
+    .nav-icon.data-stack i::after {
+      position: absolute;
+      left: 1px;
+      width: 14px;
+    }
+    .nav-icon.data-stack i::before { top: -7px; opacity: .7; }
+    .nav-icon.data-stack i::after { top: 7px; opacity: .7; }
+    .nav-item:hover .nav-icon.data-logo,
+    .nav-item.active .nav-icon.data-logo {
+      color: var(--text-1);
+      border-color: var(--rose-dim);
+      background: rgba(20,28,48,.95);
     }
 
     .nav-title { font-size: 13px; font-weight: 600; color: var(--text-1); flex: 1; }
@@ -186,8 +354,8 @@
 
     /* 底部用户信息 */
     .sidebar-footer {
-      margin-top: auto;
-      padding-top: 14px;
+      margin-top: 12px;
+      padding-top: 12px;
       border-top: 1px solid var(--border);
     }
     .user-info {
@@ -226,10 +394,28 @@
     body.sidebar-open #sidebar-mask { display: block; }
   </style>
 </head>
-<body>
+<body class="frame-loading">
 
   <!-- iframe 内容区 -->
-  <iframe id="main-frame" src="/dashboard" allowfullscreen></iframe>
+  <iframe id="main-frame" allowfullscreen></iframe>
+
+  <div id="frame-loading-screen" aria-live="polite">
+    <div class="loading-panel">
+      <div class="loading-top">
+        <div class="loading-mark"></div>
+        <div>
+          <div class="loading-title">正在加载看板</div>
+          <div class="loading-sub">同步数据与图表配置</div>
+        </div>
+      </div>
+      <div class="loading-track"><div class="loading-bar"></div></div>
+      <div class="loading-skeleton">
+        <span></span>
+        <span></span>
+        <span></span>
+      </div>
+    </div>
+  </div>
 
   <!-- 左边缘触发条 -->
   <div id="sidebar-trigger"></div>
@@ -240,26 +426,38 @@
   <!-- 悬浮侧栏 -->
   <aside id="sidebar">
     <div class="logo">
-      <div class="logo-icon">🌸</div>
+      <div class="logo-icon"><img src="/favicon.png" alt="Momcozy" /></div>
       <div>
-        <div class="logo-name">数据看板</div>
-        <div class="logo-sub">Dashboard Hub</div>
+        <div class="logo-name">Momcozy数据平台</div>
+        <div class="logo-sub">Data Platform</div>
       </div>
     </div>
 
-    <nav class="nav-list">
-      <div class="nav-item active" id="nav-ai" onclick="loadDashboard(this)">
-        <div class="nav-icon rose">📊</div>
+    <div class="nav-section-label">数据看板</div>
+    <nav class="nav-list nav-main">
+      <div class="nav-item active" id="nav-ai" data-src="/dashboard" onclick="loadDashboard(this)">
+        <div class="nav-icon data-logo data-bars"><i></i></div>
         <span class="nav-title">AI 吸乳计划看板</span>
         <span class="nav-arrow">›</span>
       </div>
 
-      <a class="nav-item cyan" id="nav-platform" href="https://app-data.luteos.site/" target="_blank" rel="noopener">
-        <div class="nav-icon cyan">🔮</div>
-        <span class="nav-title">数据开发平台</span>
-        <span class="ext-icon">↗</span>
-      </a>
+      <div class="nav-item" id="nav-ai-v2" data-src="/dashboard-v2" onclick="loadDashboard(this)">
+        <div class="nav-icon data-logo data-grid"><i></i></div>
+        <span class="nav-title">AI吸乳计划看板V2</span>
+        <span class="nav-arrow">›</span>
+      </div>
     </nav>
+
+    <div class="nav-platform-section">
+      <div class="nav-section-label">平台入口</div>
+      <nav class="nav-list">
+        <a class="nav-item" id="nav-platform" href="https://app-data.luteos.site/" target="_blank" rel="noopener">
+          <div class="nav-icon data-logo data-stack"><i></i></div>
+          <span class="nav-title">数据开发平台</span>
+          <span class="ext-icon">↗</span>
+        </a>
+      </nav>
+    </div>
 
     <div class="sidebar-footer">
       <div class="user-info">
@@ -277,6 +475,17 @@ const mask    = document.getElementById('sidebar-mask');
 const frame   = document.getElementById('main-frame');
 
 let hideTimer = null;
+function showFrame() {
+  document.body.classList.remove('frame-loading');
+}
+
+function waitForFrameReady() {
+  document.body.classList.add('frame-loading');
+}
+
+window.addEventListener('message', event => {
+  if (event.data && event.data.type === 'momcozy-dashboard-ready') showFrame();
+});
 
 /* ---- 侧栏开关 ---- */
 function openSidebar() {
@@ -302,7 +511,8 @@ mask.addEventListener('click', closeSidebar);
 /* ---- 加载内部看板 ---- */
 function loadDashboard(el) {
   setActive(el);
-  frame.src = '/dashboard';
+  waitForFrameReady();
+  frame.src = el.dataset.src || '/dashboard';
   scheduleClose();
 }
 
@@ -330,6 +540,8 @@ async function doLogout() {
   location.replace('/login');
 }
 
+waitForFrameReady();
+frame.src = '/dashboard';
 loadUser();
 </script>
 </body>

@@ -289,6 +289,12 @@ class Handler(BaseHTTPRequestHandler):
                 "text/html; charset=utf-8"
             )
 
+        if path == "/favicon.png":
+            return self.serve_file(
+                os.path.join(self._base_dir(), "favicon.png"),
+                "image/png"
+            )
+
         # 其余所有路径需鉴权
         if not self._require_auth():
             return
@@ -392,6 +398,12 @@ class Handler(BaseHTTPRequestHandler):
             elif path in ("/dashboard", "/metabase_dashboard.html"):
                 self.serve_file(
                     os.path.join(self._base_dir(), "metabase_dashboard.html"),
+                    "text/html; charset=utf-8"
+                )
+
+            elif path in ("/dashboard-v2", "/metabase_dashboard_v2.html"):
+                self.serve_file(
+                    os.path.join(self._base_dir(), "metabase_dashboard_v2.html"),
                     "text/html; charset=utf-8"
                 )
 

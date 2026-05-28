@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Momcozy数据平台</title>
+  <title>AI吸乳计划看板V2 — Momcozy数据平台</title>
   <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js"></script>
   <style>
-    /* 深色 · 科技 · 母婴专业 */
+    /* V2 · 低调专业 */
     :root {
       --bg-deep:    #060810;
       --bg-page:    #0a0e18;
@@ -69,12 +69,10 @@
     .hdr-left  { display: flex; align-items: center; gap: 12px; }
     .hdr-icon  {
       width: 42px; height: 42px; border-radius: 12px; flex-shrink: 0;
-      background: rgba(255,255,255,.96);
+      background: linear-gradient(135deg, var(--rose), var(--violet));
       display: flex; align-items: center; justify-content: center;
-      box-shadow: 0 0 20px var(--glow-rose);
-      padding: 8px;
+      font-size: 20px; box-shadow: 0 0 20px var(--glow-rose);
     }
-    .hdr-icon img { width: 100%; height: 100%; object-fit: contain; display: block; }
     .hdr-title { font-size: 20px; font-weight: 700; letter-spacing: .5px;
       background: linear-gradient(90deg, #fff8fa, var(--rose), var(--peach));
       -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
@@ -430,6 +428,559 @@
       margin-top: 12px;
     }
     .footer span + span::before { content: '|'; margin: 0 8px; color: var(--border); }
+
+    /* ============================================================ V2 · 低调专业主题 */
+    :root {
+      --bg-deep:    #f4f7fb;
+      --bg-page:    #f4f7fb;
+      --bg-card:    #ffffff;
+      --bg-card2:   #f8fafc;
+      --bg-glass:   rgba(255,255,255,.92);
+      --border:     #d9e1ea;
+      --border-hi:  #b8c5d4;
+      --border-glow:#b8c5d4;
+      --rose:       #4f7d8a;
+      --rose-soft:  #2f6f7e;
+      --rose-dim:   #6f8f9d;
+      --cyan:       #2f6f7e;
+      --cyan-dim:   #5f8795;
+      --violet:     #6b7c93;
+      --magenta:    #7f8fa3;
+      --mint:       #4f8b74;
+      --peach:      #6b7c93;
+      --green:      #2f855a;
+      --amber:      #b7791f;
+      --red:        #c2414b;
+      --accent-dark:#edf4f6;
+      --text-1:     #172033;
+      --text-2:     #526274;
+      --text-3:     #8491a3;
+      --glow-rose:  rgba(47,111,126,.12);
+      --glow-cyan:  rgba(47,111,126,.1);
+      --radius:     8px;
+      --radius-sm:  6px;
+    }
+    body {
+      background: var(--bg-page);
+      color: var(--text-1);
+    }
+    body::before,
+    body::after { display: none; }
+    .page { max-width: 1680px; padding: 0 20px 28px; }
+    .hdr {
+      margin: 16px 0 14px;
+      padding: 14px 18px;
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: 0 1px 2px rgba(15,23,42,.04);
+    }
+    .hdr-icon {
+      background: #fff;
+      border: 1px solid var(--border);
+      box-shadow: none;
+      padding: 8px;
+    }
+    .hdr-icon img { width: 100%; height: 100%; object-fit: contain; display: block; }
+    .hdr-title {
+      color: var(--text-1);
+      background: none;
+      -webkit-text-fill-color: currentColor;
+      letter-spacing: 0;
+    }
+    .hdr-sub { color: var(--text-3); }
+    .hdr-stat {
+      background: #f8fafc;
+      border-color: var(--border);
+    }
+    .hdr-stat-val,
+    #live-clock { color: var(--text-1); letter-spacing: 0; }
+    #refresh-btn {
+      background: #2f6f7e;
+      border-color: #2f6f7e;
+      color: #fff;
+      box-shadow: none;
+      letter-spacing: 0;
+    }
+    #refresh-btn:hover { box-shadow: 0 4px 12px rgba(47,111,126,.18); }
+    .status-bar,
+    .filter-bridge,
+    .flt-bar,
+    .chart-card,
+    .kpi-card,
+    .db-card {
+      background: #fff;
+      border-color: var(--border);
+      box-shadow: 0 1px 2px rgba(15,23,42,.05);
+    }
+    .status-bar { color: var(--text-2); }
+    .section { margin-top: 24px; }
+    .section-num {
+      color: #2f6f7e;
+      background: #e8f2f4;
+      border: 1px solid #d4e5e9;
+      letter-spacing: .6px;
+    }
+    .section-title { color: var(--text-1); }
+    .section-hint.fixed {
+      color: #2f6f7e;
+      background: #eef6f7;
+      border-color: #d4e5e9;
+    }
+    .chart-card-hdr,
+    .card-hdr {
+      background: #f8fafc;
+      border-bottom-color: var(--border);
+    }
+    .chart-card-hdr::before,
+    .card-hdr::before {
+      background: #2f6f7e;
+    }
+    .chart-legend-hint,
+    .card-legend-hint { color: var(--text-3); }
+    .chart-body,
+    .tech21-canvas,
+    .chart-body.tech21-canvas,
+    .tab-panel > div {
+      background: #fff;
+    }
+    .kpi-card::before { background: #d7e5e8; }
+    .kpi-val,
+    .kpi-val.pct,
+    .scalar-val {
+      color: #2f6f7e;
+      text-shadow: none;
+      letter-spacing: 0;
+    }
+    .chart-tab,
+    .flt-btn,
+    .btn-reset {
+      background: #fff;
+      border-color: var(--border);
+      color: var(--text-2);
+      box-shadow: none;
+    }
+    .chart-tab:hover,
+    .flt-btn:hover { border-color: #9bb3bd; color: var(--text-1); }
+    .chart-tab.on,
+    .flt-btn.active,
+    .flt-btn.on {
+      background: #2f6f7e;
+      border-color: #2f6f7e;
+      color: #fff;
+      box-shadow: none;
+    }
+    .filter-bridge-icon {
+      background: #2f6f7e;
+      box-shadow: none;
+    }
+    .flt-scope,
+    .flt-custom input[type="date"],
+    .no-dashboard code {
+      background: #f8fafc;
+      border-color: var(--border);
+      color: var(--text-1);
+      color-scheme: light;
+    }
+    .card-loading {
+      background: rgba(255,255,255,.9);
+      color: var(--text-2);
+    }
+    .loading-ring {
+      border-color: #d9e1ea;
+      border-top-color: #2f6f7e;
+    }
+    .mini-tbl th,
+    .mb-tbl th {
+      background: #f1f5f9;
+      color: var(--text-2);
+      border-bottom-color: var(--border);
+    }
+    .mini-tbl td,
+    .mb-tbl td {
+      border-bottom-color: #e8edf3;
+      color: var(--text-1);
+    }
+    .mini-tbl td.num,
+    .mb-tbl td.num { color: #2f6f7e; }
+    .mb-tbl tr:hover td { background: #f8fafc; }
+    .db-card.db-card--hero {
+      border-color: var(--border-hi);
+      box-shadow: 0 1px 2px rgba(15,23,42,.05);
+    }
+    .card-badge {
+      background: #eef6f7;
+      color: #2f6f7e;
+      border-color: #d4e5e9;
+    }
+    .footer { border-top-color: var(--border); }
+
+    /* ============================================================ V2 · 参考图工作台风格 */
+    :root {
+      --bg-page: #f1f4ff;
+      --bg-card: #ffffff;
+      --bg-card2: #ffffff;
+      --bg-glass: rgba(255,255,255,.96);
+      --border: #dfe6fb;
+      --border-hi: #cbd6fa;
+      --rose: #4f6dff;
+      --rose-soft: #4f6dff;
+      --rose-dim: #6b7cff;
+      --cyan: #4f6dff;
+      --cyan-dim: #4fc3f7;
+      --violet: #7e4bb8;
+      --magenta: #ef4f87;
+      --green: #2fbf8f;
+      --amber: #ff7a45;
+      --red: #ef4f87;
+      --text-1: #1b203c;
+      --text-2: #5a6389;
+      --text-3: #8b94bd;
+      --radius: 8px;
+      --radius-sm: 8px;
+      --gap: 18px;
+    }
+    body {
+      background: #f1f4ff;
+      color: var(--text-1);
+    }
+    .page {
+      max-width: 1768px;
+      padding: 0 28px 40px;
+    }
+    .hdr {
+      min-height: 58px;
+      margin: 0;
+      padding: 0;
+      border: 0;
+      border-bottom: 1px solid #dfe6fb;
+      border-radius: 0;
+      background: transparent;
+      box-shadow: none;
+    }
+    .hdr-left { gap: 10px; }
+    .hdr-icon {
+      width: 20px;
+      height: 20px;
+      border: 0;
+      border-radius: 0;
+      background: transparent;
+      padding: 0;
+    }
+    .hdr-icon img { display: none; }
+    .hdr-icon::before {
+      content: '';
+      width: 18px;
+      height: 18px;
+      display: block;
+      background:
+        linear-gradient(#4f6dff,#4f6dff) 1px 9px / 4px 2px no-repeat,
+        linear-gradient(#4f6dff,#4f6dff) 5px 6px / 2px 8px no-repeat,
+        linear-gradient(#4f6dff,#4f6dff) 9px 10px / 3px 2px no-repeat,
+        linear-gradient(#4f6dff,#4f6dff) 13px 4px / 2px 10px no-repeat;
+    }
+    .hdr-title {
+      font-size: 18px;
+      font-weight: 800;
+      letter-spacing: 0;
+    }
+    .hdr-sub {
+      display: inline-flex !important;
+      align-items: center;
+      margin: 0 0 0 12px;
+      padding-left: 12px;
+      border-left: 1px solid #d7def4;
+      color: #8b94bd;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .hdr-left > div:last-child {
+      display: flex;
+      align-items: center;
+      gap: 0;
+    }
+    .hdr-right {
+      gap: 12px;
+      color: var(--text-2);
+    }
+    .hdr-stat {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 0;
+      border: 0;
+      background: transparent;
+      text-align: left;
+    }
+    .hdr-stat-lbl {
+      font-size: 0;
+      width: 15px;
+      height: 15px;
+      border: 1.8px solid #8b94bd;
+      border-radius: 4px;
+      position: relative;
+    }
+    .hdr-stat-lbl::before {
+      content: '';
+      position: absolute;
+      left: 2px;
+      right: 2px;
+      top: 4px;
+      border-top: 1.5px solid #8b94bd;
+    }
+    .hdr-stat-val,
+    #live-clock {
+      color: #5a6389;
+      font-size: 16px;
+      font-weight: 700;
+      font-family: inherit;
+    }
+    #last-refresh {
+      margin-top: 0;
+      color: #8b94bd;
+      font-size: 12px;
+      text-align: left;
+    }
+    #refresh-btn {
+      padding: 5px 13px;
+      border: 1px solid #d8defd;
+      border-radius: 8px;
+      background: #e9edff;
+      color: #3156ff;
+      font-size: 12px;
+      font-weight: 800;
+    }
+    #refresh-btn:hover {
+      box-shadow: none;
+      background: #dfe5ff;
+      transform: none;
+    }
+    .v2-tabs {
+      display: flex;
+      gap: 26px;
+      align-items: center;
+      min-height: 58px;
+      border-bottom: 1px solid #dfe6fb;
+      margin-bottom: 30px;
+    }
+    .v2-tab {
+      position: relative;
+      color: #3f496f;
+      font-size: 15px;
+      font-weight: 800;
+      line-height: 58px;
+      white-space: nowrap;
+    }
+    .v2-tab.active { color: #4f6dff; }
+    .v2-tab.active::after {
+      content: '';
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: -1px;
+      height: 3px;
+      border-radius: 999px 999px 0 0;
+      background: #4f6dff;
+    }
+    .status-bar {
+      margin: -18px 0 18px;
+      border-color: #dfe6fb;
+      background: rgba(255,255,255,.64);
+      color: var(--text-2);
+    }
+    .section {
+      margin-top: 30px;
+    }
+    .part1-section { margin-top: 0; }
+    .section-hdr {
+      margin-bottom: 16px;
+      padding: 0;
+      align-items: center;
+    }
+    .section-num {
+      padding: 0;
+      border: 0;
+      background: transparent;
+      color: #4f6dff;
+      font-size: 15px;
+      font-weight: 800;
+      letter-spacing: 0;
+    }
+    .section-title {
+      font-size: 16px;
+      font-weight: 800;
+      color: #1b203c;
+    }
+    .section-hint {
+      color: #8b94bd;
+      font-size: 13px;
+      font-weight: 600;
+    }
+    .section-hint.fixed {
+      border: 0;
+      background: transparent;
+      color: #8b94bd;
+      padding: 0;
+    }
+    .kpi-grid {
+      gap: 14px;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+    .kpi-card,
+    .chart-card,
+    .filter-bridge,
+    .db-card {
+      border: 1px solid #dfe6fb;
+      border-radius: 8px;
+      background: #fff;
+      box-shadow: none;
+    }
+    .kpi-card {
+      min-height: 132px;
+      padding: 20px 22px 18px;
+    }
+    .kpi-card::before { display: none; }
+    .kpi-name {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 14px;
+      color: #8b94bd;
+      font-size: 13px;
+      font-weight: 800;
+    }
+    .kpi-name::before {
+      content: '';
+      width: 12px;
+      height: 12px;
+      border-radius: 3px;
+      border: 2px solid #4f6dff;
+    }
+    .kpi-name span {
+      display: none;
+    }
+    .kpi-val,
+    .kpi-val.pct {
+      color: #1b203c;
+      font-family: inherit;
+      font-size: 31px;
+      font-weight: 900;
+      line-height: 1.1;
+    }
+    .kpi-unit {
+      margin-left: 2px;
+      color: #8b94bd;
+      font-size: 16px;
+      font-weight: 800;
+    }
+    .kpi-compare {
+      margin-top: 13px;
+      gap: 8px;
+      flex-direction: column;
+    }
+    .cmp {
+      font-size: 13px;
+      font-weight: 700;
+      color: #8b94bd;
+    }
+    .cmp.up b { color: #4fc3f7; }
+    .cmp.down b { color: #ef4f87; }
+    .chart-card {
+      overflow: hidden;
+    }
+    .chart-card-hdr,
+    .card-hdr {
+      padding: 22px 28px 8px;
+      border-bottom: 0;
+      background: #fff;
+    }
+    .chart-card-hdr::before,
+    .card-hdr::before {
+      width: 0;
+      height: 0;
+      display: none;
+    }
+    .chart-card-title,
+    .card-title {
+      color: #1b203c;
+      font-size: 17px;
+      font-weight: 900;
+    }
+    .chart-legend-hint {
+      color: #8b94bd;
+      font-size: 12px;
+      font-weight: 700;
+    }
+    .chart-tabs {
+      gap: 8px;
+    }
+    .chart-tab {
+      padding: 5px 12px;
+      border: 1px solid #dfe6fb;
+      border-radius: 8px;
+      background: #f5f7ff;
+      color: #5a6389;
+      font-size: 12px;
+      font-weight: 800;
+    }
+    .chart-tab.on {
+      border-color: #d8defd;
+      background: #e9edff;
+      color: #3156ff;
+    }
+    .chart-body,
+    .tab-panels {
+      height: 310px;
+    }
+    .tab-panels { min-height: 310px; }
+    .chart-body,
+    .tech21-canvas,
+    .chart-body.tech21-canvas,
+    .tab-panel > div {
+      background: #fff;
+    }
+    #part2 {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 24px;
+    }
+    #part2 .section-hdr {
+      grid-column: 1 / -1;
+      margin-bottom: -6px;
+    }
+    #part2 .chart-grid {
+      display: block;
+      margin: 0 !important;
+    }
+    #part2 .chart-grid:nth-of-type(4) {
+      grid-column: 1 / -1;
+    }
+    .funnel-wrap {
+      gap: 24px;
+    }
+    .funnel-table-wrap {
+      background: #fff;
+      min-height: 360px;
+    }
+    .mini-tbl th,
+    .mb-tbl th {
+      background: #f7f9ff;
+      color: #8b94bd;
+      font-weight: 800;
+    }
+    .mini-tbl td,
+    .mb-tbl td {
+      border-bottom-color: #edf1fd;
+      color: #1b203c;
+    }
+    .footer { display: none; }
+    @media (min-width: 1500px) {
+      .kpi-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    }
+    @media (max-width: 1200px) {
+      #part2,
+      .funnel-wrap { grid-template-columns: 1fr; }
+    }
   </style>
 </head>
 <body>
@@ -440,8 +991,8 @@
     <div class="hdr-left">
       <div class="hdr-icon"><img src="/favicon.png" alt="Momcozy" /></div>
       <div>
-        <div class="hdr-title" id="db-title">数据看板</div>
-        <div class="hdr-sub" id="db-sub">Metabase Dashboard</div>
+        <div class="hdr-title" id="db-title">AI吸乳计划看板V2</div>
+        <div class="hdr-sub" id="db-sub">lute_app_dw · StarRocks</div>
       </div>
     </div>
     <div class="hdr-right">
@@ -459,6 +1010,13 @@
     </div>
   </header>
 
+  <nav class="v2-tabs" aria-label="看板模块">
+    <span class="v2-tab active">总览</span>
+    <span class="v2-tab">触达与渗透</span>
+    <span class="v2-tab">计划完成</span>
+    <span class="v2-tab">生成漏斗</span>
+  </nav>
+
   <!-- 状态条 -->
   <div class="status-bar" id="status-bar">
     <div class="s-dot loading" id="s-dot"></div>
@@ -469,8 +1027,8 @@
   <div id="designed-layout">
     <section class="section part1-section">
       <div class="section-hdr">
-        <span class="section-num">PART 01</span>
-        <span class="section-title">吸乳计划 · 核心指标卡</span>
+        <span class="section-num">总览</span>
+        <span class="section-title">吸乳计划核心指标</span>
         <span class="section-hint fixed">固定最近一日 · 不受下方日期筛选影响</span>
       </div>
       <div class="kpi-grid" id="kpi-grid"></div>
@@ -478,8 +1036,8 @@
 
     <section class="section" id="part2">
       <div class="section-hdr">
-        <span class="section-num">PART 02</span>
-        <span class="section-title">趋势类指标</span>
+        <span class="section-num">趋势</span>
+        <span class="section-title">触达、渗透与完成趋势</span>
         <span class="section-hint" id="part2-hint">近30天 · 折线=数值 · 柱形=比率</span>
       </div>
       <div class="chart-grid g1" style="margin-bottom:12px">
@@ -490,7 +1048,7 @@
               <button type="button" class="chart-tab on" data-tab="pump">吸奶器用户渗透</button>
               <button type="button" class="chart-tab" data-tab="app">APP大盘用户渗透</button>
             </div>
-            <div class="chart-legend-hint"><i>折线 · 荧光</i><i>柱形 · 渐变</i></div>
+            <div class="chart-legend-hint"><i>折线指标</i><i>柱形指标</i></div>
           </div>
           <div class="tab-panels" style="height:300px">
             <div class="tab-panel active" id="panel-reach-pump"><div id="chart-reach-pump" class="tech21-canvas"></div></div>
@@ -506,7 +1064,7 @@
               <button type="button" class="chart-tab on" data-tab="c214">按次</button>
               <button type="button" class="chart-tab" data-tab="c213">按人</button>
             </div>
-            <div class="chart-legend-hint"><i>折线 · 荧光</i><i>柱形 · 渐变</i></div>
+            <div class="chart-legend-hint"><i>折线指标</i><i>柱形指标</i></div>
           </div>
           <div class="tab-panels">
             <div class="tab-panel active" id="panel-plan-214"><div id="chart-plan-214" class="tech21-canvas"></div></div>
@@ -523,7 +1081,7 @@
               <button type="button" class="chart-tab" data-tab="usr">按人</button>
               <button type="button" class="chart-tab" data-tab="avg">人均</button>
             </div>
-            <div class="chart-legend-hint"><i>折线 · 荧光</i></div>
+            <div class="chart-legend-hint"><i>折线指标</i></div>
           </div>
           <div class="tab-panels" style="height:260px">
             <div class="tab-panel active" id="panel-method-cnt"><div id="chart-method-cnt" class="tech21-canvas"></div></div>
@@ -536,7 +1094,7 @@
 
     <section class="section" id="part3">
       <div class="section-hdr">
-        <span class="section-num">PART 03</span>
+        <span class="section-num">漏斗</span>
         <span class="section-title">生成计划漏斗</span>
         <span class="section-hint" id="part3-hint">受日期筛选 · 入口 → 同步</span>
       </div>
@@ -548,7 +1106,7 @@
         <div class="chart-card">
           <div class="chart-card-hdr">
             <span class="chart-card-title">3.2 关键转化率趋势</span>
-            <div class="chart-legend-hint"><i>折线 · 荧光</i></div>
+            <div class="chart-legend-hint"><i>折线指标</i></div>
           </div>
           <div class="chart-body tech21-canvas" id="chart-funnel-trend"><div class="card-loading"><div class="loading-ring"></div><span>加载中...</span></div></div>
         </div>
@@ -589,19 +1147,19 @@ let filterState = {};     // param_id → 值字符串
 let chartMap    = {};     // dashcard_id → echarts instance
 let kpiSnapshot = {};     // label → { value, display }
 
-const COLORS = ['#FF5C8A','#FF8FAB','#00E5FF','#A78BFA','#E879F9','#FBBF24','#34D399','#7EC8E3'];
+const COLORS = ['#2F6F7E','#6F8F9D','#4F8B74','#8A9AAE','#B7791F','#6B7C93','#9BB3BD','#CBD5E1'];
 /** 折线：细线 + 高饱和亮色（与柱形色系区分） */
 const LINE_WIDTH = 1.5;
-const LINE_PALETTE = ['#E879F9', '#FBBF24', '#6EE7B7', '#F9A8D4', '#FF9A6C', '#C4B5FD'];
+const LINE_PALETTE = ['#2F6F7E', '#4F8B74', '#B7791F', '#6B7C93', '#8A9AAE', '#9BB3BD'];
 
 /** 柱形：亮蓝色系 + 高透明（与折线暖色/霓虹色区分） */
 const BAR_STYLES = [
-  { fill: 'rgba(56, 189, 255, 0.34)',  border: 'rgba(56, 189, 255, 0.18)' },
-  { fill: 'rgba(96, 210, 255, 0.34)',  border: 'rgba(96, 210, 255, 0.18)' },
-  { fill: 'rgba(40, 160, 255, 0.34)',  border: 'rgba(40, 160, 255, 0.18)' },
-  { fill: 'rgba(120, 200, 255, 0.34)', border: 'rgba(120, 200, 255, 0.18)' },
-  { fill: 'rgba(72, 175, 255, 0.34)',  border: 'rgba(72, 175, 255, 0.18)' },
-  { fill: 'rgba(140, 220, 255, 0.34)', border: 'rgba(140, 220, 255, 0.18)' },
+  { fill: 'rgba(47, 111, 126, 0.24)', border: 'rgba(47, 111, 126, 0.18)' },
+  { fill: 'rgba(79, 139, 116, 0.24)', border: 'rgba(79, 139, 116, 0.18)' },
+  { fill: 'rgba(107, 124, 147, 0.22)', border: 'rgba(107, 124, 147, 0.16)' },
+  { fill: 'rgba(155, 179, 189, 0.3)', border: 'rgba(155, 179, 189, 0.2)' },
+  { fill: 'rgba(183, 121, 31, 0.18)', border: 'rgba(183, 121, 31, 0.14)' },
+  { fill: 'rgba(138, 154, 174, 0.22)', border: 'rgba(138, 154, 174, 0.16)' },
 ];
 
 function barItemStyle(idx) {
@@ -614,8 +1172,8 @@ function barItemStyle(idx) {
   };
 }
 const CHART_UI = {
-  grid: '#1e2d48', text2: '#94a8c8', text1: '#eef2ff',
-  tooltipBg: '#141c30', tooltipBorder: '#2a4068',
+  grid: '#E2E8F0', text2: '#526274', text1: '#172033',
+  tooltipBg: '#FFFFFF', tooltipBorder: '#CBD5E1',
 };
 
 /** 看板专属叙事配置（dashboard_id → profile） */
@@ -1264,7 +1822,7 @@ function initDefaultDateFilter() {
 function updatePartHints() {
   const p2 = document.getElementById('part2-hint');
   const p3 = document.getElementById('part3-hint');
-  if (p2) p2.textContent = '近30天 · 荧光折线 · 渐变柱形';
+  if (p2) p2.textContent = '近30天 · 折线趋势 · 柱形规模';
   if (p3) p3.textContent = '近30天 · 入口 → 同步';
 }
 
@@ -1393,37 +1951,37 @@ function renderExplicitCombo(el, chartKey, cols, rows, slot, vizSettings, legend
 
 /** 2.1 专用：冷色底 + 荧光折线 + 渐变胶囊柱 */
 const TECH21 = {
-  bg: '#0F172A',
-  grid: 'rgba(51, 65, 85, 0.4)',
-  axis: '#64748B',
-  text: '#94A3B8',
-  cyan: '#06B6D4',
-  cyanHi: '#00F2FE',
-  blue: '#3B82F6',
-  violet: '#8B5CF6',
-  pink: '#EC4899',
-  mute: '#64748B',
-  tooltipBg: 'rgba(15, 23, 42, 0.72)',
-  tooltipBorder: '#06B6D4',
+  bg: '#FFFFFF',
+  grid: 'rgba(203, 213, 225, 0.8)',
+  axis: '#8491A3',
+  text: '#526274',
+  cyan: '#2F6F7E',
+  cyanHi: '#2F6F7E',
+  blue: '#6F8F9D',
+  violet: '#6B7C93',
+  pink: '#4F8B74',
+  mute: '#8491A3',
+  tooltipBg: 'rgba(255, 255, 255, 0.96)',
+  tooltipBorder: '#CBD5E1',
 };
 
 function techBarGradient() {
   return new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-    { offset: 0, color: 'rgba(0, 242, 254, 0.88)' },
-    { offset: 0.45, color: 'rgba(6, 182, 212, 0.38)' },
-    { offset: 1, color: 'rgba(59, 130, 246, 0.04)' },
+    { offset: 0, color: 'rgba(47, 111, 126, 0.68)' },
+    { offset: 0.45, color: 'rgba(47, 111, 126, 0.28)' },
+    { offset: 1, color: 'rgba(47, 111, 126, 0.06)' },
   ]);
 }
 
 /** 折线用暖色/紫粉系，与柱形电光青蓝拉开 */
-const TECH21_LINE_COLORS = ['#EC4899', '#F59E0B', '#94A3B8'];
+const TECH21_LINE_COLORS = ['#2F6F7E', '#4F8B74', '#B7791F'];
 
 function techBarGradientAlt(barIdx) {
   if (barIdx % 2 === 1) {
     return new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-      { offset: 0, color: 'rgba(236, 72, 153, 0.82)' },
-      { offset: 0.5, color: 'rgba(139, 92, 246, 0.35)' },
-      { offset: 1, color: 'rgba(59, 130, 246, 0.04)' },
+      { offset: 0, color: 'rgba(79, 139, 116, 0.62)' },
+      { offset: 0.5, color: 'rgba(79, 139, 116, 0.24)' },
+      { offset: 1, color: 'rgba(79, 139, 116, 0.06)' },
     ]);
   }
   return techBarGradient();
@@ -1642,7 +2200,7 @@ function renderTechComboChart(el, chartKey, cols, rows, slot, vizSettings, legen
           const val = col && isRateCol(col, pctCfg)
             ? fmtPct2(p.value, Math.abs(p.value) <= 1)
             : fmtShort(p.value);
-          html += `<div style="margin:4px 0"><span style="color:${TECH21.text}">${p.seriesName}</span> <b style="color:#fff;font-size:14px">${val}</b></div>`;
+          html += `<div style="margin:4px 0"><span style="color:${TECH21.text}">${p.seriesName}</span> <b style="color:#1b203c;font-size:14px">${val}</b></div>`;
         });
         return html;
       },
@@ -2351,12 +2909,15 @@ async function init() {
     const profile = getProfile();
 
     // 更新标题
-    document.title = meta.name + ' — Momcozy数据平台';
-    document.getElementById('db-title').textContent = meta.name.replace(/^🗓️\s*/, '');
+    const displayTitle = profile?.useDesignedLayout
+      ? 'AI吸乳计划看板V2'
+      : meta.name.replace(/^🗓️\s*/, '');
+    document.title = displayTitle + ' — Momcozy数据平台';
+    document.getElementById('db-title').textContent = displayTitle;
     const subEl = document.getElementById('db-sub');
     if (profile?.useDesignedLayout) {
-      subEl.textContent = '';
-      subEl.style.display = 'none';
+      subEl.style.display = '';
+      subEl.textContent = 'lute_app_dw · StarRocks';
     } else {
       subEl.style.display = '';
       subEl.textContent = `Dashboard #${DASHBOARD_ID}  ·  ${meta.dashcards?.length ?? 0} 个图表`;

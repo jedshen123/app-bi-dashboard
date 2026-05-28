@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>登录 — 数据看板</title>
+  <title>登录 — Momcozy数据平台</title>
   <style>
     :root {
       --bg-deep:  #060810;
@@ -75,11 +75,18 @@
     }
     .logo-icon {
       width: 56px; height: 56px; border-radius: 16px;
-      background: linear-gradient(135deg, var(--rose), var(--violet));
+      background: rgba(255,255,255,.96);
       display: flex; align-items: center; justify-content: center;
-      font-size: 26px;
       box-shadow: 0 0 28px var(--glow-rose), 0 0 60px rgba(255,92,138,.12);
       margin-bottom: 16px;
+      overflow: hidden;
+      padding: 8px;
+    }
+    .logo-icon img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      display: block;
     }
     .logo-title {
       font-size: 20px; font-weight: 800; letter-spacing: .3px;
@@ -176,8 +183,8 @@
 <body>
   <div class="card">
     <div class="logo">
-      <div class="logo-icon">🌸</div>
-      <div class="logo-title">数据看板</div>
+      <div class="logo-icon"><img src="/favicon.png" alt="Momcozy" /></div>
+      <div class="logo-title">Momcozy数据平台</div>
       <div class="logo-sub">请使用 Metabase 账户登录</div>
     </div>
 
