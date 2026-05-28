@@ -617,22 +617,22 @@
 
     /* ============================================================ V2 · 参考图工作台风格 */
     :root {
-      --bg-page: #f1f4ff;
+      --bg-page: #edf7f8;
       --bg-card: #ffffff;
       --bg-card2: #ffffff;
       --bg-glass: rgba(255,255,255,.96);
-      --border: #dfe6fb;
-      --border-hi: #cbd6fa;
-      --rose: #4f6dff;
-      --rose-soft: #4f6dff;
-      --rose-dim: #6b7cff;
-      --cyan: #4f6dff;
-      --cyan-dim: #4fc3f7;
-      --violet: #7e4bb8;
-      --magenta: #ef4f87;
-      --green: #2fbf8f;
-      --amber: #ff7a45;
-      --red: #ef4f87;
+      --border: #dce8f0;
+      --border-hi: #cbdce8;
+      --rose: #4663f2;
+      --rose-soft: #4663f2;
+      --rose-dim: #6b80ff;
+      --cyan: #4fc3e4;
+      --cyan-dim: #4fc3e4;
+      --violet: #821fc8;
+      --magenta: #f23891;
+      --green: #42c933;
+      --amber: #ff7b14;
+      --red: #ff2b2b;
       --text-1: #1b203c;
       --text-2: #5a6389;
       --text-3: #8b94bd;
@@ -641,7 +641,7 @@
       --gap: 18px;
     }
     body {
-      background: #f1f4ff;
+      background: #edf7f8;
       color: var(--text-1);
     }
     .page {
@@ -653,7 +653,7 @@
       margin: 0;
       padding: 0;
       border: 0;
-      border-bottom: 1px solid #dfe6fb;
+      border-bottom: 1px solid #dce8f0;
       border-radius: 0;
       background: transparent;
       box-shadow: none;
@@ -674,10 +674,10 @@
       height: 18px;
       display: block;
       background:
-        linear-gradient(#4f6dff,#4f6dff) 1px 9px / 4px 2px no-repeat,
-        linear-gradient(#4f6dff,#4f6dff) 5px 6px / 2px 8px no-repeat,
-        linear-gradient(#4f6dff,#4f6dff) 9px 10px / 3px 2px no-repeat,
-        linear-gradient(#4f6dff,#4f6dff) 13px 4px / 2px 10px no-repeat;
+        linear-gradient(#4663f2,#4663f2) 1px 9px / 4px 2px no-repeat,
+        linear-gradient(#4663f2,#4663f2) 5px 6px / 2px 8px no-repeat,
+        linear-gradient(#4663f2,#4663f2) 9px 10px / 3px 2px no-repeat,
+        linear-gradient(#4663f2,#4663f2) 13px 4px / 2px 10px no-repeat;
     }
     .hdr-title {
       font-size: 18px;
@@ -734,16 +734,16 @@
     }
     #refresh-btn {
       padding: 5px 13px;
-      border: 1px solid #d8defd;
+      border: 1px solid #dbe3ff;
       border-radius: 8px;
-      background: #e9edff;
-      color: #3156ff;
+      background: #eef2ff;
+      color: #4663f2;
       font-size: 12px;
       font-weight: 800;
     }
     #refresh-btn:hover {
       box-shadow: none;
-      background: #dfe5ff;
+      background: #e3e9ff;
       transform: none;
     }
     .v2-tabs {
@@ -751,7 +751,7 @@
       gap: 26px;
       align-items: center;
       min-height: 58px;
-      border-bottom: 1px solid #dfe6fb;
+      border-bottom: 1px solid #dce8f0;
       margin-bottom: 30px;
     }
     .v2-tab {
@@ -766,8 +766,8 @@
       cursor: pointer;
       font-family: inherit;
     }
-    .v2-tab:hover { color: #4f6dff; }
-    .v2-tab.active { color: #4f6dff; }
+    .v2-tab:hover { color: #4663f2; }
+    .v2-tab.active { color: #4663f2; }
     .v2-tab.active::after {
       content: '';
       position: absolute;
@@ -776,11 +776,11 @@
       bottom: -1px;
       height: 3px;
       border-radius: 999px 999px 0 0;
-      background: #4f6dff;
+      background: #4663f2;
     }
     .status-bar {
       margin: -18px 0 18px;
-      border-color: #dfe6fb;
+      border-color: #dce8f0;
       background: rgba(255,255,255,.64);
       color: var(--text-2);
     }
@@ -797,7 +797,7 @@
       padding: 0;
       border: 0;
       background: transparent;
-      color: #4f6dff;
+      color: #4663f2;
       font-size: 15px;
       font-weight: 800;
       letter-spacing: 0;
@@ -826,7 +826,7 @@
     .chart-card,
     .filter-bridge,
     .db-card {
-      border: 1px solid #dfe6fb;
+      border: 1px solid #dce8f0;
       border-radius: 8px;
       background: #fff;
       box-shadow: none;
@@ -850,8 +850,11 @@
       width: 12px;
       height: 12px;
       border-radius: 3px;
-      border: 2px solid #4f6dff;
+      border: 2px solid #4663f2;
     }
+    .kpi-card:nth-child(4n+2) .kpi-name::before { border-color: #821fc8; }
+    .kpi-card:nth-child(4n+3) .kpi-name::before { border-color: #f23891; }
+    .kpi-card:nth-child(4n+4) .kpi-name::before { border-color: #4fc3e4; }
     .kpi-name span {
       display: none;
     }
@@ -879,8 +882,8 @@
       font-weight: 700;
       color: #8b94bd;
     }
-    .cmp.up b { color: #4fc3f7; }
-    .cmp.down b { color: #ef4f87; }
+    .cmp.up b { color: #4fc3e4; }
+    .cmp.down b { color: #f23891; }
     .chart-card {
       overflow: hidden;
     }
@@ -912,17 +915,17 @@
     }
     .chart-tab {
       padding: 5px 12px;
-      border: 1px solid #dfe6fb;
+      border: 1px solid #dce8f0;
       border-radius: 8px;
-      background: #f5f7ff;
+      background: #f7f9ff;
       color: #5a6389;
       font-size: 12px;
       font-weight: 800;
     }
     .chart-tab.on {
-      border-color: #d8defd;
-      background: #e9edff;
-      color: #3156ff;
+      border-color: #dbe3ff;
+      background: #eef2ff;
+      color: #4663f2;
     }
     .chart-body,
     .tab-panels {
@@ -1143,19 +1146,19 @@ let filterState = {};     // param_id → 值字符串
 let chartMap    = {};     // dashcard_id → echarts instance
 let kpiSnapshot = {};     // label → { value, display }
 
-const COLORS = ['#2F6F7E','#6F8F9D','#4F8B74','#8A9AAE','#B7791F','#6B7C93','#9BB3BD','#CBD5E1'];
+const COLORS = ['#4663F2', '#821FC8', '#F23891', '#4FC3E4', '#FF7B14', '#42C933', '#8B94BD', '#CBD5E1'];
 /** 折线：细线 + 高饱和亮色（与柱形色系区分） */
 const LINE_WIDTH = 1.5;
-const LINE_PALETTE = ['#2F6F7E', '#4F8B74', '#B7791F', '#6B7C93', '#8A9AAE', '#9BB3BD'];
+const LINE_PALETTE = ['#4663F2', '#821FC8', '#F23891', '#4FC3E4', '#FF7B14', '#42C933'];
 
 /** 柱形：亮蓝色系 + 高透明（与折线暖色/霓虹色区分） */
 const BAR_STYLES = [
-  { fill: 'rgba(47, 111, 126, 0.24)', border: 'rgba(47, 111, 126, 0.18)' },
-  { fill: 'rgba(79, 139, 116, 0.24)', border: 'rgba(79, 139, 116, 0.18)' },
-  { fill: 'rgba(107, 124, 147, 0.22)', border: 'rgba(107, 124, 147, 0.16)' },
-  { fill: 'rgba(155, 179, 189, 0.3)', border: 'rgba(155, 179, 189, 0.2)' },
-  { fill: 'rgba(183, 121, 31, 0.18)', border: 'rgba(183, 121, 31, 0.14)' },
-  { fill: 'rgba(138, 154, 174, 0.22)', border: 'rgba(138, 154, 174, 0.16)' },
+  { fill: 'rgba(70, 99, 242, 0.32)', border: 'rgba(70, 99, 242, 0.18)' },
+  { fill: 'rgba(130, 31, 200, 0.30)', border: 'rgba(130, 31, 200, 0.18)' },
+  { fill: 'rgba(242, 56, 145, 0.30)', border: 'rgba(242, 56, 145, 0.18)' },
+  { fill: 'rgba(79, 195, 228, 0.34)', border: 'rgba(79, 195, 228, 0.18)' },
+  { fill: 'rgba(255, 123, 20, 0.26)', border: 'rgba(255, 123, 20, 0.16)' },
+  { fill: 'rgba(66, 201, 51, 0.24)', border: 'rgba(66, 201, 51, 0.14)' },
 ];
 
 function barItemStyle(idx) {
@@ -1168,8 +1171,8 @@ function barItemStyle(idx) {
   };
 }
 const CHART_UI = {
-  grid: '#E2E8F0', text2: '#526274', text1: '#172033',
-  tooltipBg: '#FFFFFF', tooltipBorder: '#CBD5E1',
+  grid: '#E8EEF5', text2: '#5A6389', text1: '#1B203C',
+  tooltipBg: '#FFFFFF', tooltipBorder: '#DCE8F0',
 };
 
 /** 看板专属叙事配置（dashboard_id → profile） */
@@ -1948,36 +1951,36 @@ function renderExplicitCombo(el, chartKey, cols, rows, slot, vizSettings, legend
 /** 2.1 专用：冷色底 + 荧光折线 + 渐变胶囊柱 */
 const TECH21 = {
   bg: '#FFFFFF',
-  grid: 'rgba(203, 213, 225, 0.8)',
-  axis: '#8491A3',
-  text: '#526274',
-  cyan: '#2F6F7E',
-  cyanHi: '#2F6F7E',
-  blue: '#6F8F9D',
-  violet: '#6B7C93',
-  pink: '#4F8B74',
+  grid: 'rgba(220, 232, 240, 0.95)',
+  axis: '#8B94BD',
+  text: '#5A6389',
+  cyan: '#4FC3E4',
+  cyanHi: '#4FC3E4',
+  blue: '#4663F2',
+  violet: '#821FC8',
+  pink: '#F23891',
   mute: '#8491A3',
   tooltipBg: 'rgba(255, 255, 255, 0.96)',
-  tooltipBorder: '#CBD5E1',
+  tooltipBorder: '#DCE8F0',
 };
 
 function techBarGradient() {
   return new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-    { offset: 0, color: 'rgba(47, 111, 126, 0.68)' },
-    { offset: 0.45, color: 'rgba(47, 111, 126, 0.28)' },
-    { offset: 1, color: 'rgba(47, 111, 126, 0.06)' },
+    { offset: 0, color: 'rgba(70, 99, 242, 0.92)' },
+    { offset: 0.45, color: 'rgba(70, 99, 242, 0.55)' },
+    { offset: 1, color: 'rgba(70, 99, 242, 0.10)' },
   ]);
 }
 
 /** 折线用暖色/紫粉系，与柱形电光青蓝拉开 */
-const TECH21_LINE_COLORS = ['#2F6F7E', '#4F8B74', '#B7791F'];
+const TECH21_LINE_COLORS = ['#4663F2', '#821FC8', '#F23891', '#4FC3E4'];
 
 function techBarGradientAlt(barIdx) {
   if (barIdx % 2 === 1) {
     return new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-      { offset: 0, color: 'rgba(79, 139, 116, 0.62)' },
-      { offset: 0.5, color: 'rgba(79, 139, 116, 0.24)' },
-      { offset: 1, color: 'rgba(79, 139, 116, 0.06)' },
+      { offset: 0, color: 'rgba(242, 56, 145, 0.88)' },
+      { offset: 0.5, color: 'rgba(242, 56, 145, 0.42)' },
+      { offset: 1, color: 'rgba(242, 56, 145, 0.08)' },
     ]);
   }
   return techBarGradient();
