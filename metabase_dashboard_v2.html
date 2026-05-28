@@ -684,16 +684,7 @@
       font-weight: 800;
       letter-spacing: 0;
     }
-    .hdr-sub {
-      display: inline-flex !important;
-      align-items: center;
-      margin: 0 0 0 12px;
-      padding-left: 12px;
-      border-left: 1px solid #d7def4;
-      color: #8b94bd;
-      font-size: 12px;
-      font-weight: 600;
-    }
+    .hdr-sub { display: none !important; }
     .hdr-left > div:last-child {
       display: flex;
       align-items: center;
@@ -765,12 +756,17 @@
     }
     .v2-tab {
       position: relative;
+      border: 0;
+      background: transparent;
       color: #3f496f;
       font-size: 15px;
       font-weight: 800;
       line-height: 58px;
       white-space: nowrap;
+      cursor: pointer;
+      font-family: inherit;
     }
+    .v2-tab:hover { color: #4f6dff; }
     .v2-tab.active { color: #4f6dff; }
     .v2-tab.active::after {
       content: '';
@@ -992,7 +988,7 @@
       <div class="hdr-icon"><img src="/favicon.png" alt="Momcozy" /></div>
       <div>
         <div class="hdr-title" id="db-title">AI吸乳计划看板V2</div>
-        <div class="hdr-sub" id="db-sub">lute_app_dw · StarRocks</div>
+        <div class="hdr-sub" id="db-sub"></div>
       </div>
     </div>
     <div class="hdr-right">
@@ -1011,10 +1007,10 @@
   </header>
 
   <nav class="v2-tabs" aria-label="看板模块">
-    <span class="v2-tab active">总览</span>
-    <span class="v2-tab">触达与渗透</span>
-    <span class="v2-tab">计划完成</span>
-    <span class="v2-tab">生成漏斗</span>
+    <button type="button" class="v2-tab active" data-target="v2-overview">总览</button>
+    <button type="button" class="v2-tab" data-target="part2">触达与渗透</button>
+    <button type="button" class="v2-tab" data-target="v2-plan">计划完成</button>
+    <button type="button" class="v2-tab" data-target="part3">生成漏斗</button>
   </nav>
 
   <!-- 状态条 -->
@@ -1025,7 +1021,7 @@
 
   <!-- 设计稿布局（dashboard 14） -->
   <div id="designed-layout">
-    <section class="section part1-section">
+    <section class="section part1-section" id="v2-overview">
       <div class="section-hdr">
         <span class="section-num">总览</span>
         <span class="section-title">吸乳计划核心指标</span>
@@ -1056,7 +1052,7 @@
           </div>
         </div>
       </div>
-      <div class="chart-grid g1">
+      <div class="chart-grid g1" id="v2-plan">
         <div class="chart-card">
           <div class="chart-card-hdr">
             <span class="chart-card-title">2.2 AI吸乳计划完成情况</span>
@@ -2840,6 +2836,18 @@ window.addEventListener('resize', () => {
   Object.values(chartMap).forEach(c => c?.resize());
 });
 
+function bindV2Tabs() {
+  document.querySelectorAll('.v2-tab[data-target]').forEach(tab => {
+    tab.addEventListener('click', () => {
+      const target = document.getElementById(tab.dataset.target);
+      if (!target) return;
+      document.querySelectorAll('.v2-tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  });
+}
+
 /* ================================================================
    状态更新
 ================================================================ */
@@ -2916,12 +2924,13 @@ async function init() {
     document.getElementById('db-title').textContent = displayTitle;
     const subEl = document.getElementById('db-sub');
     if (profile?.useDesignedLayout) {
-      subEl.style.display = '';
-      subEl.textContent = 'lute_app_dw · StarRocks';
+      subEl.style.display = 'none';
+      subEl.textContent = '';
     } else {
       subEl.style.display = '';
       subEl.textContent = `Dashboard #${DASHBOARD_ID}  ·  ${meta.dashcards?.length ?? 0} 个图表`;
     }
+    bindV2Tabs();
     initDefaultDateFilter();
 
     if (profile?.useDesignedLayout) {
