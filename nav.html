@@ -43,93 +43,6 @@
       height: 100%;
       border: none;
       background: var(--bg-deep);
-      opacity: 1;
-      transition: opacity .18s ease;
-    }
-    body.frame-loading #main-frame { opacity: 0; }
-
-    #frame-loading-screen {
-      position: fixed;
-      inset: 0;
-      z-index: 50;
-      display: none;
-      align-items: center;
-      justify-content: center;
-      pointer-events: none;
-      background: linear-gradient(180deg, #f4f7fb, #e9eff7);
-    }
-    body.frame-loading #frame-loading-screen { display: flex; }
-    .loading-panel {
-      width: min(360px, calc(100vw - 48px));
-      padding: 22px 24px 20px;
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      background: rgba(255,255,255,.96);
-      box-shadow: 0 16px 40px rgba(30,45,72,.12);
-    }
-    .loading-top {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      margin-bottom: 16px;
-    }
-    .loading-mark {
-      width: 32px;
-      height: 32px;
-      border-radius: 8px;
-      border: 1px solid var(--border-hi);
-      display: grid;
-      place-items: center;
-      color: #526274;
-    }
-    .loading-mark::before {
-      content: '';
-      width: 15px;
-      height: 14px;
-      border-bottom: 3px solid currentColor;
-      border-left: 3px solid currentColor;
-      box-shadow: 6px 3px 0 -1px currentColor, 12px -3px 0 -1px currentColor;
-      opacity: .9;
-    }
-    .loading-title {
-      color: #172033;
-      font-size: 14px;
-      font-weight: 700;
-    }
-    .loading-sub {
-      margin-top: 3px;
-      color: #8491a3;
-      font-size: 11px;
-    }
-    .loading-track {
-      height: 4px;
-      overflow: hidden;
-      border-radius: 999px;
-      background: #d9e1ea;
-    }
-    .loading-bar {
-      width: 42%;
-      height: 100%;
-      border-radius: inherit;
-      background: linear-gradient(90deg, #2f6f7e, #6f8f9d);
-      animation: loading-slide 1.05s ease-in-out infinite;
-    }
-    .loading-skeleton {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 8px;
-      margin-top: 16px;
-    }
-    .loading-skeleton span {
-      height: 42px;
-      border-radius: 8px;
-      border: 1px solid #d9e1ea;
-      background: #f8fafc;
-    }
-    .loading-skeleton span:first-child { grid-column: span 2; height: 30px; }
-    @keyframes loading-slide {
-      0% { transform: translateX(-110%); }
-      55%, 100% { transform: translateX(245%); }
     }
 
     /* ============================================================ 左边缘触发条 */
@@ -394,28 +307,10 @@
     body.sidebar-open #sidebar-mask { display: block; }
   </style>
 </head>
-<body class="frame-loading">
+<body>
 
   <!-- iframe 内容区 -->
   <iframe id="main-frame" allowfullscreen></iframe>
-
-  <div id="frame-loading-screen" aria-live="polite">
-    <div class="loading-panel">
-      <div class="loading-top">
-        <div class="loading-mark"></div>
-        <div>
-          <div class="loading-title">正在加载看板</div>
-          <div class="loading-sub">同步数据与图表配置</div>
-        </div>
-      </div>
-      <div class="loading-track"><div class="loading-bar"></div></div>
-      <div class="loading-skeleton">
-        <span></span>
-        <span></span>
-        <span></span>
-      </div>
-    </div>
-  </div>
 
   <!-- 左边缘触发条 -->
   <div id="sidebar-trigger"></div>
@@ -481,17 +376,6 @@ const mask    = document.getElementById('sidebar-mask');
 const frame   = document.getElementById('main-frame');
 
 let hideTimer = null;
-function showFrame() {
-  document.body.classList.remove('frame-loading');
-}
-
-function waitForFrameReady() {
-  document.body.classList.add('frame-loading');
-}
-
-window.addEventListener('message', event => {
-  if (event.data && event.data.type === 'momcozy-dashboard-ready') showFrame();
-});
 
 /* ---- 侧栏开关 ---- */
 function openSidebar() {
@@ -517,7 +401,6 @@ mask.addEventListener('click', closeSidebar);
 /* ---- 加载内部看板 ---- */
 function loadDashboard(el) {
   setActive(el);
-  waitForFrameReady();
   frame.src = el.dataset.src || '/dashboard';
   scheduleClose();
 }
@@ -546,7 +429,6 @@ async function doLogout() {
   location.replace('/login');
 }
 
-waitForFrameReady();
 frame.src = '/dashboard';
 loadUser();
 </script>

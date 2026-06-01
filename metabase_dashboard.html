@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Momcozy数据平台</title>
   <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js"></script>
+  <script src="/dashboard_skeleton.js"></script>
   <style>
     /* 深色 · 科技 · 母婴专业 */
     :root {
@@ -164,11 +165,15 @@
     .tech21-canvas { background: #0f172a; border-radius: 8px; }
     .chart-body.tech21-canvas { background: #0f172a; border-radius: 8px; }
     .chart-body.sm { height: 260px; }
-    .chart-body .card-loading { background: rgba(15,21,36,.92); }
     .tab-panels { position: relative; min-height: 300px; height: 300px; }
     .tab-panel { display: none; position: absolute; inset: 0; padding: 8px 12px 12px; }
     .tab-panel.active { display: block; }
-    .tab-panel > div { width: 100%; height: 100%; min-height: 280px; }
+    .tab-panel > div {
+      width: 100%; height: 100%; min-height: 280px;
+      position: relative;
+    }
+    .chart-body.tech21-canvas,
+    .funnel-table-wrap { position: relative; }
     .funnel-wrap { display: grid; grid-template-columns: 1fr 1fr; gap: var(--gap); }
     .funnel-table-wrap { padding: 12px 18px 18px; overflow: auto; min-height: 380px; max-height: 440px; }
     .mini-tbl { width: 100%; border-collapse: collapse; font-size: 12px; }
@@ -192,7 +197,38 @@
       padding: 16px 18px 14px; box-shadow: 0 8px 32px rgba(0,0,0,.45);
       position: relative; overflow: hidden;
     }
-    .kpi-card.loading .kpi-val { opacity: .35; }
+    .kpi-card.loading .kpi-val:not(.kpi-val-skeleton) { opacity: .35; }
+    .kpi-val-skeleton {
+      color: transparent !important;
+      text-shadow: none !important;
+      min-height: 28px;
+      border-radius: 6px;
+      display: block;
+    }
+    .kpi-skeleton-cmp {
+      display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap;
+    }
+    @keyframes sk-shimmer {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+    .sk-shimmer {
+      background: linear-gradient(90deg, var(--bg-card2) 22%, var(--border-hi) 48%, var(--bg-card2) 78%);
+      background-size: 200% 100%;
+      animation: sk-shimmer 1.2s ease-in-out infinite;
+    }
+    .sk-line {
+      display: block; height: 10px; border-radius: 4px;
+    }
+    .sk-w45 { width: 45%; }
+    .sk-w38 { width: 38%; }
+    .block-skeleton-chart {
+      position: absolute; inset: 0; z-index: 5; border-radius: 8px;
+    }
+    .block-skeleton-table {
+      position: absolute; inset: 0; z-index: 5;
+      padding: 16px 18px; display: flex; flex-direction: column; gap: 12px;
+    }
     .kpi-card::before {
       content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
       background: linear-gradient(90deg, transparent, var(--rose), var(--cyan), transparent);
@@ -362,19 +398,6 @@
     .card-title { font-size: 13px; font-weight: 600; color: var(--text-1); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .card-body  { flex: 1; overflow: hidden; position: relative; }
 
-    /* 加载遮罩 */
-    .card-loading {
-      position: absolute; inset: 0; z-index: 10;
-      display: flex; flex-direction: column; align-items: center; justify-content: center;
-      background: rgba(38,24,32,.9); gap: 8px;
-      font-size: 12px; color: var(--text-2);
-    }
-    .loading-ring {
-      width: 28px; height: 28px; border-radius: 50%;
-      border: 3px solid rgba(255,92,138,.15);
-      border-top-color: var(--rose);
-      animation: spin .8s linear infinite;
-    }
     /* 错误状态 */
     .card-error {
       position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
@@ -543,19 +566,19 @@
       <div class="funnel-wrap">
         <div class="chart-card">
           <div class="chart-card-hdr"><span class="chart-card-title">3.1 漏斗总览</span></div>
-          <div class="chart-body tech21-canvas" id="chart-funnel"><div class="card-loading"><div class="loading-ring"></div><span>加载中...</span></div></div>
+          <div class="chart-body tech21-canvas" id="chart-funnel"></div>
         </div>
         <div class="chart-card">
           <div class="chart-card-hdr">
             <span class="chart-card-title">3.2 关键转化率趋势</span>
             <div class="chart-legend-hint"><i>折线 · 荧光</i></div>
           </div>
-          <div class="chart-body tech21-canvas" id="chart-funnel-trend"><div class="card-loading"><div class="loading-ring"></div><span>加载中...</span></div></div>
+          <div class="chart-body tech21-canvas" id="chart-funnel-trend"></div>
         </div>
       </div>
       <div class="chart-card" style="margin-top:12px">
         <div class="chart-card-hdr"><span class="chart-card-title">3.3 生成明细表</span></div>
-        <div class="funnel-table-wrap" id="funnel-table"><div class="card-loading"><div class="loading-ring"></div><span>加载中...</span></div></div>
+        <div class="funnel-table-wrap" id="funnel-table"></div>
       </div>
     </section>
   </div>
@@ -960,8 +983,7 @@ function getDashcard(dashcardId) {
 }
 
 function clearLoading(el) {
-  const ld = el?.querySelector?.('.card-loading');
-  if (ld) ld.remove();
+  DashSkeleton.clearBlockSkeleton(el);
 }
 
 function showSlotError(el, msg) {
@@ -1050,8 +1072,8 @@ function renderKpiGrid(profile) {
   grid.innerHTML = profile.kpis.map((k, i) => `
     <div class="kpi-card loading" id="${kpiDomId(i)}">
       <div class="kpi-name">${k.label}${k.hint ? `<span>${k.hint}</span>` : ''}</div>
-      <div class="kpi-val ${k.isPct ? 'pct' : ''}">--</div>
-      <div class="kpi-compare"><span class="cmp">加载中…</span></div>
+      <div class="${DashSkeleton.skeletonKpiValClass(k.isPct)}">--</div>
+      ${DashSkeleton.skeletonKpiCompareHtml()}
     </div>`).join('');
   grid.classList.add('show');
 }
@@ -1066,6 +1088,7 @@ function applyKpiValues(profile) {
     const valEl = box.querySelector('.kpi-val');
     const cmpEl = box.querySelector('.kpi-compare');
     if (valEl) {
+      valEl.classList.remove('kpi-val-skeleton', 'sk-shimmer');
       const unitHtml = !k.isPct && snap
         ? `<span class="kpi-unit">${k.label.includes('用户') ? '人' : '次'}</span>` : '';
       valEl.innerHTML = (snap ? snap.display : '--') + unitHtml;
@@ -1809,7 +1832,7 @@ function renderGrid(dashcards) {
     el.innerHTML = `
       <div class="card-hdr"><div class="card-title">${dc.name || ''}</div></div>
       <div class="card-body" id="body-${dc.id}">
-        <div class="card-loading"><div class="loading-ring"></div><span>加载中...</span></div>
+        ${DashSkeleton.skeletonGridCardBodyHtml()}
       </div>`;
     grid.appendChild(el);
   });
@@ -1825,26 +1848,20 @@ async function loadAllCards() {
 
 async function loadCard(dc, params) {
   const bodyEl = document.getElementById(`body-${dc.id}`);
-  const loadingEl = bodyEl?.querySelector('.card-loading');
   if (!bodyEl) return;
   try {
     const { cols, rows } = await fetchDashcardData(dc, params);
-    if (loadingEl) loadingEl.remove();
+    clearLoading(bodyEl);
     renderCard(bodyEl, dc, cols, rows);
   } catch (e) {
-    if (loadingEl) loadingEl.remove();
+    clearLoading(bodyEl);
     bodyEl.innerHTML = `<div class="card-error"><div class="err-icon">⚠</div><div>${e.message}</div></div>`;
   }
 }
 
 function resetDesignedLoading() {
-  Object.keys(chartMap).forEach(k => { chartMap[k]?.dispose(); delete chartMap[k]; });
-  ['chart-reach-pump', 'chart-reach-app', 'chart-plan-213', 'chart-plan-214',
-   'chart-method-cnt', 'chart-method-usr', 'chart-method-avg',
-   'chart-funnel', 'chart-funnel-trend', 'funnel-table'].forEach(id => {
-    const el = document.getElementById(id);
-    if (!el) return;
-    el.innerHTML = '<div class="card-loading"><div class="loading-ring"></div><span>加载中...</span></div>';
+  DashSkeleton.applyDesignedSkeleton(() => {
+    Object.keys(chartMap).forEach(k => { chartMap[k]?.dispose(); delete chartMap[k]; });
   });
 }
 
@@ -1861,7 +1878,7 @@ async function reloadAllCards() {
       const body = document.getElementById(`body-${dc.id}`);
       if (body) {
         if (chartMap[dc.id]) { chartMap[dc.id].dispose(); delete chartMap[dc.id]; }
-        body.innerHTML = '<div class="card-loading"><div class="loading-ring"></div><span>加载中...</span></div>';
+        body.innerHTML = DashSkeleton.skeletonGridCardBodyHtml();
       }
     });
     await loadAllCards();
@@ -2322,10 +2339,11 @@ function notifyDashboardReady() {
    主入口
 ================================================================ */
 async function init() {
+  notifyDashboardReady();
+
   if (!DASHBOARD_ID) {
     document.getElementById('no-db').style.display = 'flex';
     setStatus('error', '未指定 dashboard_id，请在 URL 中添加 ?dashboard_id=xxx');
-    notifyDashboardReady();
     return;
   }
 
@@ -2342,7 +2360,6 @@ async function init() {
       setStatus('error', '无查看看板权限');
       btn.classList.remove('loading');
       icon.textContent = '↻';
-      notifyDashboardReady();
       return;
     }
     meta = await res.json();
@@ -2366,6 +2383,8 @@ async function init() {
     if (profile?.useDesignedLayout) {
       document.getElementById('designed-layout').classList.add('show');
       document.getElementById('db-grid').classList.add('hidden');
+      DashSkeleton.applyDesignedSkeleton();
+      renderKpiGrid(profile);
       bindDesignedUI(profile);
       await loadDesignedDashboard(profile);
     } else {
@@ -2375,13 +2394,11 @@ async function init() {
       await loadAllCards();
     }
     markRefreshed();
-    notifyDashboardReady();
 
   } catch (e) {
     setStatus('error', `加载失败：${e.message}`);
     btn.classList.remove('loading');
     icon.textContent = '↻';
-    notifyDashboardReady();
   }
 }
 

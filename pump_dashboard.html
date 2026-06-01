@@ -190,8 +190,96 @@
   .ctrl-btn { padding: 3px 10px; border-radius: 6px; border: 0.5px solid var(--border); background: var(--purple-light); color: var(--purple-dark); font-size: 11px; cursor: pointer; white-space: nowrap; }
   .ctrl-select { font-size: 11px; color: var(--text2); border: 0.5px solid var(--border); border-radius: 6px; background: var(--surface2); padding: 2px 6px; cursor: pointer; }
   .ctrl-sep { width: 0.5px; height: 14px; background: var(--border); flex-shrink: 0; }
-  .load-status { font-size: 11px; color: var(--text3); white-space: nowrap; }
+  .load-status { font-size: 11px; color: var(--text3); white-space: nowrap; max-width: 280px; overflow: hidden; text-overflow: ellipsis; }
+  .load-status-error { color: var(--coral); }
   .filter-note { font-size: 11px; color: var(--text3); }
+
+  /* Skeleton / per-block loading */
+  @keyframes skeleton-shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+  .skeleton-line {
+    display: block;
+    height: 10px;
+    border-radius: 4px;
+    background: linear-gradient(90deg, var(--surface2) 25%, var(--border2) 50%, var(--surface2) 75%);
+    background-size: 200% 100%;
+    animation: skeleton-shimmer 1.2s ease-in-out infinite;
+  }
+  .skeleton-line.lg { height: 22px; margin-top: 8px; border-radius: 6px; }
+  .skeleton-line.sm { height: 8px; margin-top: 6px; width: 55%; }
+  .skeleton-line.w60 { width: 60%; }
+  .skeleton-line.w40 { width: 40%; }
+  .skeleton-line.w50 { width: 50%; }
+  .skeleton-line.w70 { width: 70%; min-width: 48px; }
+  .skeleton-line.w30 { width: 30px; flex-shrink: 0; }
+  .kpi.skeleton-kpi { min-height: 76px; }
+  .skeleton-bar .bar-track { background: var(--surface2); }
+  .skeleton-fill {
+    height: 100%;
+    width: 72%;
+    border-radius: 3px;
+    background: linear-gradient(90deg, var(--surface2) 25%, var(--border2) 50%, var(--surface2) 75%);
+    background-size: 200% 100%;
+    animation: skeleton-shimmer 1.2s ease-in-out infinite;
+  }
+  .chart-wrap.is-loading { min-height: inherit; }
+  .chart-wrap.is-loading canvas { visibility: hidden; }
+  .chart-wrap.is-loading::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 6px;
+    background: linear-gradient(90deg, var(--surface2) 20%, var(--border2) 45%, var(--surface2) 80%);
+    background-size: 200% 100%;
+    animation: skeleton-shimmer 1.2s ease-in-out infinite;
+  }
+  .data-table tbody tr.skeleton-row td { padding: 10px 8px 10px 0; }
+  .data-table tbody tr.skeleton-row .skeleton-line { width: 72%; }
+  .funnel.skeleton-funnel .funnel-bar {
+    background: linear-gradient(90deg, var(--surface2) 25%, var(--border2) 50%, var(--surface2) 75%) !important;
+    background-size: 200% 100% !important;
+    animation: skeleton-shimmer 1.2s ease-in-out infinite;
+    min-height: 40px;
+    border: none;
+  }
+  .funnel.skeleton-funnel .funnel-bar .funnel-name,
+  .funnel.skeleton-funnel .funnel-bar .funnel-val { visibility: hidden; }
+  .mini-kpi-value.skeleton-pulse {
+    color: transparent;
+    border-radius: 4px;
+    background: linear-gradient(90deg, var(--surface2) 25%, var(--border2) 50%, var(--surface2) 75%);
+    background-size: 200% 100%;
+    animation: skeleton-shimmer 1.2s ease-in-out infinite;
+    min-width: 48px;
+    display: inline-block;
+    min-height: 1.1em;
+  }
+  .section-load-error {
+    margin-bottom: 14px;
+    padding: 10px 14px;
+    border-radius: var(--radius-sm);
+    border: 0.5px solid var(--coral);
+    background: var(--coral-light);
+    color: var(--coral-dark);
+    font-size: 12px;
+    line-height: 1.5;
+  }
+  .nav-item.nav-loading { color: var(--purple); }
+  .nav-item.nav-loading::after {
+    content: '';
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    margin-left: 6px;
+    border-radius: 50%;
+    border: 1.5px solid var(--purple);
+    border-top-color: transparent;
+    animation: nav-spin 0.7s linear infinite;
+    vertical-align: 1px;
+  }
+  @keyframes nav-spin { to { transform: rotate(360deg); } }
   .filter-sep { width: 0.5px; height: 16px; background: var(--border); margin: 0 2px; }
 
   /* Nav tabs */
@@ -347,9 +435,7 @@
       <button type="button" class="theme-btn" data-theme="warm" onclick="setTheme('warm')" title="暖色">☀</button>
       <button type="button" class="theme-btn" data-theme="tech" onclick="setTheme('tech')" title="科技">◈</button>
       <button type="button" class="theme-btn" data-theme="feminine" onclick="setTheme('feminine')" title="女性">✿</button>
-      <div class="topbar-status-row">
-        <span id="load-status" class="load-status"></span>
-      </div>
+      <span id="load-status" class="load-status" hidden></span>
     </div>
   </div>
 
@@ -774,6 +860,161 @@ const chartStore = {};
 const stackedChartData = {};
 let activeTab = 'overview';
 const loaded = {};
+const NAV_TAB_IDS = ['overview', 'retention', 'sessions', 'duration', 'habits', 'funnel'];
+
+const SECTION_SKELETONS = {
+  overview: {
+    kpis: [{ id: 'kpi-overview', n: 6 }, { id: 'kpi-yesterday', n: 6 }],
+    charts: ['dauChart', 'sessionTrendChart', 'levelDonut'],
+    bars: ['bar-modes', 'bar-peak-hours'],
+  },
+  retention: {
+    kpis: [{ id: 'kpi-retention', n: 7 }],
+    charts: ['retentionUserChart', 'retentionDeviceChart', 'newUserDevChart', 'streakChart'],
+    tables: [{ id: 'table-retention', rows: 5, cols: 6 }],
+  },
+  sessions: {
+    kpis: [{ id: 'kpi-sessions', n: 4 }],
+    charts: ['sessDailyTrendChart', 'sessAvgPerUserChart', 'sessDistChart', 'sessTrendChart',
+      'cumUserChart', 'cumDevChart', 'sessModeDistChart', 'sessModeTrendChart'],
+  },
+  duration: {
+    kpis: [{ id: 'kpi-duration', n: 4 }],
+    charts: ['durDailyTrendChart', 'durAvgPerUserChart', 'durDistChart', 'durTrendChart',
+      'durModeDistChart', 'durModeTrendChart', 'cumDurComboChart'],
+  },
+  habits: {
+    charts: ['hourWeekdayChart', 'hourWeekendChart', 'adjDirChart', 'evtSourceChart', 'adjCntChart'],
+    bars: ['bar-mode-adj', 'bar-pause-dist', 'bar-mode-mix'],
+    tables: [{ id: 'table-mode-level', rows: 4, cols: 5 }],
+    miniKpis: ['mode-adj-rate', 'mode-adj-avg', 'level-adj-rate', 'level-adj-avg', 'pause-rate-val', 'pause-avg-val'],
+  },
+  funnel: {
+    kpis: [{ id: 'kpi-funnel', n: 4 }],
+    charts: ['funnelTrendChart', 'funnelRateChart'],
+    funnel: 'funnel-viz',
+  },
+};
+
+function skeletonKpiCards(n) {
+  return Array.from({ length: n }, () => `
+    <div class="kpi skeleton-kpi" aria-hidden="true">
+      <div class="skeleton-line w60"></div>
+      <div class="skeleton-line w40 lg"></div>
+      <div class="skeleton-line sm"></div>
+    </div>`).join('');
+}
+
+function skeletonBarRows(n = 5) {
+  return Array.from({ length: n }, () => `
+    <div class="bar-row skeleton-bar" aria-hidden="true">
+      <span class="skeleton-line w70"></span>
+      <div class="bar-track"><div class="skeleton-fill"></div></div>
+      <span class="skeleton-line w30"></span>
+    </div>`).join('');
+}
+
+function skeletonTableBody(rows, cols) {
+  return Array.from({ length: rows }, () =>
+    '<tr class="skeleton-row" aria-hidden="true">' +
+    Array.from({ length: cols }, () => '<td><span class="skeleton-line"></span></td>').join('') +
+    '</tr>'
+  ).join('');
+}
+
+function skeletonFunnelHtml() {
+  const widths = ['100%', '88%', '76%', '64%'];
+  return widths.map(w => `
+    <div class="funnel-step" aria-hidden="true">
+      <div class="funnel-bar" style="width:${w};margin:0 auto"><span class="funnel-name">—</span><span class="funnel-val">—</span></div>
+    </div>`).join('');
+}
+
+function setChartLoading(canvasId, on) {
+  const canvas = document.getElementById(canvasId);
+  const wrap = canvas?.closest('.chart-wrap');
+  if (wrap) wrap.classList.toggle('is-loading', on);
+  if (on) {
+    const leg = document.getElementById(canvasId + '-legend');
+    if (leg) leg.innerHTML = '';
+  }
+}
+
+function clearChartLoading(ctx) {
+  const id = typeof ctx === 'string' ? ctx : (ctx?.id || ctx?.canvas?.id);
+  if (id) setChartLoading(id, false);
+}
+
+function applySectionSkeleton(section) {
+  const cfg = SECTION_SKELETONS[section];
+  if (!cfg) return;
+  clearSectionError(section);
+  (cfg.kpis || []).forEach(({ id, n }) => {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = skeletonKpiCards(n);
+  });
+  (cfg.charts || []).forEach(id => setChartLoading(id, true));
+  (cfg.bars || []).forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = skeletonBarRows();
+  });
+  (cfg.tables || []).forEach(({ id, rows, cols }) => {
+    const tb = document.querySelector(`#${id} tbody`);
+    if (tb) tb.innerHTML = skeletonTableBody(rows, cols);
+    const pager = document.getElementById(id + '-pager');
+    if (pager) pager.innerHTML = '';
+  });
+  if (cfg.funnel) {
+    const el = document.getElementById(cfg.funnel);
+    if (el) {
+      el.classList.add('skeleton-funnel');
+      el.innerHTML = skeletonFunnelHtml();
+    }
+  }
+  (cfg.miniKpis || []).forEach(id => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.textContent = '\u00a0';
+      el.classList.add('skeleton-pulse');
+    }
+  });
+}
+
+function clearSectionError(section) {
+  const banner = document.getElementById('sec-' + section)?.querySelector('.section-load-error');
+  if (banner) banner.remove();
+}
+
+function showSectionError(section, msg) {
+  clearSectionError(section);
+  const sec = document.getElementById('sec-' + section);
+  if (!sec) return;
+  const banner = document.createElement('div');
+  banner.className = 'section-load-error';
+  banner.setAttribute('role', 'alert');
+  banner.textContent = '加载失败：' + msg;
+  sec.insertBefore(banner, sec.firstChild);
+}
+
+function setNavLoading(section, on) {
+  document.querySelectorAll('.nav-item').forEach((el, i) => {
+    el.classList.toggle('nav-loading', on && NAV_TAB_IDS[i] === section);
+  });
+}
+
+function setLoadStatus(msg, isError = false) {
+  const status = document.getElementById('load-status');
+  if (!status) return;
+  if (!msg) {
+    status.hidden = true;
+    status.textContent = '';
+    status.classList.remove('load-status-error');
+    return;
+  }
+  status.hidden = false;
+  status.textContent = msg;
+  status.classList.toggle('load-status-error', isError);
+}
 
 function stackAbsOpts(p) {
   return {
@@ -971,6 +1212,7 @@ function wireLegendEl(legendEl, chart) {
 function _ctxId(ctx) { return ctx?.id || ctx?.canvas?.id; }
 
 function mkLine(ctx, datasets, labels, opts = {}, isPct = false) {
+  clearChartLoading(ctx);
   destroyChart(_ctxId(ctx));
   const aligns = ['end', 'start'];
   const ds = datasets.map((d, dsIdx) => ({
@@ -1009,6 +1251,7 @@ function mkLine(ctx, datasets, labels, opts = {}, isPct = false) {
 }
 
 function mkBar(ctx, labels, datasets, opts = {}) {
+  clearChartLoading(ctx);
   destroyChart(_ctxId(ctx));
   const n = labels.length;
   const step = n > 10 ? Math.max(1, Math.floor(n / 6)) : 1;
@@ -1048,6 +1291,7 @@ function mkLegend(el, labels, colors) {
 }
 
 function mkStackedBar(ctx, labels, seriesLabels, seriesData, colors, opts = {}) {
+  clearChartLoading(ctx);
   destroyChart(_ctxId(ctx));
   const p = getP();
   const ds = seriesLabels.map((lbl, i) => ({
@@ -1080,6 +1324,7 @@ function mkStackedBar(ctx, labels, seriesLabels, seriesData, colors, opts = {}) 
 }
 
 function mkDonut(ctx, labels, data, colors, cutout = '60%', isRatio = true) {
+  clearChartLoading(ctx);
   destroyChart(_ctxId(ctx));
   const vals = data.map(v => isRatio && v <= 1 ? v * 100 : v);
   const total = vals.reduce((a, b) => a + (b || 0), 0) || 1;
@@ -1625,6 +1870,8 @@ function renderRetention(d) {
         layout: { padding: { top: 32 } }
       }
     );
+  } else {
+    clearChartLoading('streakChart');
   }
 }
 
@@ -1825,6 +2072,7 @@ function renderDuration(d) {
 
   // Combo chart with dynamic axis + point markers + better colors
   const c14 = d.chart14 || [];
+  clearChartLoading('cumDurComboChart');
   destroyChart('cumDurComboChart');
   const comboCtx = document.getElementById('cumDurComboChart');
   const barVals = c14.map(r => r.daily_hours);
@@ -1928,6 +2176,11 @@ function renderDuration(d) {
 }
 
 function renderHabits(d) {
+  ['mode-adj-rate', 'mode-adj-avg', 'level-adj-rate', 'level-adj-avg', 'pause-rate-val', 'pause-avg-val'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.classList.remove('skeleton-pulse');
+  });
+
   // 时段分布：工作日和周末两张柱形图
   const chart15 = d.chart15 || [];
   const hours = Array.from({length: 24}, (_, i) => i + '时');
@@ -2049,6 +2302,9 @@ function renderHabits(d) {
 }
 
 function renderFunnel(d) {
+  const funnelEl = document.getElementById('funnel-viz');
+  if (funnelEl) funnelEl.classList.remove('skeleton-funnel');
+
   const k = d.kpi02 || {};
   const f = d.funnel || {};
   document.getElementById('kpi-funnel').innerHTML = [
@@ -2151,29 +2407,35 @@ const RENDERERS = {
 };
 
 async function loadSection(section, force = false) {
-  const status = document.getElementById('load-status');
   if (!force && loaded[section]) return;
 
   // file:// 直接打开时跳过 API，直接用演示数据
   if (window.location.protocol === 'file:') {
+    applySectionSkeleton(section);
     loaded[section] = true;
     RENDERERS[section](useDemoData(section));
-    status.textContent = '';
+    setLoadStatus('');
+    setNavLoading(section, false);
     return;
   }
 
-  status.textContent = '加载中…';
-  status.title = '';
+  setNavLoading(section, true);
+  applySectionSkeleton(section);
+  setLoadStatus('');
+
   try {
     const json = await fetchSection(section);
     loaded[section] = true;
     RENDERERS[section](json.data || {});
-    status.textContent = '已更新 ' + new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+    clearSectionError(section);
+    setLoadStatus('');
   } catch (e) {
     console.error('API 请求失败：', e.message);
-    status.textContent = '加载失败：' + e.message;
-    status.title = e.message || '';
+    showSectionError(section, e.message);
+    setLoadStatus(e.message, true);
     // 不标记 loaded，下次切换 tab 会重试
+  } finally {
+    setNavLoading(section, false);
   }
 }
 
@@ -2246,8 +2508,18 @@ function setTheme(name) {
   }
 })();
 
+function notifyDashboardReady() {
+  try {
+    if (window.parent !== window) {
+      window.parent.postMessage({ type: 'momcozy-dashboard-ready' }, '*');
+    }
+  } catch (_) {}
+}
+
 initDates();
 loadSection('overview');
+// 通知 nav.html 关闭「正在加载看板」遮罩（不等待 API 数据）
+notifyDashboardReady();
 </script>
 </body>
 </html>

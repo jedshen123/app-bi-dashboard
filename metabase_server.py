@@ -411,6 +411,12 @@ class Handler(BaseHTTPRequestHandler):
                         "text/html; charset=utf-8"
                     )
 
+            elif path == "/dashboard_skeleton.js":
+                self.serve_file(
+                    os.path.join(self._base_dir(), "dashboard_skeleton.js"),
+                    "application/javascript; charset=utf-8",
+                )
+
             elif path in ("/dashboard", "/metabase_dashboard.html"):
                 self.serve_file(
                     os.path.join(self._base_dir(), "metabase_dashboard.html"),
