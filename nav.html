@@ -229,7 +229,7 @@
 <body>
 
   <!-- iframe 内容区 -->
-  <iframe id="main-frame" src="/dashboard" allowfullscreen></iframe>
+  <iframe id="main-frame" src="/dashboard?dashboard_id=14" allowfullscreen></iframe>
 
   <!-- 左边缘触发条 -->
   <div id="sidebar-trigger"></div>
@@ -248,9 +248,15 @@
     </div>
 
     <nav class="nav-list">
-      <div class="nav-item active" id="nav-ai" onclick="loadDashboard(this)">
+      <div class="nav-item active" id="nav-ai" onclick="loadDashboard(this, '/dashboard?dashboard_id=14')">
         <div class="nav-icon rose">📊</div>
         <span class="nav-title">AI 吸乳计划看板</span>
+        <span class="nav-arrow">›</span>
+      </div>
+
+      <div class="nav-item" id="nav-pump" onclick="loadDashboard(this, '/pump')">
+        <div class="nav-icon cyan">🍼</div>
+        <span class="nav-title">吸奶器行为看板</span>
         <span class="nav-arrow">›</span>
       </div>
 
@@ -300,9 +306,9 @@ sidebar.addEventListener('mouseleave', scheduleClose);
 mask.addEventListener('click', closeSidebar);
 
 /* ---- 加载内部看板 ---- */
-function loadDashboard(el) {
+function loadDashboard(el, url) {
   setActive(el);
-  frame.src = '/dashboard';
+  frame.src = url || '/dashboard?dashboard_id=14';
   scheduleClose();
 }
 

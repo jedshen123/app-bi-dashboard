@@ -1,0 +1,2253 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>吸奶器用户行为分析看板</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #f4f6ff;
+    --surface: #ffffff;
+    --surface2: #eef0fb;
+    --border: rgba(75,107,255,0.15);
+    --border2: rgba(75,107,255,0.08);
+    --text: #1a1d36;
+    --text2: #4a4e72;
+    --text3: #8b8fad;
+    --purple: #4b6bff;
+    --purple-light: #e8ecff;
+    --purple-dark: #2540cc;
+    --teal: #5bc8e8;
+    --teal-light: #e2f7fd;
+    --teal-dark: #1a7a96;
+    --coral: #e8477a;
+    --coral-light: #fde8f0;
+    --coral-dark: #a01848;
+    --amber: #ff8c42;
+    --amber-light: #fff0e5;
+    --amber-dark: #c45200;
+    --blue: #4b6bff;
+    --blue-light: #e8ecff;
+    --blue-dark: #2540cc;
+    --radius: 12px;
+    --radius-sm: 8px;
+    --c1: #4b6bff; --c2: #7b3fa0; --c3: #e8477a; --c4: #ff8c42; --c5: #5bc8e8; --c6: #2540cc;
+    --chart-text: #4a4e72; --chart-text3: #8b8fad; --chart-grid: rgba(75,107,255,0.06);
+  }
+  /* ===== Theme: Warm (暖色经典) ===== */
+  [data-theme="warm"] {
+    --bg: #f5f4f0;
+    --surface: #ffffff;
+    --surface2: #f1efe8;
+    --border: rgba(0,0,0,0.1);
+    --border2: rgba(0,0,0,0.06);
+    --text: #1a1a18;
+    --text2: #5f5e5a;
+    --text3: #888780;
+    --purple: #7f77dd;
+    --purple-light: #eeedfe;
+    --purple-dark: #3c3489;
+    --teal: #1d9e75;
+    --teal-light: #e1f5ee;
+    --teal-dark: #085041;
+    --coral: #d85a30;
+    --coral-light: #faece7;
+    --coral-dark: #712b13;
+    --amber: #ba7517;
+    --amber-light: #faeeda;
+    --amber-dark: #633806;
+    --blue: #378add;
+    --blue-light: #e6f1fb;
+    --blue-dark: #0c447c;
+    --radius: 12px;
+    --radius-sm: 8px;
+    --c1: #7f77dd; --c2: #1d9e75; --c3: #d85a30; --c4: #ba7517; --c5: #378add; --c6: #3c3489;
+    --chart-text: #5f5e5a; --chart-text3: #888780; --chart-grid: rgba(0,0,0,0.04);
+  }
+  /* ===== Theme: Tech (科技感) ===== */
+  [data-theme="tech"] {
+    --bg: #0d1117;
+    --surface: #161b22;
+    --surface2: #1c2128;
+    --border: rgba(48,54,61,0.9);
+    --border2: rgba(48,54,61,0.5);
+    --text: #e6edf3;
+    --text2: #8b949e;
+    --text3: #6e7681;
+    --purple: #58a6ff;
+    --purple-light: #0d2040;
+    --purple-dark: #a8d4ff;
+    --teal: #3fb950;
+    --teal-light: #0d2c14;
+    --teal-dark: #9de3a6;
+    --coral: #f78166;
+    --coral-light: #3d1a10;
+    --coral-dark: #ffc1b3;
+    --amber: #d29922;
+    --amber-light: #2e2000;
+    --amber-dark: #f8d67a;
+    --blue: #58a6ff;
+    --blue-light: #0d2040;
+    --blue-dark: #a8d4ff;
+    --radius: 8px;
+    --radius-sm: 6px;
+    --c1: #58a6ff; --c2: #3fb950; --c3: #f78166; --c4: #d29922; --c5: #bc8cff; --c6: #1f6feb;
+    --chart-text: #8b949e; --chart-text3: #6e7681; --chart-grid: rgba(255,255,255,0.07);
+  }
+
+  /* ===== Theme: Feminine (女性感) ===== */
+  [data-theme="feminine"] {
+    --bg: #fdf6f9;
+    --surface: #ffffff;
+    --surface2: #fceef5;
+    --border: rgba(220,150,180,0.25);
+    --border2: rgba(220,150,180,0.12);
+    --text: #2d1a26;
+    --text2: #7a4d65;
+    --text3: #b88fa3;
+    --purple: #c2537a;
+    --purple-light: #fde8f0;
+    --purple-dark: #7a1f40;
+    --teal: #d4688a;
+    --teal-light: #fde8f0;
+    --teal-dark: #7a1f40;
+    --coral: #e8855d;
+    --coral-light: #fdf0eb;
+    --coral-dark: #8b3820;
+    --amber: #c9844a;
+    --amber-light: #fdf3ea;
+    --amber-dark: #7a4020;
+    --blue: #9b72cf;
+    --blue-light: #f3ecfb;
+    --blue-dark: #4a2080;
+    --radius: 16px;
+    --radius-sm: 12px;
+    --c1: #c2537a; --c2: #e8855d; --c3: #c9844a; --c4: #9b72cf; --c5: #d4688a; --c6: #7a1f40;
+    --chart-text: #7a4d65; --chart-text3: #b88fa3; --chart-grid: rgba(194,83,122,0.07);
+  }
+
+  /* ===== Theme: Vivid (明亮科技) ===== */
+  [data-theme="vivid"] {
+    --bg: #f4f6ff;
+    --surface: #ffffff;
+    --surface2: #eef0fb;
+    --border: rgba(75,107,255,0.15);
+    --border2: rgba(75,107,255,0.08);
+    --text: #1a1d36;
+    --text2: #4a4e72;
+    --text3: #8b8fad;
+    --purple: #4b6bff;
+    --purple-light: #e8ecff;
+    --purple-dark: #2540cc;
+    --teal: #5bc8e8;
+    --teal-light: #e2f7fd;
+    --teal-dark: #1a7a96;
+    --coral: #e8477a;
+    --coral-light: #fde8f0;
+    --coral-dark: #a01848;
+    --amber: #ff8c42;
+    --amber-light: #fff0e5;
+    --amber-dark: #c45200;
+    --blue: #4b6bff;
+    --blue-light: #e8ecff;
+    --blue-dark: #2540cc;
+    --radius: 12px;
+    --radius-sm: 8px;
+    --c1: #4b6bff; --c2: #7b3fa0; --c3: #e8477a; --c4: #ff8c42; --c5: #5bc8e8; --c6: #2540cc;
+    --chart-text: #4a4e72; --chart-text3: #8b8fad; --chart-grid: rgba(75,107,255,0.06);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1a1a18;
+      --surface: #2c2c2a;
+      --surface2: #232320;
+      --border: rgba(255,255,255,0.1);
+      --border2: rgba(255,255,255,0.06);
+      --text: #f1efe8;
+      --text2: #b4b2a9;
+      --text3: #888780;
+      --purple-light: #26215c;
+      --teal-light: #04342c;
+      --coral-light: #4a1b0c;
+      --amber-light: #412402;
+      --blue-light: #042c53;
+    }
+  }
+  body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 14px; line-height: 1.5; }
+  .shell { max-width: 1280px; margin: 0 auto; padding: 24px 20px 48px; }
+
+  .topbar { display: flex; align-items: flex-start; justify-content: space-between; padding: 0 0 10px; gap: 12px; flex-wrap: wrap; }
+  .topbar-left { display: flex; align-items: center; gap: 8px; min-width: 0; }
+  .topbar-title { font-size: 15px; font-weight: 600; color: var(--text); letter-spacing: -0.3px; white-space: nowrap; }
+  .topbar-sub { font-size: 10px; color: var(--text3); padding-left: 8px; border-left: 1px solid var(--border); margin-left: 4px; white-space: nowrap; }
+  .topbar-right { display: flex; align-items: center; gap: 5px; flex-wrap: wrap; justify-content: flex-end; }
+  .topbar-status-row { flex-basis: 100%; display: flex; justify-content: flex-end; margin-top: 2px; }
+  .ctrl-input { border: none; background: transparent; color: var(--text2); font-size: 12px; outline: none; width: 100px; }
+  .ctrl-btn { padding: 3px 10px; border-radius: 6px; border: 0.5px solid var(--border); background: var(--purple-light); color: var(--purple-dark); font-size: 11px; cursor: pointer; white-space: nowrap; }
+  .ctrl-select { font-size: 11px; color: var(--text2); border: 0.5px solid var(--border); border-radius: 6px; background: var(--surface2); padding: 2px 6px; cursor: pointer; }
+  .ctrl-sep { width: 0.5px; height: 14px; background: var(--border); flex-shrink: 0; }
+  .load-status { font-size: 11px; color: var(--text3); white-space: nowrap; }
+  .filter-note { font-size: 11px; color: var(--text3); }
+  .filter-sep { width: 0.5px; height: 16px; background: var(--border); margin: 0 2px; }
+
+  /* Nav tabs */
+  .nav { display: flex; gap: 4px; border-bottom: 0.5px solid var(--border); margin-bottom: 24px; overflow-x: auto; }
+  .nav-item { padding: 8px 16px; font-size: 13px; color: var(--text2); cursor: pointer; border-bottom: 2px solid transparent; white-space: nowrap; transition: color 0.15s; }
+  .nav-item:hover { color: var(--text); }
+  .nav-item.active { color: var(--purple); border-bottom-color: var(--purple); font-weight: 500; }
+
+  /* Section */
+  .section { display: none; }
+  .section.active { display: block; }
+
+  /* KPI row */
+  .kpi-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 20px; }
+  .kpi { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 14px 16px; }
+  .kpi-label { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; display: flex; align-items: center; gap: 5px; flex-wrap: wrap; }
+  .kpi-label i { font-size: 13px; }
+  .kpi-value { font-size: 24px; font-weight: 500; color: var(--text); letter-spacing: -0.5px; }
+  .kpi-sub { font-size: 11px; color: var(--text3); margin-top: 3px; }
+  .kpi-sub div { margin-top: 1px; }
+  .kpi-up { color: var(--teal); }
+  .kpi-down { color: var(--coral); }
+
+  /* Help tip tooltip */
+  .help-tip { display: inline-flex; align-items: center; justify-content: center; width: 14px; height: 14px; border-radius: 50%; background: var(--surface2); border: 0.5px solid var(--border); font-size: 9px; color: var(--text3); cursor: help; margin-left: 4px; position: relative; flex-shrink: 0; }
+  .help-tip:hover::after { content: attr(data-tip); position: absolute; left: 50%; transform: translateX(-50%); bottom: calc(100% + 6px); background: #333; color: #fff; font-size: 11px; padding: 6px 10px; border-radius: 6px; white-space: pre-line; width: 220px; z-index: 100; pointer-events: none; font-weight: 400; line-height: 1.4; }
+  .help-tip:hover::before { content: ''; position: absolute; left: 50%; transform: translateX(-50%); bottom: calc(100% + 1px); border: 5px solid transparent; border-top-color: #333; z-index: 101; }
+
+  /* Grid layouts */
+  .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; margin-bottom: 16px; }
+  .grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 16px; }
+  .grid-1-2 { display: grid; grid-template-columns: 1fr 2fr; gap: 16px; margin-bottom: 16px; }
+  @media (max-width: 720px) { .grid-1-2 { grid-template-columns: 1fr; } }
+
+  /* Card */
+  .card { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 18px 20px; }
+  .card-title { font-size: 13px; font-weight: 500; color: var(--text); margin-bottom: 4px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  .card-title i { font-size: 15px; color: var(--text3); }
+  .card-sub { font-size: 11px; color: var(--text3); margin-bottom: 14px; }
+  .chart-wrap { position: relative; width: 100%; }
+
+  /* Legend */
+  .legend { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 10px; }
+  .legend-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--text2); }
+  .legend-dot { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; }
+
+  /* Bar list */
+  .bar-list { display: flex; flex-direction: column; gap: 8px; }
+  .bar-row { display: flex; align-items: center; gap: 8px; }
+  .bar-label { font-size: 12px; color: var(--text2); width: 80px; flex-shrink: 0; text-align: right; }
+  .bar-label.wide { width: 110px; }
+  .bar-track { flex: 1; background: var(--surface2); border-radius: 3px; height: 8px; overflow: hidden; }
+  .bar-fill { height: 100%; border-radius: 3px; transition: width 0.6s ease; }
+  .bar-val { font-size: 11px; color: var(--text3); width: 40px; }
+
+  /* Table */
+  .data-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .data-table th { font-size: 11px; color: var(--text3); font-weight: 500; text-align: left; padding: 0 8px 8px 0; border-bottom: 0.5px solid var(--border2); text-transform: uppercase; letter-spacing: 0.3px; }
+  .data-table td { padding: 7px 8px 7px 0; border-bottom: 0.5px solid var(--border2); color: var(--text2); vertical-align: middle; }
+  .data-table td:first-child { color: var(--text); font-weight: 500; }
+  .data-table tr:last-child td { border-bottom: none; }
+
+  /* Badge */
+  .badge { display: inline-block; font-size: 10px; padding: 2px 8px; border-radius: 20px; font-weight: 500; }
+  .badge-purple { background: var(--purple-light); color: var(--purple-dark); }
+  .badge-teal { background: var(--teal-light); color: var(--teal-dark); }
+  .badge-coral { background: var(--coral-light); color: var(--coral-dark); }
+  .badge-amber { background: var(--amber-light); color: var(--amber-dark); }
+  .badge-blue { background: var(--blue-light); color: var(--blue-dark); }
+
+  /* Funnel */
+  .funnel { display: flex; flex-direction: column; gap: 6px; }
+  .funnel-step { position: relative; }
+  .funnel-bar { border-radius: var(--radius-sm); padding: 10px 14px; display: flex; justify-content: space-between; align-items: center; }
+  .funnel-name { font-size: 12px; font-weight: 500; }
+  .funnel-val { font-size: 13px; font-weight: 500; }
+  .funnel-rate { font-size: 11px; color: var(--text3); text-align: center; padding: 2px 0; }
+  .funnel-arrow { font-size: 11px; color: var(--text3); }
+
+  /* Heatmap */
+  .heatmap-wrap { overflow-x: auto; }
+  .heatmap { display: grid; grid-template-columns: 40px repeat(24, 1fr); gap: 2px; min-width: 540px; }
+  .heatmap-cell { height: 20px; border-radius: 2px; }
+  .heatmap-label { font-size: 10px; color: var(--text3); display: flex; align-items: center; justify-content: flex-end; padding-right: 6px; }
+  .heatmap-hour { font-size: 9px; color: var(--text3); text-align: center; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 2px; }
+
+  /* Mode matrix */
+  .matrix { display: grid; gap: 4px; }
+  .matrix-cell { border-radius: var(--radius-sm); padding: 10px; text-align: center; }
+  .matrix-mode { font-size: 11px; font-weight: 500; }
+  .matrix-pct { font-size: 16px; font-weight: 500; margin-top: 2px; }
+  .matrix-sub { font-size: 10px; opacity: 0.8; margin-top: 1px; }
+
+  /* Retention */
+  .retention-grid { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+  .ret-cell { padding: 6px 12px; border-radius: var(--radius-sm); font-size: 12px; text-align: center; min-width: 56px; }
+  .ret-label { font-size: 10px; opacity: 0.8; }
+  .ret-val { font-size: 14px; font-weight: 500; }
+
+  /* Divider */
+  .divider { height: 0.5px; background: var(--border2); margin: 20px 0; }
+
+  /* Scroll indicator */
+  .scroll-hint { font-size: 11px; color: var(--text3); margin-bottom: 6px; display: flex; align-items: center; gap: 4px; }
+
+  /* Cohort note box */
+  .cohort-note { background: var(--surface2); border-radius: var(--radius-sm); padding: 10px 14px; font-size: 11px; color: var(--text3); margin-top: 12px; line-height: 1.6; border-left: 2px solid var(--border); }
+
+  /* Yesterday section header */
+  .section-header { font-size: 12px; font-weight: 500; color: var(--text2); margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+  .section-header-note { font-size: 11px; color: var(--text3); font-weight: 400; }
+
+  /* Mini KPI pair inside habit card */
+  .mini-kpi-row { display: flex; gap: 12px; margin-bottom: 14px; }
+  .mini-kpi { background: var(--surface2); border-radius: var(--radius-sm); padding: 10px 14px; flex: 1; }
+  .mini-kpi-label { font-size: 10px; color: var(--text3); margin-bottom: 4px; }
+  .mini-kpi-value { font-size: 18px; font-weight: 500; color: var(--text); }
+
+  /* evtSource table */
+  .evt-table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 10px; }
+  .evt-table th { font-size: 10px; color: var(--text3); text-align: left; padding: 4px 8px 4px 0; border-bottom: 0.5px solid var(--border2); }
+  .evt-table td { padding: 6px 8px 6px 0; border-bottom: 0.5px solid var(--border2); color: var(--text2); font-size: 11px; }
+  .evt-table td:first-child { color: var(--text); }
+  .evt-table tr:last-child td { border-bottom: none; }
+  .theme-btn { width:22px;height:22px;border-radius:50%;border:1.5px solid var(--border);background:var(--surface2);color:var(--text2);font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:border-color 0.15s; }
+  .theme-btn.active { border-color:var(--purple);color:var(--purple); }
+  .stack-toggle-btn { width:22px;height:22px;border-radius:5px;border:0.5px solid var(--border);background:var(--surface2);color:var(--text3);font-size:10px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all 0.15s;line-height:1; }
+  .stack-toggle-btn:hover { border-color:var(--purple);color:var(--purple); }
+  .stack-toggle-btn.abs-mode { background:var(--purple-light);color:var(--purple-dark);border-color:var(--purple); }
+</style>
+</head>
+<body>
+<div class="shell">
+  <div class="topbar">
+    <div class="topbar-left">
+      <i class="ti ti-activity-heartbeat" style="color:var(--purple);font-size:16px"></i>
+      <span class="topbar-title">吸奶器用户行为分析</span>
+      <span class="topbar-sub">lute_app_dw · StarRocks</span>
+    </div>
+    <div class="topbar-right">
+      <i class="ti ti-calendar" style="font-size:12px;color:var(--text3)"></i>
+      <input type="date" id="start-dt" class="ctrl-input" />
+      <span style="color:var(--text3);font-size:11px">~</span>
+      <input type="date" id="end-dt" class="ctrl-input" />
+      <button type="button" id="btn-refresh" class="ctrl-btn">查询</button>
+      <div class="ctrl-sep"></div>
+      <select id="deviceFilter" class="ctrl-select">
+        <option value="all">全部型号</option>
+        <!-- __DEVICE_CODE_OPTIONS__ -->
+      </select>
+      <div class="ctrl-sep"></div>
+      <button type="button" class="theme-btn active" data-theme="" onclick="setTheme('')" title="明亮">◉</button>
+      <button type="button" class="theme-btn" data-theme="warm" onclick="setTheme('warm')" title="暖色">☀</button>
+      <button type="button" class="theme-btn" data-theme="tech" onclick="setTheme('tech')" title="科技">◈</button>
+      <button type="button" class="theme-btn" data-theme="feminine" onclick="setTheme('feminine')" title="女性">✿</button>
+      <div class="topbar-status-row">
+        <span id="load-status" class="load-status"></span>
+      </div>
+    </div>
+  </div>
+
+  <div class="nav">
+    <div class="nav-item active" onclick="switchTab('overview')">总览</div>
+    <div class="nav-item" onclick="switchTab('retention')">活跃与留存</div>
+    <div class="nav-item" onclick="switchTab('sessions')">吸奶次数</div>
+    <div class="nav-item" onclick="switchTab('duration')">吸奶时长</div>
+    <div class="nav-item" onclick="switchTab('habits')">用户习惯</div>
+    <div class="nav-item" onclick="switchTab('funnel')">有效进程</div>
+  </div>
+
+  <!-- ===== 总览 ===== -->
+  <div class="section active" id="sec-overview">
+
+    <!-- 累计总览 -->
+    <div class="section-header"><i class="ti ti-database" style="color:var(--purple)"></i>累计总览</div>
+    <div class="kpi-row" id="kpi-overview"></div>
+
+    <!-- 昨日快照 -->
+    <div class="section-header" style="margin-top:4px">
+      <i class="ti ti-calendar-stats" style="color:var(--teal)"></i>昨日快照
+      <span class="section-header-note" id="yday-date-note">· 所有指标均为昨日（T-1）数据</span>
+    </div>
+    <div class="kpi-row" id="kpi-yesterday"></div>
+
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title"><i class="ti ti-chart-line"></i>日活跃用户 & 设备趋势<span class="help-tip" data-tip="DAU：当日有至少一次吸奶行为的用户数（去重）&#10;活跃设备：当日有吸奶行为的设备数（去重）">?</span></div>
+        <div class="card-sub">每日 DAU / 活跃设备数</div>
+        <div class="legend">
+          <span class="legend-item"><span class="legend-dot" style="background:var(--c1)"></span>活跃用户</span>
+          <span class="legend-item"><span class="legend-dot" style="background:var(--c2)"></span>活跃设备</span>
+        </div>
+        <div class="chart-wrap" style="height:200px">
+          <canvas id="dauChart" role="img" aria-label="日活跃用户和设备趋势折线图"></canvas>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title"><i class="ti ti-chart-bar"></i>每日吸奶次数趋势<span class="help-tip" data-tip="按日汇总所有 useSessionId 去重后的吸奶次数">?</span></div>
+        <div class="card-sub">按日汇总的吸奶 session 总数</div>
+        <div class="legend">
+          <span class="legend-item"><span class="legend-dot" style="background:var(--c3)"></span>吸奶次数</span>
+        </div>
+        <div class="chart-wrap" style="height:200px">
+          <canvas id="sessionTrendChart" role="img" aria-label="每日吸奶次数趋势柱状图"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid-3">
+      <div class="card">
+        <div class="card-title"><i class="ti ti-settings"></i>最常用模式<span class="help-tip" data-tip="按 session 结束时的 finalModeType 字段统计，展示各模式占比">?</span></div>
+        <div class="card-sub">按结束时 finalModeType 统计</div>
+        <div class="bar-list" id="bar-modes" style="margin-top:8px"></div>
+      </div>
+      <div class="card">
+        <div class="card-title"><i class="ti ti-adjustments"></i>常用档位分布<span class="help-tip" data-tip="按 session 结束时的 finalSuctionLevel 字段统计档位区间占比">?</span></div>
+        <div class="card-sub">结束时 finalSuctionLevel</div>
+        <div class="chart-wrap" style="height:150px">
+          <canvas id="levelDonut" role="img" aria-label="档位分布环形图"></canvas>
+        </div>
+        <div class="donut-legend" id="levelDonut-legend"></div>
+      </div>
+      <div class="card">
+        <div class="card-title"><i class="ti ti-clock"></i>吸奶高峰时段<span class="help-tip" data-tip="基于 session 开始的本地时间（localHour）统计，展示 session 数最多的 6 个时段">?</span></div>
+        <div class="card-sub">本地时间分布（Top 6）</div>
+        <div class="bar-list" id="bar-peak-hours" style="margin-top:8px"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== 活跃与留存 ===== -->
+  <div class="section" id="sec-retention">
+    <div class="kpi-row" id="kpi-retention"></div>
+
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title"><i class="ti ti-chart-line"></i>用户留存率趋势<span class="help-tip" data-tip="用户口径：前N日活跃用户，在当日仍有活跃的比例&#10;D1=次日留存，D7=7日留存">?</span></div>
+        <div class="card-sub">用户口径：D1 次日留存 vs D7 七日留存</div>
+        <div class="legend">
+          <span class="legend-item"><span class="legend-dot" style="background:var(--c1)"></span>用户 D1</span>
+          <span class="legend-item"><span class="legend-dot" style="background:var(--c6);border-radius:0"></span>用户 D7</span>
+        </div>
+        <div class="chart-wrap" style="height:210px">
+          <canvas id="retentionUserChart" role="img" aria-label="用户留存率趋势折线图"></canvas>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title"><i class="ti ti-chart-line"></i>设备留存率趋势<span class="help-tip" data-tip="设备口径：前N日活跃设备，在当日仍有活跃的比例&#10;D1=次日留存，D7=7日留存">?</span></div>
+        <div class="card-sub">设备口径：D1 次日留存 vs D7 七日留存</div>
+        <div class="legend">
+          <span class="legend-item"><span class="legend-dot" style="background:var(--c2)"></span>设备 D1</span>
+          <span class="legend-item"><span class="legend-dot" style="background:var(--c5);border-radius:0"></span>设备 D7</span>
+        </div>
+        <div class="chart-wrap" style="height:210px">
+          <canvas id="retentionDeviceChart" role="img" aria-label="设备留存率趋势折线图"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:16px">
+      <div class="card-title"><i class="ti ti-table"></i>留存率分组详情<span class="help-tip" data-tip="全局日期筛选器控制的是激活日期范围，即只展示在所选日期段内首次激活的用户群体，统计其 D1/D3/D7/D14 历史留存率。">?</span></div>
+      <div class="card-sub">按激活日期段分组，D1 / D3 / D7 / D14 留存率（用户维度）</div>
+      <div style="overflow-x:auto;margin-top:12px">
+        <table class="data-table" id="table-retention">
+          <thead><tr><th>激活日期段</th><th>新增用户</th><th>D1 留存</th><th>D3 留存</th><th>D7 留存</th><th>D14 留存</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <div id="table-retention-pager" style="margin-top:8px;display:flex;gap:6px;align-items:center;font-size:12px;color:var(--text3)"></div>
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title"><i class="ti ti-chart-line"></i>每日新增用户 & 设备趋势<span class="help-tip" data-tip="新增用户：当日首次有吸奶行为的用户数&#10;新增设备：当日首次绑定并使用的设备数">?</span></div>
+        <div class="card-sub">首次激活用户数 & 设备数</div>
+        <div class="legend">
+          <span class="legend-item"><span class="legend-dot" style="background:var(--c1)"></span>新增用户</span>
+          <span class="legend-item"><span class="legend-dot" style="background:var(--c2)"></span>新增设备</span>
+        </div>
+        <div class="chart-wrap" style="height:180px">
+          <canvas id="newUserDevChart" role="img" aria-label="每日新增用户和设备趋势折线图"></canvas>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title"><i class="ti ti-calendar-stats"></i>连续活跃天数分布<span class="help-tip" data-tip="统计期内每个用户的最长连续活跃天数，按区间分布">?</span></div>
+        <div class="card-sub">用户最长连续活跃天数区间分布</div>
+        <div class="chart-wrap" style="height:180px">
+          <canvas id="streakChart" role="img" aria-label="连续活跃天数分布柱状图"></canvas>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ===== 吸奶次数 ===== -->
+  <div class="section" id="sec-sessions">
+    <div class="kpi-row" id="kpi-sessions"></div>
+
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title"><i class="ti ti-chart-line"></i>每日吸奶次数趋势<span class="help-tip" data-tip="每日去重 session 总数趋势">?</span></div>
+        <div class="card-sub">每日吸奶总次数</div>
+        <div class="chart-wrap" style="height:180px">
+          <canvas id="sessDailyTrendChart"></canvas>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title"><i class="ti ti-chart-line"></i>人均每日吸奶次数趋势<span class="help-tip" data-tip="每日总次数 / 当日活跃用户数">?</span></div>
+        <div class="card-sub">每日人均吸奶次数（次/人）</div>
+        <div class="chart-wrap" style="height:180px">
+          <canvas id="sessAvgPerUserChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title"><i class="ti ti-chart-bar"></i>每日吸奶次数分布<span class="help-tip" data-tip="用户·日粒度：每个用户每天的吸奶次数，离散化为区间后统计占比">?</span></div>
+        <div class="card-sub">用户·日粒度离散化区间</div>
+        <div class="chart-wrap" style="height:200px">
+          <canvas id="sessDistChart" role="img" aria-label="每日吸奶次数分布柱状图"></canvas>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title" style="justify-content:space-between"><span style="display:flex;align-items:center;gap:6px"><i class="ti ti-chart-area"></i>各次数区间用户趋势<span class="help-tip" data-tip="每日各次数区间用户数，可切换绝对值堆积/百分比堆积">?</span></span><button type="button" id="btn-sess-trend-mode" class="stack-toggle-btn abs-mode" data-mode="abs" title="切换堆积模式" onclick="toggleStackMode('sessTrendChart','btn-sess-trend-mode')">#</button></div>
+        <div class="card-sub" id="sub-sess-trend">各次数区间用户数量（堆积）</div>
+        <div id="legend-sess-trend" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:6px"></div>
+        <div class="chart-wrap" style="height:170px">
+          <canvas id="sessTrendChart" role="img" aria-label="各次数区间堆积图"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title"><i class="ti ti-chart-donut"></i>累计次数分布（用户粒度）<span class="help-tip" data-tip="整个统计期内，每个用户的累计吸奶总次数区间分布">?</span></div>
+        <div class="card-sub">整个统计期内用户总吸奶次数区间</div>
+        <div class="chart-wrap" style="height:150px"><canvas id="cumUserChart" role="img" aria-label="用户累计吸奶次数分布"></canvas></div>
+        <div class="donut-legend" id="cumUserChart-legend"></div>
+      </div>
+      <div class="card">
+        <div class="card-title"><i class="ti ti-chart-donut"></i>累计次数分布（设备粒度）<span class="help-tip" data-tip="整个统计期内，每台设备的累计吸奶总次数区间分布">?</span></div>
+        <div class="card-sub">整个统计期内设备总吸奶次数区间</div>
+        <div class="chart-wrap" style="height:150px"><canvas id="cumDevChart" role="img" aria-label="设备累计吸奶次数分布"></canvas></div>
+        <div class="donut-legend" id="cumDevChart-legend"></div>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title"><i class="ti ti-chart-donut"></i>各模式吸奶次数占比<span class="help-tip" data-tip="各模式（刺激/泌乳/混合/自定义）在统计期内的总吸奶次数分布，来源：dws_pump_session_mode_di">?</span></div>
+        <div class="card-sub">模式维度的次数分布</div>
+        <div class="chart-wrap" style="height:150px"><canvas id="sessModeDistChart" role="img" aria-label="各模式吸奶次数占比"></canvas></div>
+        <div class="donut-legend" id="sessModeDistChart-legend"></div>
+      </div>
+      <div class="card">
+        <div class="card-title" style="justify-content:space-between"><span style="display:flex;align-items:center;gap:6px"><i class="ti ti-chart-area"></i>各模式吸奶次数趋势<span class="help-tip" data-tip="各模式每日吸奶次数，可切换绝对值堆积/百分比堆积">?</span></span><button type="button" id="btn-sess-mode-trend" class="stack-toggle-btn abs-mode" data-mode="abs" title="切换堆积模式" onclick="toggleStackMode('sessModeTrendChart','btn-sess-mode-trend')">#</button></div>
+        <div class="card-sub" id="sub-sess-mode-trend">各模式吸奶次数（堆积）</div>
+        <div id="legend-sess-mode-trend" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:6px"></div>
+        <div class="chart-wrap" style="height:170px">
+          <canvas id="sessModeTrendChart" role="img" aria-label="各模式吸奶次数堆积图"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== 吸奶时长 ===== -->
+  <div class="section" id="sec-duration">
+    <div class="kpi-row" id="kpi-duration"></div>
+
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title"><i class="ti ti-chart-line"></i>每日吸奶总时长趋势<span class="help-tip" data-tip="每日所有 session 时长累计（小时）">?</span></div>
+        <div class="card-sub">每日吸奶总时长（小时）</div>
+        <div class="chart-wrap" style="height:180px">
+          <canvas id="durDailyTrendChart"></canvas>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title"><i class="ti ti-chart-line"></i>人均每日吸奶时长趋势<span class="help-tip" data-tip="每日总时长 / 当日活跃用户数（分钟）">?</span></div>
+        <div class="card-sub">每日人均吸奶时长（分钟/人）</div>
+        <div class="chart-wrap" style="height:180px">
+          <canvas id="durAvgPerUserChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title"><i class="ti ti-chart-bar"></i>吸奶时长分布<span class="help-tip" data-tip="单次 session 的时长（分钟）区间分布，基于 pumpDuration 字段">?</span></div>
+        <div class="card-sub">单次 session 时长区间（分钟）</div>
+        <div class="chart-wrap" style="height:200px">
+          <canvas id="durDistChart" role="img" aria-label="吸奶时长分布柱状图"></canvas>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title"><i class="ti ti-chart-line"></i>次均时长趋势<span class="help-tip" data-tip="每日次均时长 = 当日吸奶总时长 / 当日总次数（分钟）">?</span></div>
+        <div class="card-sub">每日次均吸奶时长（分钟）</div>
+        <div class="chart-wrap" style="height:200px">
+          <canvas id="durTrendChart" role="img" aria-label="次均时长趋势折线图"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title"><i class="ti ti-chart-donut"></i>各模式吸奶时长占比<span class="help-tip" data-tip="各模式（刺激/泌乳/混合/自定义）在统计期内的总时长分布，来源：dws_pump_session_mode_di">?</span></div>
+        <div class="card-sub">模式维度的时长分布</div>
+        <div class="chart-wrap" style="height:150px"><canvas id="durModeDistChart" role="img" aria-label="各模式吸奶时长占比"></canvas></div>
+        <div class="donut-legend" id="durModeDistChart-legend"></div>
+      </div>
+      <div class="card">
+        <div class="card-title" style="justify-content:space-between"><span style="display:flex;align-items:center;gap:6px"><i class="ti ti-chart-area"></i>各模式时长趋势<span class="help-tip" data-tip="各模式每日吸奶时长，可切换绝对值堆积/百分比堆积">?</span></span><button type="button" id="btn-dur-mode-trend" class="stack-toggle-btn abs-mode" data-mode="abs" title="切换堆积模式" onclick="toggleStackMode('durModeTrendChart','btn-dur-mode-trend')">#</button></div>
+        <div class="card-sub" id="sub-dur-mode-trend">各模式吸奶时长（分钟，堆积）</div>
+        <div id="legend-dur-mode-trend" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:6px"></div>
+        <div class="chart-wrap" style="height:170px">
+          <canvas id="durModeTrendChart" role="img" aria-label="各模式吸奶时长堆积图"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><i class="ti ti-chart-bar"></i>每日新增时长 & 累计时长<span class="help-tip" data-tip="柱形：每日新增吸奶时长（小时）&#10;折线（右轴）：截至当日累计总时长（千小时）">?</span></div>
+      <div class="card-sub">左轴：每日新增时长（小时）；右轴：累计时长（千小时）</div>
+      <div class="legend">
+        <span class="legend-item"><span class="legend-dot" style="background:var(--c4)"></span>每日新增（小时）</span>
+        <span class="legend-item"><span class="legend-dot" style="background:var(--c1)"></span>累计时长（千小时）</span>
+      </div>
+      <div class="chart-wrap" style="height:200px">
+        <canvas id="cumDurComboChart" role="img" aria-label="每日新增时长和累计时长组合图"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== 用户习惯 ===== -->
+  <div class="section" id="sec-habits">
+
+    <!-- 行1：时段分布（全宽） -->
+    <div class="card" style="margin-bottom:16px">
+      <div class="card-title"><i class="ti ti-clock"></i>吸奶时段分布<span class="help-tip" data-tip="本地时间 0–23 时，基于 session 开始时间统计各时段 session 占比，分工作日和周末分别展示">?</span></div>
+      <div class="card-sub">本地时间各时段 session 占比（%）——工作日 vs 周末对比</div>
+      <div class="grid-2" style="margin-bottom:0">
+        <div>
+          <div style="font-size:11px;color:var(--text2);font-weight:500;margin-bottom:6px;display:flex;align-items:center;gap:6px"><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:var(--c1)"></span>工作日</div>
+          <div class="chart-wrap" style="height:130px"><canvas id="hourWeekdayChart"></canvas></div>
+        </div>
+        <div>
+          <div style="font-size:11px;color:var(--text2);font-weight:500;margin-bottom:6px;display:flex;align-items:center;gap:6px"><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:var(--c2)"></span>周末</div>
+          <div class="chart-wrap" style="height:130px"><canvas id="hourWeekendChart"></canvas></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 行2：模式调节 + 档位调节 -->
+    <div class="grid-2" style="margin-bottom:16px">
+      <div class="card">
+        <div class="card-title"><i class="ti ti-arrows-exchange"></i>模式调节行为<span class="help-tip" data-tip="eventname = pump_manual_adjust_evt，evtType = pump_mode&#10;统计用户在吸奶过程中手动切换模式的路径（from→to）">?</span></div>
+        <div class="card-sub">pump_manual_adjust_evt · evtType = pump_mode</div>
+        <div class="mini-kpi-row">
+          <div class="mini-kpi"><div class="mini-kpi-label">调节过模式的进程占比</div><div class="mini-kpi-value" id="mode-adj-rate">--</div></div>
+          <div class="mini-kpi"><div class="mini-kpi-label">次均调节次数</div><div class="mini-kpi-value" id="mode-adj-avg">--</div></div>
+        </div>
+        <div class="card-sub" style="margin-bottom:8px">调节路径（Top 5）</div>
+        <div class="bar-list" id="bar-mode-adj"></div>
+      </div>
+      <div class="card">
+        <div class="card-title"><i class="ti ti-adjustments"></i>档位调节行为<span class="help-tip" data-tip="eventname = pump_manual_adjust_evt，evtType = suction_level&#10;统计档位上调/下调/不变的次数分布">?</span></div>
+        <div class="card-sub">pump_manual_adjust_evt · evtType = suction_level</div>
+        <div class="mini-kpi-row">
+          <div class="mini-kpi"><div class="mini-kpi-label">调节过档位的进程占比</div><div class="mini-kpi-value" id="level-adj-rate">--</div></div>
+          <div class="mini-kpi"><div class="mini-kpi-label">次均调节次数</div><div class="mini-kpi-value" id="level-adj-avg">--</div></div>
+        </div>
+        <div class="card-sub" style="margin-bottom:8px">调节方向分布</div>
+        <div class="chart-wrap" style="height:130px"><canvas id="adjDirChart"></canvas></div>
+        <div class="donut-legend" id="adjDirChart-legend"></div>
+      </div>
+    </div>
+
+    <!-- 行3：暂停行为 + 操作来源 -->
+    <div class="grid-2" style="margin-bottom:16px">
+      <div class="card">
+        <div class="card-title"><i class="ti ti-player-pause"></i>暂停行为分析<span class="help-tip" data-tip="pause 事件来自 pump_user_evt，当用户在吸奶过程中暂停时触发；eventSessionId 每次暂停后重启，可用于识别暂停次数">?</span></div>
+        <div class="card-sub">pump_user_evt（pause）事件统计</div>
+        <div class="mini-kpi-row">
+          <div class="mini-kpi"><div class="mini-kpi-label">有暂停行为的进程占比</div><div class="mini-kpi-value" id="pause-rate-val">--</div></div>
+          <div class="mini-kpi"><div class="mini-kpi-label">次均暂停次数</div><div class="mini-kpi-value" id="pause-avg-val">--</div></div>
+        </div>
+        <div class="card-sub" style="margin-bottom:8px">暂停次数分布</div>
+        <div class="bar-list" id="bar-pause-dist"></div>
+      </div>
+      <div class="card">
+        <div class="card-title"><i class="ti ti-device-mobile"></i>操作来源分布（evtSource）<span class="help-tip" data-tip="evtSource 标识操作来自 APP 还是硬件&#10;remote_app = APP 操作&#10;manual = 直接操作吸奶器硬件按键">?</span></div>
+        <div class="card-sub">APP 操作 vs 硬件操作</div>
+        <div class="chart-wrap" style="height:130px"><canvas id="evtSourceChart"></canvas></div>
+        <div class="donut-legend" id="evtSourceChart-legend"></div>
+        <table class="evt-table" style="margin-top:10px">
+          <thead><tr><th>事件类型</th><th>APP操作</th><th>硬件操作</th><th>说明</th></tr></thead>
+          <tbody>
+            <tr><td>调节档位 (suction_level)</td><td>72%</td><td>28%</td><td style="color:var(--text3)">档位多通过 APP 微调</td></tr>
+            <tr><td>调节模式 (pump_mode)</td><td>61%</td><td>39%</td><td style="color:var(--text3)">模式切换硬件按键使用较多</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 行4：结束模式×档位 + 混合模式 + 调节次数分布 -->
+    <div class="grid-2" style="margin-bottom:16px">
+      <div class="card">
+        <div class="card-title"><i class="ti ti-settings"></i>结束模式 × 结束档位交叉<span class="help-tip" data-tip="各模式（finalModeType）下结束时档位（finalSuctionLevel）的区间分布（%）">?</span></div>
+        <div class="card-sub">各模式结束时使用档位的分布（%）</div>
+        <div style="overflow-x:auto;margin-top:12px">
+          <table class="data-table" id="table-mode-level">
+            <thead><tr><th>结束模式</th><th>1–3档</th><th>4–6档</th><th>7–9档</th><th>9+档</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <div class="divider"></div>
+        <div class="card-title" style="margin-bottom:4px"><i class="ti ti-layers-intersect"></i>混合模式使用情况<span class="help-tip" data-tip="一次吸奶过程中切换过几个不同模式">?</span></div>
+        <div class="card-sub">过程中使用模式数分布</div>
+        <div class="bar-list" id="bar-mode-mix" style="margin-top:8px"></div>
+      </div>
+      <div class="card">
+        <div class="card-title"><i class="ti ti-chart-bar"></i>每次吸奶调节次数分布<span class="help-tip" data-tip="每个 session 中手动调节模式/档位的次数（0=未调节，1=调节1次，依此类推）">?</span></div>
+        <div class="card-sub">模式调节 vs 档位调节次数频次</div>
+        <div class="legend">
+          <span class="legend-item"><span class="legend-dot" style="background:var(--c1)"></span>模式调节</span>
+          <span class="legend-item"><span class="legend-dot" style="background:var(--c2)"></span>档位调节</span>
+        </div>
+        <div class="chart-wrap" style="height:200px">
+          <canvas id="adjCntChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ===== 有效进程 ===== -->
+  <div class="section" id="sec-funnel">
+    <div class="kpi-row" id="kpi-funnel"></div>
+
+    <div class="grid-1-2">
+      <div class="card">
+        <div class="card-title"><i class="ti ti-filter"></i>漏斗概览<span class="help-tip" data-tip="从开机到有效进程的转化漏斗。有效进程 = 吸奶时长 > 10 分钟的次数">?</span></div>
+        <div class="card-sub">设备维度转化</div>
+        <div class="funnel" id="funnel-viz" style="margin-top:16px"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><i class="ti ti-chart-line"></i>各阶段每日趋势<span class="help-tip" data-tip="开机/开始/吸奶结束/有效进程（>10min）每日数量趋势&#10;可观察各阶段转化的日变化情况">?</span></div>
+        <div class="card-sub">开机 / 开始吸奶 / 吸奶结束 / 有效进程 每日数量</div>
+        <div class="legend">
+          <span class="legend-item"><span class="legend-dot" style="background:var(--c1)"></span>开机</span>
+          <span class="legend-item"><span class="legend-dot" style="background:var(--c2)"></span>开始吸奶</span>
+          <span class="legend-item"><span class="legend-dot" style="background:var(--c4)"></span>吸奶结束</span>
+          <span class="legend-item"><span class="legend-dot" style="background:var(--c3)"></span>>10min</span>
+        </div>
+        <div class="chart-wrap" style="height:230px">
+          <canvas id="funnelTrendChart" role="img" aria-label="有效进程各阶段每日趋势折线图"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><i class="ti ti-chart-bar"></i>有效率 & 结束率趋势<span class="help-tip" data-tip="吸奶结束率 = 吸奶结束次数 / 开始次数&#10;有效进程率 = 吸奶时长>10min 的次数 / 总次数">?</span></div>
+      <div class="card-sub">吸奶结束率（吸奶结束/开始）& 有效进程率（>10min/开始）</div>
+      <div class="legend">
+        <span class="legend-item"><span class="legend-dot" style="background:var(--c1)"></span>吸奶结束率</span>
+        <span class="legend-item"><span class="legend-dot" style="background:var(--c3)"></span>有效率(>10min)</span>
+      </div>
+      <div class="chart-wrap" style="height:180px">
+        <canvas id="funnelRateChart" role="img" aria-label="吸奶结束率和有效率趋势"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+Chart.register(ChartDataLabels);
+const chartStore = {};
+const stackedChartData = {};
+let activeTab = 'overview';
+const loaded = {};
+
+function stackAbsOpts(p) {
+  return {
+    scales: {
+      x: { stacked: true, ticks: { font:{size:10}, color: p.text3, maxRotation:0, autoSkip:true, maxTicksLimit:12 }, grid:{display:false} },
+      y: { stacked: true, ticks: { font:{size:10}, color: p.text3, callback: v => v >= 1000 ? (v/1000).toFixed(0)+'K' : v }, grid:{color:p.grid} }
+    },
+    plugins: {
+      legend:{display:false},
+      tooltip:{mode:'index',intersect:false,callbacks:{label: x=>`${x.dataset.label}: ${x.parsed.y!=null?(x.parsed.y>=1000?(x.parsed.y/1000).toFixed(1)+'K':x.parsed.y.toFixed(0)):'--'}`}},
+      datalabels:{display:false}
+    }
+  };
+}
+
+function stackPctOpts(p) {
+  return {
+    scales: {
+      x: { stacked: true, ticks: { font:{size:10}, color: p.text3, maxRotation:0, autoSkip:true, maxTicksLimit:12 }, grid:{display:false} },
+      y: { stacked: true, min:0, max:100, ticks: { font:{size:10}, color: p.text3, callback: v => v + '%' }, grid:{color:p.grid} }
+    },
+    plugins: {
+      legend:{display:false},
+      tooltip:{mode:'index',intersect:false,callbacks:{label: x=>`${x.dataset.label}: ${x.parsed.y!=null?x.parsed.y.toFixed(1)+'%':'--'}`}},
+      datalabels:{display:false}
+    }
+  };
+}
+
+function getP() {
+  const s = getComputedStyle(document.documentElement);
+  const v = n => s.getPropertyValue(n).trim();
+  return {
+    c1: v('--c1'), c2: v('--c2'), c3: v('--c3'), c4: v('--c4'), c5: v('--c5'), c6: v('--c6'),
+    text: v('--chart-text'), text3: v('--chart-text3'), grid: v('--chart-grid'),
+    colors: () => [v('--c1'),v('--c2'),v('--c3'),v('--c4'),v('--c5'),v('--c6')],
+  };
+}
+function hexToRgb(hex) {
+  hex = hex.replace('#','');
+  if (hex.length === 3) hex = hex.split('').map(x=>x+x).join('');
+  return [parseInt(hex.slice(0,2),16), parseInt(hex.slice(2,4),16), parseInt(hex.slice(4,6),16)];
+}
+function rgba(hex, a) { const [r,g,b] = hexToRgb(hex); return `rgba(${r},${g},${b},${a})`; }
+const COLORS = ['#4b6bff','#7b3fa0','#e8477a','#ff8c42','#5bc8e8','#2540cc'];
+const MODE_MAP = { stimulation: '刺激', expression: '泌乳', massage: '混合', custom: '自定义' };
+const DONUT_PURPLE = ['#e8ecff','#a0b4ff','#4b6bff','#2540cc','#1a2e99','#3358e8','#7b99ff'];
+const DONUT_TEAL =   ['#e2f7fd','#a8e7f6','#5bc8e8','#2aa8cc','#1a7a96','#0f5570','#0a3a50'];
+
+// Random number helper for demo data
+function rnd(min, max, decimals = 0) {
+  const v = Math.random() * (max - min) + min;
+  return decimals > 0 ? parseFloat(v.toFixed(decimals)) : Math.round(v);
+}
+
+function fmtPct(v, isRatio = true) {
+  const n = Number(v);
+  if (isNaN(n)) return '--';
+  const pct = isRatio && Math.abs(n) <= 1 ? n * 100 : n;
+  return pct.toFixed(1) + '%';
+}
+
+function fmtNum(n) {
+  if (n == null || isNaN(n)) return '--';
+  n = Number(n);
+  if (Math.abs(n) >= 1e6) return (n / 1e6).toFixed(1) + 'M';
+  if (Math.abs(n) >= 1e4) return (n / 1e4).toFixed(1) + '万';
+  if (Math.abs(n) >= 1e3) return n.toLocaleString('zh-CN');
+  return String(n);
+}
+function fmtHours(h) {
+  if (h == null) return '--';
+  h = Number(h);
+  if (h >= 1e6) return (h / 1e6).toFixed(1) + 'M h';
+  return Math.round(h).toLocaleString('zh-CN') + ' h';
+}
+function fmtHoursWan(h) {
+  if (h == null) return '--';
+  h = Number(h);
+  if (h >= 1000) return (h / 1000).toFixed(1) + ' kh';
+  return Math.round(h).toLocaleString('zh-CN') + ' h';
+}
+function fmtDtLabel(dt) {
+  if (!dt) return '';
+  const s = String(dt).slice(0, 10);
+  const p = s.split('-');
+  return p.length === 3 ? `${+p[1]}/${+p[2]}` : s;
+}
+function dtLabels(rows, key = 'dt') {
+  return rows.map(r => fmtDtLabel(r[key] || r.base_date));
+}
+
+// Generate last N days array
+function genDays(n) {
+  const arr = [];
+  for (let i = n - 1; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(d.getDate() - i - 1);
+    arr.push(d.toISOString().slice(0, 10));
+  }
+  return arr;
+}
+
+// KPI card with comparison lines
+function kpiCard(label, value, sub, icon, color, tip) {
+  const tipHtml = tip ? `<span class="help-tip" data-tip="${tip}">?</span>` : '';
+  return `<div class="kpi">
+    <div class="kpi-label"><i class="ti ${icon}" style="color:var(--${color})"></i>${label}${tipHtml}</div>
+    <div class="kpi-value">${value}</div>
+    <div class="kpi-sub">${sub || ''}</div>
+  </div>`;
+}
+
+// KPI card with two-line comparison
+function kpiCardCmp(label, value, cmp1Html, cmp2Html, icon, color, tip) {
+  const tipHtml = tip ? `<span class="help-tip" data-tip="${tip}">?</span>` : '';
+  const c1 = cmp1Html || '';
+  const c2 = cmp2Html || '';
+  return `<div class="kpi">
+    <div class="kpi-label"><i class="ti ${icon}" style="color:var(--${color})"></i>${label}${tipHtml}</div>
+    <div class="kpi-value">${value}</div>
+    <div class="kpi-sub">
+      <div>${c1}</div>
+      <div>${c2}</div>
+    </div>
+  </div>`;
+}
+
+function cmpHtml(pct, label, isPp = false) {
+  if (pct == null || isNaN(parseFloat(pct))) return '';
+  const n = parseFloat(pct);
+  const cls = n >= 0 ? 'kpi-up' : 'kpi-down';
+  const arrow = n >= 0 ? '↑' : '↓';
+  const unit = isPp ? 'pp' : '%';
+  return `<span class="${cls}">${arrow} ${Math.abs(n).toFixed(1)}${unit}</span> ${label}`;
+}
+
+function renderBarList(el, rows, labelKey, pctKey, colors, wide, isRatio = true) {
+  if (!el) return;
+  const pcts = rows.map(r => {
+    const n = Number(r[pctKey]) || 0;
+    return isRatio && n <= 1 ? n * 100 : n;
+  });
+  const max = Math.max(...pcts, 1);
+  el.innerHTML = rows.slice(0, 6).map((r, i) => {
+    const pct = pcts[i];
+    const w = Math.round(pct / max * 100);
+    const lbl = (r[labelKey] || '').replace(/</g, '&lt;');
+    return `<div class="bar-row">
+      <span class="bar-label${wide ? ' wide' : ''}">${lbl}</span>
+      <div class="bar-track"><div class="bar-fill" style="width:${w}%;background:${colors[i % colors.length]}"></div></div>
+      <span class="bar-val">${pct.toFixed(1)}%</span>
+    </div>`;
+  }).join('') || '<div style="color:var(--text3);font-size:12px">暂无数据</div>';
+}
+
+function destroyChart(id) {
+  if (chartStore[id]) { chartStore[id].destroy(); delete chartStore[id]; }
+}
+
+function wireChartLegend(canvas, chart) {
+  if (!canvas || !chart) return;
+  const card = canvas.closest?.('.card');
+  if (!card) return;
+  const items = card.querySelectorAll('.legend > .legend-item');
+  if (!items.length) return;
+  items.forEach((item, i) => {
+    item.style.cursor = 'pointer';
+    item.style.userSelect = 'none';
+    item.onclick = () => {
+      const meta = chart.getDatasetMeta(i);
+      if (!meta) return;
+      meta.hidden = meta.hidden === null ? true : !meta.hidden;
+      item.style.opacity = meta.hidden ? '0.35' : '1';
+      chart.update();
+    };
+  });
+}
+function wireLegendEl(legendEl, chart) {
+  if (!legendEl || !chart) return;
+  const items = [...legendEl.querySelectorAll('span')].filter(s => s.style.display);
+  items.forEach((item, i) => {
+    item.style.cursor = 'pointer';
+    item.style.userSelect = 'none';
+    item.onclick = () => {
+      const meta = chart.getDatasetMeta(i);
+      if (!meta) return;
+      meta.hidden = meta.hidden === null ? true : !meta.hidden;
+      item.style.opacity = meta.hidden ? '0.35' : '1';
+      chart.update();
+    };
+  });
+}
+
+function _ctxId(ctx) { return ctx?.id || ctx?.canvas?.id; }
+
+function mkLine(ctx, datasets, labels, opts = {}, isPct = false) {
+  destroyChart(_ctxId(ctx));
+  const aligns = ['end', 'start'];
+  const ds = datasets.map((d, dsIdx) => ({
+    ...d,
+    pointRadius: d.pointRadius ?? 2,
+    pointHoverRadius: d.pointHoverRadius ?? 4,
+    pointBorderColor: d.pointBorderColor ?? 'transparent',
+    pointBackgroundColor: d.pointBackgroundColor ?? (d.borderColor || '#888780'),
+    datalabels: d.datalabels || {
+      display: (ctx) => ctx.dataIndex % Math.max(1, Math.floor(labels.length / 6)) === 0,
+      color: d.borderColor || '#888780',
+      font: { size: 11, weight: '500' },
+      anchor: aligns[dsIdx % 2], align: aligns[dsIdx % 2], offset: 3,
+      formatter: isPct
+        ? (v) => v == null ? '' : parseFloat(v).toFixed(1) + '%'
+        : (v) => v == null ? '' : (typeof v === 'number' && Math.abs(v) >= 1000 ? (v/1000).toFixed(1)+'K' : (typeof v === 'number' ? v.toFixed(v % 1 === 0 ? 0 : 1) : v))
+    }
+  }));
+  const c = new Chart(ctx, {
+    type: 'line',
+    data: { labels, datasets: ds },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      layout: { padding: { top: 26 } },
+      plugins: { legend: { display: false }, tooltip: { mode: 'index', intersect: false }, datalabels: {} },
+      scales: {
+        x: { ticks: { font: { size: 10 }, color: getP().text3, maxRotation: 0, autoSkip: true, maxTicksLimit: 12 }, grid: { display: false } },
+        y: { ticks: { font: { size: 10 }, color: getP().text3 }, grid: { color: getP().grid } }
+      },
+      ...opts
+    }
+  });
+  const _id = _ctxId(ctx); if (_id) chartStore[_id] = c;
+  setTimeout(() => wireChartLegend(ctx?.canvas || ctx, c), 0);
+  return c;
+}
+
+function mkBar(ctx, labels, datasets, opts = {}) {
+  destroyChart(_ctxId(ctx));
+  const n = labels.length;
+  const step = n > 10 ? Math.max(1, Math.floor(n / 6)) : 1;
+  const ds = datasets.map(d => ({
+    ...d,
+    datalabels: d.datalabels || {
+      display: (ctx) => ctx.dataIndex % step === 0,
+      color: getP().text,
+      font: { size: 11, weight: '500' },
+      anchor: 'end', align: 'top', offset: 2, clamp: true,
+      formatter: (v) => v == null ? '' : (typeof v === 'number' && Math.abs(v) >= 1000 ? (v/1000).toFixed(1)+'K' : (typeof v === 'number' ? (v % 1 === 0 ? v : v.toFixed(1)) : v))
+    }
+  }));
+  const c = new Chart(ctx, {
+    type: 'bar',
+    data: { labels, datasets: ds },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      layout: { padding: { top: 26 } },
+      plugins: { legend: { display: false }, tooltip: { mode: 'index', intersect: false }, datalabels: {} },
+      scales: {
+        x: { ticks: { font: { size: 10 }, color: getP().text3 }, grid: { display: false } },
+        y: { ticks: { font: { size: 10 }, color: getP().text3 }, grid: { color: getP().grid } }
+      },
+      ...opts
+    }
+  });
+  const _bid = _ctxId(ctx); if (_bid) chartStore[_bid] = c;
+  setTimeout(() => wireChartLegend(ctx?.canvas || ctx, c), 0);
+  return c;
+}
+
+function mkLegend(el, labels, colors) {
+  if (!el) return;
+  const p = getP();
+  el.innerHTML = labels.map((l, i) => `<span style="display:flex;align-items:center;gap:4px;font-size:10px;color:${p.text}"><span style="width:8px;height:8px;border-radius:2px;background:${colors[i % colors.length]};flex-shrink:0"></span>${l}</span>`).join('');
+}
+
+function mkStackedBar(ctx, labels, seriesLabels, seriesData, colors, opts = {}) {
+  destroyChart(_ctxId(ctx));
+  const p = getP();
+  const ds = seriesLabels.map((lbl, i) => ({
+    label: lbl,
+    data: seriesData[i],
+    backgroundColor: colors[i % colors.length],
+    borderWidth: 0,
+    datalabels: { display: false }
+  }));
+  const defaultOpts = {
+    responsive: true, maintainAspectRatio: false,
+    layout: { padding: { top: 6 } },
+    plugins: {
+      legend: { display: false },
+      tooltip: { mode: 'index', intersect: false },
+      datalabels: { display: false }
+    },
+    scales: {
+      x: { stacked: true, ticks: { font: { size: 10 }, color: p.text3, maxRotation: 0, autoSkip: true, maxTicksLimit: 12 }, grid: { display: false } },
+      y: { stacked: true, ticks: { font: { size: 10 }, color: p.text3 }, grid: { color: p.grid } }
+    }
+  };
+  // Deep-merge plugins and scales so opts don't blow away defaults
+  const mergedOpts = { ...defaultOpts, ...opts };
+  if (opts.plugins) mergedOpts.plugins = { ...defaultOpts.plugins, ...opts.plugins };
+  if (opts.scales)  mergedOpts.scales  = { ...defaultOpts.scales,  ...opts.scales  };
+  const c = new Chart(ctx, { type: 'bar', data: { labels, datasets: ds }, options: mergedOpts });
+  const _sid = _ctxId(ctx); if (_sid) chartStore[_sid] = c;
+  return c;
+}
+
+function mkDonut(ctx, labels, data, colors, cutout = '60%', isRatio = true) {
+  destroyChart(_ctxId(ctx));
+  const vals = data.map(v => isRatio && v <= 1 ? v * 100 : v);
+  const total = vals.reduce((a, b) => a + (b || 0), 0) || 1;
+  const p = getP();
+
+  // Find pre-built legend div by id convention
+  const canvas = ctx?.canvas || ctx;
+  const canvasId = canvas?.id;
+  const legendEl = canvasId
+    ? document.getElementById(canvasId + '-legend') || canvas?.closest?.('.card')?.querySelector('.donut-legend')
+    : canvas?.closest?.('.card')?.querySelector('.donut-legend');
+  if (legendEl) {
+    // Layout: wrapping row of chips — each chip: dot+name on line 1, pct on line 2
+    legendEl.innerHTML = labels.map((l, i) => {
+      const pct = (vals[i] / total * 100).toFixed(1);
+      return `<div style="display:flex;flex-direction:column;gap:2px;padding:5px 8px;border-radius:6px;background:var(--surface2)">
+        <div style="display:flex;align-items:center;gap:4px">
+          <span style="width:7px;height:7px;border-radius:50%;background:${colors[i % colors.length]};flex-shrink:0"></span>
+          <span style="font-size:10px;color:${p.text2 || p.text};white-space:nowrap">${l}</span>
+        </div>
+        <span style="font-size:13px;font-weight:600;color:${p.text};padding-left:11px">${pct}%</span>
+      </div>`;
+    }).join('');
+    legendEl.style.cssText = 'display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;justify-content:center;';
+  }
+
+  const c = new Chart(ctx, {
+    type: 'doughnut',
+    data: { labels, datasets: [{ data: vals, backgroundColor: colors.slice(0, labels.length), borderWidth: 0 }] },
+    options: {
+      responsive: true, maintainAspectRatio: false, cutout,
+      layout: { padding: 4 },
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: x => `${x.label}: ${(x.parsed / total * 100).toFixed(1)}%` } },
+        datalabels: { display: false }
+      }
+    }
+  });
+  const _did = _ctxId(ctx); if (_did) chartStore[_did] = c;
+  return c;
+}
+
+function switchTab(id) {
+  document.querySelectorAll('.nav-item').forEach((el, i) => {
+    const ids = ['overview', 'retention', 'sessions', 'duration', 'habits', 'funnel'];
+    el.classList.toggle('active', ids[i] === id);
+  });
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.getElementById('sec-' + id).classList.add('active');
+  activeTab = id;
+  loadSection(id);
+}
+
+async function fetchSection(section) {
+  const start = document.getElementById('start-dt').value;
+  const end = document.getElementById('end-dt').value;
+  const device = document.getElementById('deviceFilter').value;
+  const qs = new URLSearchParams({ section, start_dt: start, end_dt: end });
+  if (device && device !== 'all') qs.set('device_code', device);
+  let res;
+  try {
+    res = await fetch('/api/pump_dashboard?' + qs, {
+      credentials: 'same-origin',
+      signal: AbortSignal.timeout(60000),
+    });
+  } catch (e) {
+    if (e.name === 'TimeoutError') {
+      throw new Error('请求超时（>60s）。请确认 MCP 服务可访问（54.226.190.74:8000）');
+    }
+    if (e.message === 'Failed to fetch') {
+      throw new Error('无法连接本地服务（:5001）。请确认已运行 python metabase_server.py，且 MCP 可访问（54.226.190.74:8000）');
+    }
+    throw e;
+  }
+  if (res.status === 401) {
+    window.top.location.replace('/login');
+    throw new Error('登录已过期，正在跳转登录页…');
+  }
+  let json;
+  try {
+    json = await res.json();
+  } catch (_) {
+    throw new Error('HTTP ' + res.status + '（响应非 JSON）');
+  }
+  if (!res.ok) throw new Error(json.error || ('HTTP ' + res.status));
+  if (json.error) throw new Error(json.error);
+  return json;
+}
+
+// ===== Demo data generators =====
+
+function genOverviewDemo() {
+  const days = genDays(30);
+  const chart01 = days.map(dt => ({ dt, dau: rnd(7000, 9500), active_devices: rnd(8000, 11000) }));
+  const chart02 = days.map(dt => ({ dt, session_count: rnd(18000, 32000) }));
+  const chart03 = [
+    { mode_type: '泌乳模式', pct: 42 },
+    { mode_type: '按摩模式', pct: 28 },
+    { mode_type: '吸奶模式', pct: 18 },
+    { mode_type: '自定义', pct: 12 },
+  ];
+  const chart04 = [
+    { level_bucket: '1–3档', pct: 15 },
+    { level_bucket: '4–6档', pct: 38 },
+    { level_bucket: '7–9档', pct: 32 },
+    { level_bucket: '9+档', pct: 15 },
+  ];
+  const chart05 = [
+    { local_hour: 6, pct: 8.2 },
+    { local_hour: 9, pct: 14.5 },
+    { local_hour: 12, pct: 11.8 },
+    { local_hour: 21, pct: 16.4 },
+  ];
+  return { chart01, chart02, chart03, chart04, chart05,
+    kpi01: { total_users: 42180, total_devices: 51200, total_sessions: 382400, avg_sessions_per_user: 9.1 },
+    kpi01_extra: { devices_per_user: 1.2, total_duration_hours: 96800, avg_duration_min: 15.2, d1_retention_pct: 62.4, valid_session_rate_pct: 71.8 }
+  };
+}
+
+function genRetentionDemo() {
+  const days = genDays(30);
+  const chart06_user = days.map(dt => ({ base_date: dt, d1_user_retention_pct: rnd(55, 72, 1) }));
+  const chart06_device = days.map(dt => ({ base_date: dt, d1_device_retention_pct: rnd(58, 76, 1) }));
+  const newUserDev = days.map(dt => ({ dt, new_users: rnd(180, 420), new_devices: rnd(200, 480) }));
+
+  // Cohort weeks
+  const weeks = [];
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date(); d.setDate(d.getDate() - i * 7 - 7);
+    const d2 = new Date(); d2.setDate(d.getDate() + 6);
+    const fmt = x => x.toISOString().slice(0, 10);
+    const label = fmt(d) + ' ~ ' + fmt(d2);
+    const base = rnd(60, 75, 1);
+    const d7 = Math.max(0, base - rnd(5, 15, 1));
+    const d14 = Math.max(0, d7 - rnd(3, 10, 1));
+    weeks.push({ label, d1: base, d7, d14 });
+  }
+
+  const table01 = [];
+  for (let i = 0; i < 6; i++) {
+    const d1 = new Date(); d1.setDate(d1.getDate() - (6 - i) * 7 - 7);
+    const d2 = new Date(d1); d2.setDate(d1.getDate() + 6);
+    const fmt = x => x.toISOString().slice(0, 10);
+    table01.push({
+      install_week: fmt(d1) + ' ~ ' + fmt(d2),
+      new_users: rnd(2800, 4200),
+      d1_pct: rnd(62, 74, 1),
+      d3_pct: rnd(50, 63, 1),
+      d7_pct: rnd(38, 52, 1),
+      d14_pct: rnd(28, 42, 1),
+    });
+  }
+
+  const chart07 = [
+    { streak_bucket: '1天',    bucket_order: 1,  user_count: rnd(4200, 5800) },
+    { streak_bucket: '2–3天',  bucket_order: 2,  user_count: rnd(3000, 4200) },
+    { streak_bucket: '4–7天',  bucket_order: 4,  user_count: rnd(2000, 3200) },
+    { streak_bucket: '8–14天', bucket_order: 8,  user_count: rnd(1200, 2000) },
+    { streak_bucket: '15–30天',bucket_order: 15, user_count: rnd(600, 1200) },
+    { streak_bucket: '30+天',  bucket_order: 31, user_count: rnd(200, 600) },
+  ];
+
+  return {
+    summary: { avg_dau: 8420, avg_devices: 9800, d1_user_pct: 64.2, d1_device_pct: 67.8, d7_user_pct: 43.1, d7_device_pct: 46.5, new_users_yday: 312, new_devices_yday: 358 },
+    chart06_user, chart06_device, newUserDev, cohortWeeks: weeks, table01, chart07
+  };
+}
+
+function genSessionsDemo() {
+  const days = genDays(30);
+  const chart08 = [
+    { session_bucket: '1次', pct: 38 },
+    { session_bucket: '2次', pct: 27 },
+    { session_bucket: '3次', pct: 18 },
+    { session_bucket: '4–5次', pct: 12 },
+    { session_bucket: '6+次', pct: 5 },
+  ];
+  const buckets = ['1次', '2次', '3次', '4–5次', '6+次'];
+  const chart09 = [];
+  days.forEach(dt => {
+    const dayTotal = rnd(18000, 32000);
+    const total = 100;
+    let rem = total;
+    buckets.forEach((b, i) => {
+      const v = i < buckets.length - 1 ? rnd(5, Math.min(rem - (buckets.length - 1 - i) * 3, 45)) : rem;
+      chart09.push({ dt, session_bucket: b, pct_of_day: v / 100, cnt_of_day: Math.round(dayTotal * v / 100) });
+      rem -= v;
+    });
+  });
+  const chart10 = [
+    { cumulative_bucket: '1–5次', pct: 0.22 },
+    { cumulative_bucket: '6–20次', pct: 0.31 },
+    { cumulative_bucket: '21–50次', pct: 0.24 },
+    { cumulative_bucket: '51–100次', pct: 0.14 },
+    { cumulative_bucket: '100+次', pct: 0.09 },
+  ];
+  const chart11 = [
+    { cumulative_bucket: '1–5次', pct: 0.19 },
+    { cumulative_bucket: '6–20次', pct: 0.34 },
+    { cumulative_bucket: '21–50次', pct: 0.26 },
+    { cumulative_bucket: '51–100次', pct: 0.13 },
+    { cumulative_bucket: '100+次', pct: 0.08 },
+  ];
+  const chart_sess_daily_trend = days.map(dt => ({ dt, session_count: rnd(18000, 32000) }));
+  const chart_sess_avg_per_user = days.map(dt => ({ dt, avg_sessions: rnd(22, 38, 1) / 10 }));
+  return {
+    kpi01: { total_sessions: 28410, total_users: 8420, avg_sessions_per_user: 3.4 },
+    summary: { one_per_day_pct: 0.38, max_sessions_single_user: 11 },
+    chart08, chart09, chart10, chart11,
+    chart_sess_daily_trend, chart_sess_avg_per_user,
+    chart_mode_sess_dist: [
+      { mode_type: '刺激', cnt: 8240 },
+      { mode_type: '泌乳', cnt: 12810 },
+      { mode_type: '混合', cnt: 5360 },
+      { mode_type: '自定义', cnt: 2000 },
+    ],
+    chart_mode_sess_trend: (() => {
+      const modes = ['刺激', '泌乳', '混合', '自定义'];
+      const rows = [];
+      days.forEach(dt => {
+        const dayTotal = rnd(18000, 32000);
+        modes.forEach(m => {
+          const v = m === '泌乳' ? rnd(38, 50) : m === '刺激' ? rnd(22, 32) : m === '混合' ? rnd(14, 22) : rnd(5, 12);
+          rows.push({ dt, mode_type: m, pct: v / 100, cnt: Math.round(dayTotal * v / 100) });
+        });
+      });
+      return rows;
+    })()
+  };
+}
+
+function genDurationDemo() {
+  const days = genDays(30);
+  const chart12 = [
+    { duration_bucket: '<5min', pct: 12 },
+    { duration_bucket: '5–10min', pct: 18 },
+    { duration_bucket: '10–15min', pct: 28 },
+    { duration_bucket: '15–20min', pct: 22 },
+    { duration_bucket: '20–30min', pct: 14 },
+    { duration_bucket: '30+min', pct: 6 },
+  ];
+  const chart13 = days.map(dt => ({ dt, avg_duration_min: rnd(13, 17, 1) }));
+  let cumHoursK = 85;
+  const chart14 = days.map(dt => {
+    const daily_hours = rnd(2800, 4200);
+    cumHoursK += daily_hours / 1000;
+    return { dt, daily_hours, cumulative_hours_k: parseFloat(cumHoursK.toFixed(1)) };
+  });
+  const chart_dur_daily_trend = days.map(dt => ({ dt, total_hours: rnd(2800, 4200) }));
+  const chart_dur_avg_per_user = days.map(dt => ({ dt, avg_min_per_user: rnd(240, 360, 1) / 10 }));
+  return {
+    summary: { total_duration_hours: 96800, avg_duration_min: 15.2, daily_min_per_user: 28.4, valid_session_rate_pct: 0.718 },
+    kpi_yesterday: { total_hours_yday: 3420, avg_dur_min_yday: 15.4, daily_per_user_yday: 28.8, valid_rate_yday: 71.2 },
+    chart12, chart13, chart14,
+    chart_dur_daily_trend, chart_dur_avg_per_user,
+    chart_mode_dur_dist: [
+      { mode_type: '刺激', duration_min: 18400 },
+      { mode_type: '泌乳', duration_min: 52300 },
+      { mode_type: '混合', duration_min: 21600 },
+      { mode_type: '自定义', duration_min: 4500 },
+    ],
+    chart_mode_dur_trend: (() => {
+      const modes = ['刺激', '泌乳', '混合', '自定义'];
+      const rows = [];
+      days.forEach(dt => {
+        const dayTotal = rnd(2800, 4200);
+        modes.forEach(m => {
+          const v = m === '泌乳' ? rnd(40, 55) : m === '刺激' ? rnd(18, 28) : m === '混合' ? rnd(16, 24) : rnd(4, 10);
+          rows.push({ dt, mode_type: m, pct: v / 100, dur_min: Math.round(dayTotal * v / 100) });
+        });
+      });
+      return rows;
+    })()
+  };
+}
+
+function genHabitsDemo() {
+  const chart15 = [];
+  const dayTypes = ['工作日', '周末'];
+  dayTypes.forEach(day_type => {
+    for (let h = 0; h < 24; h++) {
+      let pct = 2 + Math.random() * 3;
+      if (h >= 6 && h <= 9) pct += 6 + Math.random() * 5;
+      if (h >= 11 && h <= 13) pct += 4 + Math.random() * 4;
+      if (h >= 20 && h <= 22) pct += 8 + Math.random() * 6;
+      chart15.push({ day_type, local_hour: h, pct });
+    }
+  });
+  const table02 = [];
+  const modes = ['泌乳', '按摩', '吸奶'];
+  const levelBuckets = ['1–3档', '4–6档', '7–9档', '9+档'];
+  modes.forEach(m => {
+    levelBuckets.forEach(lv => {
+      table02.push({ final_mode: m, level_bucket: lv, pct_within_mode: rnd(10, 40, 1) / 100 });
+    });
+  });
+  const chart16 = [
+    { mode_mix_type: '单一模式', pct: 54 },
+    { mode_mix_type: '切换1次', pct: 29 },
+    { mode_mix_type: '切换2次', pct: 12 },
+    { mode_mix_type: '切换3+次', pct: 5 },
+  ];
+  const chart17 = [
+    { adjust_path: '泌乳→按摩', pct: 32 },
+    { adjust_path: '按摩→吸奶', pct: 24 },
+    { adjust_path: '吸奶→泌乳', pct: 18 },
+    { adjust_path: '按摩→泌乳', pct: 15 },
+    { adjust_path: '其他', pct: 11 },
+  ];
+  const chart18 = [
+    { direction: '上调', pct: 52 },
+    { direction: '下调', pct: 38 },
+    { direction: '不变', pct: 10 },
+  ];
+  const chart19 = {
+    mode: [
+      { adj_bucket: '0', pct: 46 }, { adj_bucket: '1', pct: 28 },
+      { adj_bucket: '2', pct: 15 }, { adj_bucket: '3+', pct: 11 },
+    ],
+    level: [
+      { adj_bucket: '0', pct: 32 }, { adj_bucket: '1', pct: 31 },
+      { adj_bucket: '2', pct: 22 }, { adj_bucket: '3+', pct: 15 },
+    ]
+  };
+  return { chart15, table02, chart16, chart17, chart18, chart19 };
+}
+
+function genFunnelDemo() {
+  const days = genDays(30);
+  const chart20 = days.map(dt => {
+    const power = rnd(22000, 28000);
+    const started = Math.round(power * rnd(0.82, 0.91, 2));
+    const ended = Math.round(started * rnd(0.74, 0.86, 2));
+    const valid = Math.round(ended * rnd(0.65, 0.78, 2));
+    return { dt, power_on_cnt: power, started_cnt: started, ended_cnt: ended, valid_cnt: valid };
+  });
+  const chart21 = days.map(dt => ({
+    dt, completion_rate_pct: rnd(74, 86, 1), valid_rate_pct: rnd(65, 79, 1)
+  }));
+  return {
+    kpi02: { power_on_cnt: 24800, devices_powered_on: 9200, started_sessions: 21300, ended_sessions: 17200, valid_sessions: 12400 },
+    funnel: { power_on_cnt: 24800, started_sessions: 21300, ended_sessions: 17200, valid_sessions: 12400,
+      start_rate_pct: 85.9, completion_rate_pct: 80.8, valid_rate_pct: 72.1 },
+    chart20, chart21
+  };
+}
+
+// ===== Render functions =====
+
+function renderOverview(d) {
+  const k = d.kpi01 || {};
+  const ex = d.kpi01_extra || {};
+  document.getElementById('kpi-overview').innerHTML = [
+    kpiCard('累计活跃用户数', fmtNum(k.total_users), '', 'ti-users', 'purple', '统计期内有至少一次吸奶行为的去重用户总数'),
+    kpiCard('累计活跃设备数', fmtNum(k.total_devices), `人均 ${ex.devices_per_user != null ? parseFloat(ex.devices_per_user).toFixed(2) : '--'} 台`, 'ti-device-mobile', 'teal', '统计期内有吸奶行为的去重设备总数'),
+    kpiCard('总吸奶次数', fmtNum(k.total_sessions), `人均 ${k.avg_sessions_per_user != null ? Math.round(k.avg_sessions_per_user) : '--'} 次`, 'ti-repeat', 'coral', '统计期内所有 useSessionId 去重后的吸奶次数总和；人均 = 总次数 / 累计活跃用户数'),
+    kpiCard('总吸奶时长', fmtHoursWan(ex.total_duration_hours), `次均 ${ex.avg_duration_min ?? '--'} 分钟`, 'ti-clock', 'amber', '统计期内所有 session 的 pumpDuration 累计（kh = 千小时）'),
+    kpiCard('次留率（D1）', ex.d1_retention_pct != null ? fmtPct(ex.d1_retention_pct, true) : '--', '期间日均', 'ti-chart-line', 'blue', 'D1 次留率 = 统计期内每日留存率的平均值（前1日活跃用户在当日仍有吸奶行为的比例）'),
+    kpiCard('有效进程率', ex.valid_session_rate_pct != null ? fmtPct(ex.valid_session_rate_pct, true) : '--', '时长 > 10 分钟', 'ti-check', 'teal', '吸奶时长大于10分钟的吸奶次数占总吸奶次数的比例'),
+  ].join('');
+
+  const ydayStr = (()=>{ const d=new Date(); d.setDate(d.getDate()-1); return d.toLocaleDateString('zh-CN',{month:'2-digit',day:'2-digit'}); })();
+  const noteEl = document.getElementById('yday-date-note');
+  if (noteEl) noteEl.textContent = '· 所有指标均为 ' + ydayStr + ' 数据';
+
+  // 昨日快照 KPI
+  const y = d.kpi_yesterday || {};
+  const yDau = fmtNum(y.dau);
+  const yDev = fmtNum(y.active_devices);
+  const ySess = fmtNum(y.sessions);
+  const yDurH = fmtHours(y.duration_hours);
+  const yAvgMin = (y.avg_dur_min != null ? y.avg_dur_min : '--') + ' min';
+  const yRet = (y.d1_ret != null ? y.d1_ret : '--') + '%';
+  const yValid = y.valid_rate != null ? fmtPct(y.valid_rate, true) : '--';
+
+  const _cmpD = (obj) => obj && obj.d1_delta != null ? obj.d1_delta : null;
+  const _cmpW = (obj) => obj && obj.d7_delta != null ? obj.d7_delta : null;
+
+  document.getElementById('kpi-yesterday').innerHTML = [
+    kpiCardCmp('活跃用户', yDau,
+      cmpHtml(_cmpD(y.dau_cmp), '较前1日'),
+      cmpHtml(_cmpW(y.dau_cmp), '较前7日均值'),
+      'ti-users', 'purple', '当日有至少一次吸奶行为的用户数（去重）'),
+    kpiCardCmp('活跃设备', yDev,
+      cmpHtml(_cmpD(y.active_devices_cmp), '较前1日'),
+      cmpHtml(_cmpW(y.active_devices_cmp), '较前7日均值'),
+      'ti-device-mobile', 'teal', '当日有吸奶行为的设备数（去重）'),
+    kpiCardCmp('吸奶次数', ySess,
+      cmpHtml(_cmpD(y.sessions_cmp), '较前1日'),
+      cmpHtml(_cmpW(y.sessions_cmp), '较前7日均值'),
+      'ti-repeat', 'coral', '昨日所有 useSessionId 去重后的吸奶总次数'),
+    kpiCardCmp('吸奶总时长', yDurH,
+      cmpHtml(_cmpD(y.duration_hours_cmp), '较前1日'),
+      cmpHtml(_cmpW(y.duration_hours_cmp), '较前7日均值'),
+      'ti-clock', 'amber', '昨日吸奶总时长（小时），次均 ' + yAvgMin),
+    kpiCardCmp('次留率（D1）', yRet,
+      cmpHtml(_cmpD(y.d1_ret_cmp), '较前1日', true),
+      cmpHtml(_cmpW(y.d1_ret_cmp), '较前7日均值', true),
+      'ti-chart-line', 'blue', 'D1 留存率 = 前1日活跃用户，在当日仍有活跃的比例'),
+    kpiCardCmp('有效进程率', yValid,
+      cmpHtml(_cmpD(y.valid_rate_cmp), '较前1日', true),
+      cmpHtml(_cmpW(y.valid_rate_cmp), '较前7日均值', true),
+      'ti-check', 'teal', '吸奶时长大于10分钟的吸奶次数占总吸奶次数的比例'),
+  ].join('');
+
+  const c1 = d.chart01 || [];
+  const p0 = getP();
+  const _dauLabels = dtLabels(c1);
+  const _dauLastIdx = _dauLabels.length - 1;
+  const _dauStep = Math.max(1, Math.floor(_dauLabels.length / 6));
+  const _dauShow = (ctx) => ctx.dataIndex % _dauStep === 0 || ctx.dataIndex === _dauLastIdx;
+  const _dauFmt = (v) => v == null ? '' : (Math.abs(v) >= 1000 ? (v/1000).toFixed(1)+'K' : String(v));
+  mkLine(document.getElementById('dauChart'), [
+    { label: '用户', data: c1.map(r => r.dau), borderColor: p0.c1, backgroundColor: rgba(p0.c1, 0.08), borderWidth: 1.5, fill: true, tension: 0.4,
+      datalabels: { display: _dauShow, color: p0.c1, font: { size: 11, weight: '500' }, anchor: 'start', align: 'start', offset: 3, formatter: _dauFmt } },
+    { label: '设备', data: c1.map(r => r.active_devices), borderColor: p0.c2, backgroundColor: rgba(p0.c2, 0.06), borderWidth: 1.5, fill: true, tension: 0.4,
+      datalabels: { display: _dauShow, color: p0.c2, font: { size: 11, weight: '500' }, anchor: 'end', align: 'end', offset: 3, formatter: _dauFmt } }
+  ], _dauLabels);
+
+  const c2 = d.chart02 || [];
+  mkBar(document.getElementById('sessionTrendChart'), dtLabels(c2),
+    [{ data: c2.map(r => r.session_count), backgroundColor: rgba(p0.c3, 0.7), borderRadius: 2 }]);
+
+  renderBarList(document.getElementById('bar-modes'), d.chart03 || [], 'mode_type', 'pct', p0.colors(), false, false);
+  const c4 = d.chart04 || [];
+  mkDonut(document.getElementById('levelDonut'), c4.map(r => r.level_bucket), c4.map(r => r.pct), [rgba(p0.c1,0.25), rgba(p0.c1,0.5), p0.c1, p0.c6], '68%', false);
+
+  const c5 = (d.chart05 || []).map(r => ({
+    ...r,
+    hour_label: `${String(r.local_hour).padStart(2, '0')}:00`
+  }));
+  renderBarList(document.getElementById('bar-peak-hours'), c5.map(r => ({ ...r, mode_type: r.hour_label })), 'mode_type', 'pct', COLORS);
+}
+
+function renderRetention(d) {
+  const s = d.summary || {};
+  const _cmpD = (obj) => obj && obj.d1_delta != null ? obj.d1_delta : null;
+  const _cmpW = (obj) => obj && obj.d7_delta != null ? obj.d7_delta : null;
+
+  document.getElementById('kpi-retention').innerHTML = [
+    kpiCardCmp('昨日 DAU', fmtNum(s.dau_yday != null ? s.dau_yday : s.avg_dau),
+      cmpHtml(_cmpD(s.dau_cmp), '较前1日'),
+      cmpHtml(_cmpW(s.dau_cmp), '较前7日均值'),
+      'ti-users', 'purple', '昨日有至少一次吸奶行为的去重用户数（日活跃用户数）'),
+    kpiCardCmp('D1 用户留存', s.d1_user_pct != null ? fmtPct(s.d1_user_pct, true) : '--',
+      cmpHtml(_cmpD(s.d1_user_cmp), '较前1日', true),
+      cmpHtml(_cmpW(s.d1_user_cmp), '较前7日均值', true),
+      'ti-chart-line', 'teal', 'D1 留存率口径：前1日活跃用户，在当日仍有活跃的比例'),
+    kpiCardCmp('D1 设备留存', s.d1_device_pct != null ? fmtPct(s.d1_device_pct, true) : '--',
+      cmpHtml(_cmpD(s.d1_device_cmp), '较前1日', true),
+      cmpHtml(_cmpW(s.d1_device_cmp), '较前7日均值', true),
+      'ti-device-mobile', 'coral', 'D1 设备留存率口径：前1日活跃设备，在当日仍有活跃的比例'),
+    kpiCardCmp('D7 用户留存', s.d7_user_pct != null ? fmtPct(s.d7_user_pct, true) : '--',
+      cmpHtml(_cmpD(s.d7_user_cmp), '较前1日', true),
+      cmpHtml(_cmpW(s.d7_user_cmp), '较前7日均值', true),
+      'ti-chart-line', 'amber', 'D7 留存率口径：前7日活跃用户，在当日仍有活跃的比例'),
+    kpiCardCmp('D7 设备留存', s.d7_device_pct != null ? fmtPct(s.d7_device_pct, true) : '--',
+      cmpHtml(_cmpD(s.d7_device_cmp), '较前1日', true),
+      cmpHtml(_cmpW(s.d7_device_cmp), '较前7日均值', true),
+      'ti-device-mobile', 'blue', 'D7 设备留存率口径：前7日活跃设备，在当日仍有活跃的比例'),
+    kpiCardCmp('新增用户数', fmtNum(s.new_users_yday),
+      cmpHtml(_cmpD(s.new_users_cmp), '较前1日'),
+      cmpHtml(_cmpW(s.new_users_cmp), '较前7日均值'),
+      'ti-user-plus', 'purple', '昨日首次有吸奶行为的新用户数'),
+    kpiCardCmp('新增设备数', fmtNum(s.new_devices_yday),
+      cmpHtml(_cmpD(s.new_devices_cmp), '较前1日'),
+      cmpHtml(_cmpW(s.new_devices_cmp), '较前7日均值'),
+      'ti-device-tablet-plus', 'teal', '昨日首次绑定并使用的新设备数'),
+  ].join('');
+
+  const u = d.chart06_user || [];
+  const dev = d.chart06_device || [];
+  const labels = dtLabels(u, 'base_date');
+  const pr = getP();
+  mkLine(document.getElementById('retentionUserChart'), [
+    { label: '用户D1', data: u.map(r => r.d1_user_retention_pct != null ? (r.d1_user_retention_pct <= 1 ? +(r.d1_user_retention_pct*100).toFixed(1) : r.d1_user_retention_pct) : null), borderColor: pr.c1, borderWidth: 1.5, tension: 0.4 },
+    { label: '用户D7', data: u.map(r => r.d7_user_retention_pct != null ? (r.d7_user_retention_pct <= 1 ? +(r.d7_user_retention_pct*100).toFixed(1) : r.d7_user_retention_pct) : null), borderColor: pr.c6, borderWidth: 1.5, tension: 0.4, borderDash: [5, 3] }
+  ], labels, { scales: { y: { ticks: { callback: v => v + '%', color: pr.text3 }, suggestedMin: 0, suggestedMax: 100 } } }, true);
+  const devLabels = dtLabels(dev, 'base_date');
+  mkLine(document.getElementById('retentionDeviceChart'), [
+    { label: '设备D1', data: dev.map(r => r.d1_device_retention_pct != null ? (r.d1_device_retention_pct <= 1 ? +(r.d1_device_retention_pct*100).toFixed(1) : r.d1_device_retention_pct) : null), borderColor: pr.c2, borderWidth: 1.5, tension: 0.4 },
+    { label: '设备D7', data: dev.map(r => r.d7_device_retention_pct != null ? (r.d7_device_retention_pct <= 1 ? +(r.d7_device_retention_pct*100).toFixed(1) : r.d7_device_retention_pct) : null), borderColor: pr.c5, borderWidth: 1.5, tension: 0.4, borderDash: [5, 3] }
+  ], devLabels, { scales: { y: { ticks: { callback: v => v + '%', color: pr.text3 }, suggestedMin: 0, suggestedMax: 100 } } }, true);
+
+  const newUD = d.newUserDev || [];
+  mkLine(document.getElementById('newUserDevChart'), [
+    { label: '新增用户', data: newUD.map(r => r.new_users), borderColor: pr.c1, backgroundColor: rgba(pr.c1, 0.08), borderWidth: 1.5, fill: true, tension: 0.4 },
+    { label: '新增设备', data: newUD.map(r => r.new_devices), borderColor: pr.c2, backgroundColor: rgba(pr.c2, 0.06), borderWidth: 1.5, fill: true, tension: 0.4 }
+  ], dtLabels(newUD));
+
+  const tbody = document.querySelector('#table-retention tbody');
+  const allRows = d.table01 || [];
+  const PAGE_SIZE = 10;
+  let currentPage = 0;
+  function fmtWeekRange(w) {
+    if (!w) return '--';
+    const d0 = new Date(String(w).slice(0, 10));
+    if (isNaN(d0)) return String(w).slice(0, 10);
+    const d1 = new Date(d0); d1.setDate(d0.getDate() + 6);
+    const fmt = d => d.toISOString().slice(0, 10);
+    return fmt(d0) + ' ~ ' + fmt(d1);
+  }
+  function renderTablePage(page) {
+    const slice = allRows.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
+    tbody.innerHTML = slice.map(r => `<tr>
+      <td>${fmtWeekRange(r.install_week)}</td><td>${fmtNum(r.new_users)}</td>
+      <td><span class="badge badge-teal">${fmtPct(r.d1_pct, true)}</span></td>
+      <td>${fmtPct(r.d3_pct, true)}</td><td>${fmtPct(r.d7_pct, true)}</td><td>${fmtPct(r.d14_pct, true)}</td>
+    </tr>`).join('') || '<tr><td colspan="6">暂无数据</td></tr>';
+    const pager = document.getElementById('table-retention-pager');
+    const totalPages = Math.ceil(allRows.length / PAGE_SIZE);
+    if (totalPages <= 1) { pager.innerHTML = ''; return; }
+    pager.innerHTML = `<span>第 ${page + 1} / ${totalPages} 页</span>` +
+      (page > 0 ? `<button class="ctrl-btn" style="padding:2px 8px;font-size:11px" onclick="(${renderTablePage.toString()})(${page - 1})">上一页</button>` : '') +
+      (page < totalPages - 1 ? `<button class="ctrl-btn" style="padding:2px 8px;font-size:11px" onclick="(${renderTablePage.toString()})(${page + 1})">下一页</button>` : '');
+  }
+  renderTablePage(0);
+
+  const streak = d.chart07 || [];
+  if (streak.length) {
+    const pr2 = getP();
+    const totalStreak = streak.reduce((s, r) => s + (r.user_count || 0), 0);
+    mkBar(document.getElementById('streakChart'),
+      streak.map(r => r.streak_bucket),
+      [{ label: '用户数', data: streak.map(r => r.user_count),
+         backgroundColor: rgba(pr2.c1, 0.75), borderColor: pr2.c1, borderWidth: 1, borderRadius: 4,
+         datalabels: {
+           display: true, anchor: 'end', align: 'top', offset: 2,
+           font: { size: 11 }, color: pr2.text3,
+           formatter: (v) => {
+             const pct = totalStreak > 0 ? (v / totalStreak * 100).toFixed(1) : '0.0';
+             return [(v >= 1000 ? (v/1000).toFixed(1)+'K' : String(v)), pct + '%'];
+           }
+         }
+      }],
+      {
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { ticks: { font:{size:10}, color: pr2.text3 }, grid: { display: false } },
+          y: { ticks: { callback: v => v >= 1000 ? (v/1000).toFixed(1)+'K' : v, color: pr2.text3 }, grid: { display: false } }
+        },
+        layout: { padding: { top: 32 } }
+      }
+    );
+  }
+}
+
+function renderSessions(d) {
+  const k = d.kpi01 || {};
+  const sm = d.summary || {};
+  const ky = d.kpi_yesterday || {};
+  const _cmpD = (obj) => obj && obj.d1_delta != null ? obj.d1_delta : null;
+  const _cmpW = (obj) => obj && obj.d7_delta != null ? obj.d7_delta : null;
+  document.getElementById('kpi-sessions').innerHTML = [
+    kpiCardCmp('总吸奶次数', fmtNum(ky.total_sessions),
+      cmpHtml(_cmpD(ky.sessions_cmp), '较前1日'),
+      cmpHtml(_cmpW(ky.sessions_cmp), '较前7日均值'),
+      'ti-repeat', 'purple', '昨日所有 useSessionId 去重后的吸奶次数'),
+    kpiCardCmp('人均每日次数', (ky.avg_sessions_per_user != null ? ky.avg_sessions_per_user : '--') + ' 次',
+      cmpHtml(_cmpD(ky.avg_sessions_per_user_cmp), '较前1日'),
+      cmpHtml(_cmpW(ky.avg_sessions_per_user_cmp), '较前7日均值'),
+      'ti-user', 'teal', '昨日总次数 / 昨日活跃用户数'),
+    kpiCardCmp('单日最高次数', (ky.max_sessions_single_user != null ? ky.max_sessions_single_user : '--') + ' 次',
+      null, null,
+      'ti-trophy', 'coral', '昨日单个用户的最大吸奶次数'),
+    kpiCardCmp('1次/天占比', ky.one_per_day_pct != null ? fmtPct(ky.one_per_day_pct, true) : '--',
+      cmpHtml(_cmpD(ky.one_per_day_cmp), '较前1日', true),
+      cmpHtml(_cmpW(ky.one_per_day_cmp), '较前7日均值', true),
+      'ti-chart-bar', 'amber', '昨日只吸奶1次的用户数 / 昨日活跃用户数'),
+  ].join('');
+
+  const ps = getP();
+
+  // New: daily session trend
+  const cSdt = d.chart_sess_daily_trend || [];
+  mkLine(document.getElementById('sessDailyTrendChart'), [
+    { label: '每日次数', data: cSdt.map(r => r.session_count), borderColor: ps.c1, backgroundColor: rgba(ps.c1, 0.08), borderWidth: 1.5, fill: true, tension: 0.4 }
+  ], dtLabels(cSdt));
+
+  // New: avg sessions per user trend
+  const cSau = d.chart_sess_avg_per_user || [];
+  mkLine(document.getElementById('sessAvgPerUserChart'), [
+    { label: '人均次数', data: cSau.map(r => r.avg_sessions), borderColor: ps.c2, backgroundColor: rgba(ps.c2, 0.07), borderWidth: 1.5, fill: true, tension: 0.4 }
+  ], dtLabels(cSau));
+
+  const c8 = d.chart08 || [];
+  const c8data = c8.map(r => (r.pct <= 1 ? +(r.pct * 100).toFixed(1) : r.pct));
+  mkBar(document.getElementById('sessDistChart'), c8.map(r => r.session_bucket), [
+    { data: c8data, backgroundColor: rgba(ps.c1, 0.8), borderRadius: 4 }
+  ], {
+    plugins: {
+      legend: { display: false },
+      datalabels: { display: true, anchor: 'end', align: 'top', offset: 1, font: { size: 11 }, formatter: v => v.toFixed(1) + '%' },
+      tooltip: { callbacks: { label: x => x.parsed.y.toFixed(1) + '%' } }
+    },
+    scales: {
+      x: { ticks: { font: { size: 10 }, color: ps.text3 }, grid: { display: false } },
+      y: { ticks: { font: { size: 10 }, color: ps.text3, callback: v => v + '%' }, grid: { color: ps.grid } }
+    }
+  });
+
+  // Stacked bar for sessTrendChart
+  const c9 = d.chart09 || [];
+  const normDt = v => String(v).slice(0, 10);
+  const buckets9 = [...new Set(c9.map(r => r.session_bucket))];
+  const dates9 = [...new Set(c9.map(r => normDt(r.dt)))].sort();
+  const sCols = ps.colors();
+  const sessStackColors = buckets9.map((_, i) => sCols[i % sCols.length]);
+  mkLegend(document.getElementById('legend-sess-trend'), buckets9, sessStackColors);
+  const sessTrendPct = buckets9.map(b => dates9.map(dt => {
+    const v = (c9.find(r => normDt(r.dt) === dt && r.session_bucket === b) || {}).pct_of_day;
+    return v != null && v <= 1 ? +(v * 100).toFixed(1) : (v ?? 0);
+  }));
+  const sessTrendAbs = buckets9.map(b => dates9.map(dt => {
+    const r = c9.find(row => normDt(row.dt) === dt && row.session_bucket === b) || {};
+    return r.cnt_of_day != null ? r.cnt_of_day : Math.round((r.pct_of_day ?? 0) * 25000);
+  }));
+  stackedChartData['sessTrendChart'] = {
+    labels: dtLabels(dates9.map(dt => ({ dt }))),
+    seriesLabels: buckets9,
+    seriesData: sessTrendPct,
+    seriesDataAbs: sessTrendAbs,
+    colors: sessStackColors,
+    legendElId: 'legend-sess-trend',
+    subElId: 'sub-sess-trend',
+    subPct: '各次数区间用户占比（百分比堆积）',
+    subAbs: '各次数区间用户数量（堆积）',
+  };
+  const __sessTrendChart = mkStackedBar(
+    document.getElementById('sessTrendChart'),
+    dtLabels(dates9.map(dt => ({ dt }))),
+    buckets9, sessTrendAbs, sessStackColors, stackAbsOpts(ps)
+  );
+  wireLegendEl(document.getElementById('legend-sess-trend'), __sessTrendChart);
+
+  const c10 = d.chart10 || [];
+  mkDonut(document.getElementById('cumUserChart'), c10.map(r => r.cumulative_bucket), c10.map(r => r.pct), [rgba(ps.c1,0.15),rgba(ps.c1,0.3),rgba(ps.c1,0.5),ps.c1,ps.c6], '60%', true);
+  const c11 = d.chart11 || [];
+  mkDonut(document.getElementById('cumDevChart'), c11.map(r => r.cumulative_bucket), c11.map(r => r.pct), [rgba(ps.c2,0.15),rgba(ps.c2,0.3),rgba(ps.c2,0.5),ps.c2,ps.c5], '60%', true);
+
+  const modeColors4 = [ps.c1, ps.c2, ps.c3, ps.c4];
+  const cMsd = d.chart_mode_sess_dist || [];
+  mkDonut(document.getElementById('sessModeDistChart'), cMsd.map(r => MODE_MAP[r.mode_type] || r.mode_type), cMsd.map(r => r.cnt), modeColors4, '62%', false);
+
+  // Stacked bar for sessModeTrendChart
+  const cMst = d.chart_mode_sess_trend || [];
+  const modeTypes4 = ['stimulation', 'expression', 'massage', 'custom'];
+  const modeLabels4 = modeTypes4.map(m => MODE_MAP[m] || m);
+  const mstDates = [...new Set(cMst.map(r => String(r.dt).slice(0, 10)))].sort();
+  mkLegend(document.getElementById('legend-sess-mode-trend'), modeLabels4, modeColors4);
+  const sessModePct = modeTypes4.map(m => mstDates.map(dt => {
+    const v = (cMst.find(r => String(r.dt).slice(0, 10) === dt && r.mode_type === m) || {}).pct;
+    return v != null && v <= 1 ? +(v * 100).toFixed(1) : (v ?? 0);
+  }));
+  const sessModeAbs = modeTypes4.map(m => mstDates.map(dt => {
+    const r = cMst.find(row => String(row.dt).slice(0, 10) === dt && row.mode_type === m) || {};
+    return r.cnt != null ? r.cnt : 0;
+  }));
+  stackedChartData['sessModeTrendChart'] = {
+    labels: dtLabels(mstDates.map(dt => ({ dt }))),
+    seriesLabels: modeLabels4,
+    seriesData: sessModePct,
+    seriesDataAbs: sessModeAbs,
+    colors: modeColors4,
+    legendElId: 'legend-sess-mode-trend',
+    subElId: 'sub-sess-mode-trend',
+    subPct: '各模式次数占比（百分比堆积）',
+    subAbs: '各模式吸奶次数（堆积）',
+  };
+  const __sessModeTrendChart = mkStackedBar(
+    document.getElementById('sessModeTrendChart'),
+    dtLabels(mstDates.map(dt => ({ dt }))),
+    modeLabels4, sessModeAbs, modeColors4, stackAbsOpts(ps)
+  );
+  wireLegendEl(document.getElementById('legend-sess-mode-trend'), __sessModeTrendChart);
+}
+
+function renderDuration(d) {
+  const s = d.summary || {};
+  const ky = d.kpi_yesterday || {};
+  const _cmpD = (obj) => obj && obj.d1_delta != null ? obj.d1_delta : null;
+  const _cmpW = (obj) => obj && obj.d7_delta != null ? obj.d7_delta : null;
+  document.getElementById('kpi-duration').innerHTML = [
+    kpiCardCmp('总吸奶时长', fmtHours(ky.total_hours_yday != null ? ky.total_hours_yday : s.total_duration_hours),
+      cmpHtml(_cmpD(s.total_hours_cmp), '较前1日'),
+      cmpHtml(_cmpW(s.total_hours_cmp), '较前7日均值'),
+      'ti-clock', 'purple', '昨日吸奶总时长（小时），所有 session 的 pumpDuration 累计'),
+    kpiCardCmp('次均时长', (ky.avg_dur_min_yday != null ? parseFloat(ky.avg_dur_min_yday).toFixed(1) : (s.avg_duration_min != null ? parseFloat(s.avg_duration_min).toFixed(1) : '--')) + ' min',
+      cmpHtml(_cmpD(s.avg_dur_min_cmp), '较前1日'),
+      cmpHtml(_cmpW(s.avg_dur_min_cmp), '较前7日均值'),
+      'ti-stopwatch', 'teal', '昨日次均时长 = 昨日总时长 / 昨日总次数（分钟）'),
+    kpiCardCmp('人均每日时长', (ky.daily_per_user_yday != null ? parseFloat(ky.daily_per_user_yday).toFixed(1) : (s.daily_min_per_user != null ? parseFloat(s.daily_min_per_user).toFixed(1) : '--')) + ' min',
+      cmpHtml(_cmpD(s.dur_per_user_cmp), '较前1日'),
+      cmpHtml(_cmpW(s.dur_per_user_cmp), '较前7日均值'),
+      'ti-user', 'coral', '昨日人均每日吸奶时长 = 昨日总时长 / 昨日活跃用户数（分钟）'),
+    kpiCardCmp('>10min 占比', fmtPct(ky.valid_rate_yday != null ? ky.valid_rate_yday : (s.valid_session_rate_pct != null ? s.valid_session_rate_pct : 0), true),
+      cmpHtml(_cmpD(s.valid_rate_cmp), '较前1日', true),
+      cmpHtml(_cmpW(s.valid_rate_cmp), '较前7日均值', true),
+      'ti-chart-pie', 'amber', '昨日吸奶时长>10分钟的次数 / 昨日总次数（有效进程率）'),
+  ].join('');
+
+  const pd = getP();
+
+  // New: daily total hours trend
+  const cDdt = d.chart_dur_daily_trend || [];
+  mkLine(document.getElementById('durDailyTrendChart'), [
+    { label: '每日时长', data: cDdt.map(r => r.total_hours), borderColor: pd.c3, backgroundColor: rgba(pd.c3, 0.08), borderWidth: 1.5, fill: true, tension: 0.4 }
+  ], dtLabels(cDdt));
+
+  // New: avg duration per user trend
+  const cDau = d.chart_dur_avg_per_user || [];
+  mkLine(document.getElementById('durAvgPerUserChart'), [
+    { label: '人均时长', data: cDau.map(r => r.avg_min_per_user), borderColor: pd.c2, backgroundColor: rgba(pd.c2, 0.07), borderWidth: 1.5, fill: true, tension: 0.4 }
+  ], dtLabels(cDau));
+
+  const c12 = d.chart12 || [];
+  const durDistCtx = document.getElementById('durDistChart');
+  const durDistRaw = c12.map(r => r.pct <= 1 ? +(r.pct * 100).toFixed(1) : r.pct);
+  const durDistMax = Math.max(...durDistRaw) || 1;
+  const [dr,dg,db] = hexToRgb(pd.c1);
+  const durDistColors = durDistRaw.map(v => {
+    const t = v / durDistMax;
+    return `rgba(${Math.round(dr - t*40)},${Math.round(dg - t*35)},${Math.round(db - t*30)},${0.35 + t * 0.6})`;
+  });
+  mkBar(durDistCtx, c12.map(r => r.duration_bucket),
+    [{ data: durDistRaw, backgroundColor: durDistColors, borderRadius: 4 }], {
+    plugins: {
+      legend: { display: false },
+      datalabels: { display: true, anchor: 'end', align: 'top', offset: 1, font: { size: 11 }, formatter: v => v.toFixed(1) + '%' },
+      tooltip: { callbacks: { label: x => x.parsed.y.toFixed(1) + '%' } }
+    },
+    scales: {
+      x: { ticks: { font: { size: 10 }, color: pd.text3 }, grid: { display: false } },
+      y: { ticks: { font: { size: 10 }, color: pd.text3, callback: v => v + '%' }, grid: { color: pd.grid } }
+    }
+  });
+
+  const c13 = d.chart13 || [];
+  mkLine(document.getElementById('durTrendChart'), [
+    { label: '次均时长', data: c13.map(r => r.avg_duration_min), borderColor: pd.c1, backgroundColor: rgba(pd.c1, 0.07), borderWidth: 1.5, fill: true, tension: 0.4 }
+  ], dtLabels(c13));
+
+  // Combo chart with dynamic axis + point markers + better colors
+  const c14 = d.chart14 || [];
+  destroyChart('cumDurComboChart');
+  const comboCtx = document.getElementById('cumDurComboChart');
+  const barVals = c14.map(r => r.daily_hours);
+  const lineVals = c14.map(r => r.cumulative_hours_k);
+  const barMin = Math.min(...barVals); const barMax = Math.max(...barVals);
+  const lineMin = Math.min(...lineVals); const lineMax = Math.max(...lineVals);
+  const barPad = (barMax - barMin) * 0.15 || 200;
+  const linePad = (lineMax - lineMin) * 0.1 || 5;
+  const [br2,bg2,bb2] = hexToRgb(pd.c4);
+  const comboChart = new Chart(comboCtx, {
+    type: 'bar',
+    data: {
+      labels: dtLabels(c14),
+      datasets: [
+        {
+          type: 'bar',
+          label: '每日新增（小时）',
+          data: barVals,
+          backgroundColor: barVals.map(v => {
+            const t = (v - barMin) / (barMax - barMin || 1);
+            return `rgba(${Math.round(br2 - t*25)},${Math.round(bg2 - t*20)},${Math.round(bb2 - t*10)},${0.35 + t*0.6})`;
+          }),
+          borderRadius: 4,
+          yAxisID: 'y',
+          datalabels: {
+            display: (ctx) => ctx.dataIndex === 0 || ctx.dataIndex === barVals.length - 1 || ctx.dataIndex % Math.max(1, Math.floor(barVals.length / 6)) === 0,
+            color: pd.text3, font: { size: 11 },
+            anchor: 'end', align: 'top', offset: 1,
+            formatter: v => v >= 1000 ? (v/1000).toFixed(0)+'K' : Math.round(v)
+          }
+        },
+        {
+          type: 'line',
+          label: '累计（千小时）',
+          data: lineVals,
+          borderColor: pd.c1,
+          backgroundColor: rgba(pd.c1, 0.12),
+          borderWidth: 2,
+          pointRadius: 3,
+          pointBackgroundColor: pd.c1,
+          pointBorderColor: 'transparent',
+          tension: 0.4,
+          fill: true,
+          yAxisID: 'y2',
+          datalabels: {
+            display: (ctx) => ctx.dataIndex === 0 || ctx.dataIndex === lineVals.length - 1 || ctx.dataIndex % Math.max(1, Math.floor(lineVals.length / 5)) === 0,
+            color: pd.c1, font: { size: 11, weight: '500' },
+            anchor: 'end', align: 'top', offset: 4,
+            formatter: v => v.toFixed(0) + 'K'
+          }
+        }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: { mode: 'index', intersect: false }, datalabels: {} },
+      scales: {
+        x: { ticks: { font: { size: 10 }, color: pd.text3, maxRotation: 0, autoSkip: true, maxTicksLimit: 12 }, grid: { display: false } },
+        y: { position: 'left', min: Math.max(0, barMin - barPad), max: barMax + barPad, ticks: { font: { size: 10 }, color: pd.text3 }, grid: { color: pd.grid }, title: { display: true, text: '小时', font: { size: 11 }, color: pd.text3 } },
+        y2: { position: 'right', min: lineMin - linePad, max: lineMax + linePad, ticks: { font: { size: 10 }, color: pd.c1, callback: v => v.toFixed(0) + 'K' }, grid: { display: false }, title: { display: true, text: '千小时', font: { size: 11 }, color: pd.c1 } }
+      }
+    }
+  });
+  chartStore['cumDurComboChart'] = comboChart;
+
+  const durModeColors = [pd.c1, pd.c2, pd.c3, pd.c4];
+  const cMdd = d.chart_mode_dur_dist || [];
+  mkDonut(document.getElementById('durModeDistChart'), cMdd.map(r => MODE_MAP[r.mode_type] || r.mode_type), cMdd.map(r => r.duration_min), durModeColors, '62%', false);
+
+  // Stacked bar for durModeTrendChart
+  const cMdt = d.chart_mode_dur_trend || [];
+  const durModeTypes = ['stimulation', 'expression', 'massage', 'custom'];
+  const durModeLabels = durModeTypes.map(m => MODE_MAP[m] || m);
+  const mdtDates = [...new Set(cMdt.map(r => String(r.dt).slice(0, 10)))].sort();
+  mkLegend(document.getElementById('legend-dur-mode-trend'), durModeLabels, durModeColors);
+  const durModePct = durModeTypes.map(m => mdtDates.map(dt => {
+    const v = (cMdt.find(r => String(r.dt).slice(0, 10) === dt && r.mode_type === m) || {}).pct;
+    return v != null && v <= 1 ? +(v * 100).toFixed(1) : (v ?? 0);
+  }));
+  const durModeAbs = durModeTypes.map(m => mdtDates.map(dt => {
+    const r = cMdt.find(row => String(row.dt).slice(0, 10) === dt && row.mode_type === m) || {};
+    return r.dur_min != null ? r.dur_min : 0;
+  }));
+  stackedChartData['durModeTrendChart'] = {
+    labels: dtLabels(mdtDates.map(dt => ({ dt }))),
+    seriesLabels: durModeLabels,
+    seriesData: durModePct,
+    seriesDataAbs: durModeAbs,
+    colors: durModeColors,
+    legendElId: 'legend-dur-mode-trend',
+    subElId: 'sub-dur-mode-trend',
+    subPct: '各模式时长占比（百分比堆积）',
+    subAbs: '各模式吸奶时长（分钟，堆积）',
+  };
+  const __durModeTrendChart = mkStackedBar(
+    document.getElementById('durModeTrendChart'),
+    dtLabels(mdtDates.map(dt => ({ dt }))),
+    durModeLabels, durModeAbs, durModeColors, stackAbsOpts(pd)
+  );
+  wireLegendEl(document.getElementById('legend-dur-mode-trend'), __durModeTrendChart);
+}
+
+function renderHabits(d) {
+  // 时段分布：工作日和周末两张柱形图
+  const chart15 = d.chart15 || [];
+  const hours = Array.from({length: 24}, (_, i) => i + '时');
+  const weekdayData = hours.map((_, h) => {
+    const row = chart15.find(r => r.day_type === '工作日' && r.local_hour === h);
+    const v = row ? Number(row.pct) : 0;
+    return v <= 1 ? +(v * 100).toFixed(3) : v;
+  });
+  const weekendData = hours.map((_, h) => {
+    const row = chart15.find(r => r.day_type === '周末' && r.local_hour === h);
+    const v = row ? Number(row.pct) : 0;
+    return v <= 1 ? +(v * 100).toFixed(3) : v;
+  });
+  const hourBarOpts = {
+    responsive: true, maintainAspectRatio: false,
+    layout: { padding: { top: 18 } },
+    plugins: {
+      legend: { display: false },
+      tooltip: { callbacks: { label: c => c.parsed.y.toFixed(1) + '%' } },
+      datalabels: {
+        display: (ctx) => [6, 9, 12, 15, 18, 21].includes(ctx.dataIndex),
+        color: getP().text2, font: { size: 11, weight: '500' },
+        anchor: 'end', align: 'top', offset: 1,
+        formatter: v => v.toFixed(1) + '%'
+      }
+    },
+    scales: {
+      x: { ticks: { font: { size: 11 }, color: '#888780', maxRotation: 0 }, grid: { display: false } },
+      y: { ticks: { font: { size: 11 }, color: '#888780', callback: v => v + '%' }, grid: { color: 'rgba(0,0,0,0.04)' } }
+    }
+  };
+
+  const hourGradient = (data, r0, g0, b0) => {
+    const mx = Math.max(...data, 1);
+    return data.map(v => {
+      const t = v / mx;
+      return `rgba(${Math.round(r0 - t*40)},${Math.round(g0 - t*35)},${Math.round(b0 - t*30)},${0.3 + t*0.65})`;
+    });
+  };
+
+  const ph = getP();
+  const [hr1,hg1,hb1] = hexToRgb(ph.c1);
+  const [hr2,hg2,hb2] = hexToRgb(ph.c2);
+  destroyChart('hourWeekdayChart');
+  const wdCtx = document.getElementById('hourWeekdayChart');
+  chartStore['hourWeekdayChart'] = new Chart(wdCtx, {
+    type: 'bar',
+    data: { labels: hours, datasets: [{ data: weekdayData, backgroundColor: hourGradient(weekdayData, hr1, hg1, hb1), borderRadius: 3 }] },
+    options: hourBarOpts
+  });
+
+  destroyChart('hourWeekendChart');
+  const weCtx = document.getElementById('hourWeekendChart');
+  chartStore['hourWeekendChart'] = new Chart(weCtx, {
+    type: 'bar',
+    data: { labels: hours, datasets: [{ data: weekendData, backgroundColor: hourGradient(weekendData, hr2, hg2, hb2), borderRadius: 3 }] },
+    options: hourBarOpts
+  });
+  const modes = [...new Set((d.table02 || []).map(r => r.final_mode))];
+  const levels = ['1–3档', '4–6档', '7–9档', '9+档'];
+  const tbody = document.querySelector('#table-mode-level tbody');
+  tbody.innerHTML = modes.map(m => {
+    const cells = levels.map(lv => {
+      const row = (d.table02 || []).find(r => r.final_mode === m && r.level_bucket === lv);
+      return `<td>${row ? fmtPct(row.pct_within_mode) : '--'}</td>`;
+    }).join('');
+    return `<tr><td><span class="badge badge-purple">${m}</span></td>${cells}</tr>`;
+  }).join('') || '<tr><td colspan="5">暂无数据</td></tr>';
+
+  renderBarList(document.getElementById('bar-mode-mix'), d.chart16 || [], 'mode_mix_type', 'pct', ph.colors(), false, true);
+  renderBarList(document.getElementById('bar-mode-adj'), d.chart17 || [], 'adjust_path', 'pct', ph.colors(), true, true);
+
+  // 模式/档位调节汇总 KPI
+  const adjS = d.adj_summary || {};
+  const modeAdjRate = adjS.mode_adj_rate_pct;
+  const levelAdjRate = adjS.level_adj_rate_pct;
+  document.getElementById('mode-adj-rate').textContent  = modeAdjRate  != null ? modeAdjRate.toFixed(1)  + '%' : '--';
+  document.getElementById('mode-adj-avg').textContent   = adjS.avg_mode_adj  != null ? adjS.avg_mode_adj  + ' 次' : '--';
+  document.getElementById('level-adj-rate').textContent = levelAdjRate != null ? levelAdjRate.toFixed(1) + '%' : '--';
+  document.getElementById('level-adj-avg').textContent  = adjS.avg_level_adj != null ? adjS.avg_level_adj + ' 次' : '--';
+
+  const c18 = d.chart18 || [];
+  mkDonut(document.getElementById('adjDirChart'), c18.map(r => r.direction), c18.map(r => r.pct), [ph.c1, ph.c2, ph.text3], '65%', true);
+
+  const c19 = d.chart19 || {};
+  const mode = c19.mode || [];
+  const level = c19.level || [];
+  const labels = [...new Set([...mode, ...level].map(r => r.adj_bucket))].sort((a, b) => {
+    if (a === '3+') return 1; if (b === '3+') return -1; return Number(a) - Number(b);
+  });
+  mkBar(document.getElementById('adjCntChart'), labels.map(l => l + '次'), [
+    { label: '模式', data: labels.map(l => { const v = (mode.find(r => r.adj_bucket === l) || {}).pct; return v != null && v <= 1 ? +(v*100).toFixed(1) : (v ?? 0); }), backgroundColor: rgba(ph.c1, 0.75), borderRadius: 3 },
+    { label: '档位', data: labels.map(l => { const v = (level.find(r => r.adj_bucket === l) || {}).pct; return v != null && v <= 1 ? +(v*100).toFixed(1) : (v ?? 0); }), backgroundColor: rgba(ph.c2, 0.75), borderRadius: 3 }
+  ], {
+    plugins: {
+      legend: { display: false },
+      datalabels: { display: true, anchor: 'end', align: 'top', offset: 1, font: { size: 11 }, formatter: v => v > 0 ? v.toFixed(1) + '%' : '' }
+    },
+    scales: {
+      x: { ticks: { font:{size:10}, color: ph.text3 }, grid: { display: false } },
+      y: { ticks: { font:{size:10}, color: ph.text3, callback: v => v + '%' }, grid: { color: ph.grid } }
+    }
+  });
+
+  // 暂停行为
+  const ps_data = d.pause_stats || {};
+  document.getElementById('pause-rate-val').textContent = ps_data.pause_rate_pct != null ? ps_data.pause_rate_pct + '%' : '--';
+  document.getElementById('pause-avg-val').textContent = ps_data.avg_pauses != null ? ps_data.avg_pauses + '次' : '--';
+  const pauseDist = ps_data.dist || [];
+  renderBarList(document.getElementById('bar-pause-dist'), pauseDist, 'label', 'pct', COLORS, true, false);
+
+  const evtSrc = d.evt_source || [];
+  mkDonut(document.getElementById('evtSourceChart'),
+    evtSrc.map(r => r.source_type),
+    evtSrc.map(r => r.cnt != null ? r.cnt : r.event_count),
+    [ph.c1, ph.c2, ph.c3],
+    '55%', false
+  );
+}
+
+function renderFunnel(d) {
+  const k = d.kpi02 || {};
+  const f = d.funnel || {};
+  document.getElementById('kpi-funnel').innerHTML = [
+    kpiCard('开机次数', fmtNum(k.power_on_cnt), `累计设备 ${fmtNum(k.total_devices)}`, 'ti-power', 'purple', '统计期内设备开机次数（pump_power_on 事件）；累计设备 = 期间有吸奶行为的去重设备总数'),
+    kpiCard('开始 session', fmtNum(k.started_sessions), `转化 ${f.start_rate_pct ?? '--'}%`, 'ti-player-play', 'teal', '开始吸奶的 session 数（pump_start 事件），转化率 = 开始/开机'),
+    kpiCard('吸奶结束', fmtNum(k.ended_sessions), `结束率 ${f.completion_rate_pct ?? '--'}%`, 'ti-player-stop', 'coral', '有吸奶结束事件（pump_end）的 session 数，结束率 = 吸奶结束/开始'),
+    kpiCard('> 10min 有效', fmtNum(k.valid_sessions), `有效率 ${f.valid_rate_pct ?? '--'}%`, 'ti-check', 'amber', '吸奶时长>10分钟的 session 数，有效率 = 有效 / 开始 session 数（与总览有效进程率口径一致）'),
+  ].join('');
+
+  const steps = [
+    { name: '开机', val: f.power_on_cnt, bg: 'var(--purple-light)', fg: 'var(--purple-dark)', rate: f.start_rate_pct },
+    { name: '开始吸奶', val: f.started_sessions, bg: 'var(--teal-light)', fg: 'var(--teal-dark)', margin: '0 8px', rate: f.completion_rate_pct },
+    { name: '吸奶结束', val: f.ended_sessions, bg: 'var(--amber-light)', fg: 'var(--amber-dark)', margin: '0 16px', rate: f.valid_rate_pct },
+    { name: '有效（>10min）', val: f.valid_sessions, bg: 'var(--coral-light)', fg: 'var(--coral-dark)', margin: '0 24px' },
+  ];
+  document.getElementById('funnel-viz').innerHTML = steps.map((s, i) => {
+    const rateHtml = i < steps.length - 1 && s.rate != null
+      ? `<div class="funnel-rate"><i class="ti ti-arrow-down" style="font-size:12px;color:var(--text3)"></i> ${s.rate}%</div>` : '';
+    return `<div class="funnel-step">
+      <div class="funnel-bar" style="background:${s.bg};${s.margin ? 'margin:' + s.margin : ''}">
+        <span class="funnel-name" style="color:${s.fg}">${s.name}</span>
+        <span class="funnel-val" style="color:${s.fg}">${fmtNum(s.val)}</span>
+      </div></div>${rateHtml}`;
+  }).join('');
+
+  const pf = getP();
+  const c20 = d.chart20 || [];
+  const _funnelLabels = dtLabels(c20);
+  const _funnelLastIdx = _funnelLabels.length - 1;
+  const _funnelStep = Math.max(1, Math.floor(_funnelLabels.length / 6));
+  const _funnelShow = (ctx) => ctx.dataIndex % _funnelStep === 0 || ctx.dataIndex === _funnelLastIdx;
+  const _funnelFmt = (v) => v == null ? '' : (Math.abs(v) >= 1000 ? (v/1000).toFixed(1)+'K' : String(v));
+  mkLine(document.getElementById('funnelTrendChart'), [
+    { label: '开机', data: c20.map(r => r.power_on_cnt), borderColor: pf.c1, borderWidth: 1.5, tension: 0.4,
+      datalabels: { display: _funnelShow, color: pf.c1, font: { size: 11, weight: '500' }, anchor: 'end', align: 'end', offset: 3, formatter: _funnelFmt } },
+    { label: '开始吸奶', data: c20.map(r => r.started_cnt), borderColor: pf.c2, borderWidth: 1.5, tension: 0.4, borderDash: [4, 3],
+      datalabels: { display: _funnelShow, color: pf.c2, font: { size: 11, weight: '500' }, anchor: 'end', align: 'end', offset: 3, formatter: _funnelFmt } },
+    { label: '吸奶结束', data: c20.map(r => r.ended_cnt), borderColor: pf.c4, borderWidth: 1.5, tension: 0.4, borderDash: [2, 2],
+      datalabels: { display: false } },
+    { label: '>10min', data: c20.map(r => r.valid_cnt), borderColor: pf.c3, borderWidth: 1.5, tension: 0.4,
+      datalabels: { display: _funnelShow, color: pf.c3, font: { size: 11, weight: '500' }, anchor: 'start', align: 'start', offset: 3, formatter: _funnelFmt } }
+  ], _funnelLabels);
+
+  const c21 = d.chart21 || [];
+  mkLine(document.getElementById('funnelRateChart'), [
+    { label: '结束率', data: c21.map(r => r.completion_rate_pct), borderColor: pf.c1, borderWidth: 1.5, tension: 0.4 },
+    { label: '有效率', data: c21.map(r => r.valid_rate_pct), borderColor: pf.c3, borderWidth: 1.5, tension: 0.4, borderDash: [4, 3] }
+  ], dtLabels(c21), {}, true);
+}
+
+function buildHeatmapFromData(rows) {
+  const grid = document.getElementById('heatmapGrid');
+  if (!grid) return;
+  grid.innerHTML = '';
+  const dayTypes = ['工作日', '周末'];
+  const map = {};
+  rows.forEach(r => { map[`${r.day_type}-${r.local_hour}`] = Number(r.pct) || 0; });
+  const maxV = Math.max(...Object.values(map), 0.1);
+  const alphas = [0.1, 0.25, 0.4, 0.58, 0.75, 0.9, 1.0];
+  const getAlpha = v => alphas[Math.min(6, Math.floor(v / maxV * 7))];
+
+  const corner = document.createElement('div'); corner.className = 'heatmap-label'; grid.appendChild(corner);
+  for (let h = 0; h < 24; h++) {
+    const lbl = document.createElement('div'); lbl.className = 'heatmap-hour'; lbl.textContent = h; grid.appendChild(lbl);
+  }
+  dayTypes.forEach(row => {
+    const rowLbl = document.createElement('div'); rowLbl.className = 'heatmap-label'; rowLbl.textContent = row; grid.appendChild(rowLbl);
+    for (let h = 0; h < 24; h++) {
+      const v = map[`${row}-${h}`] || 0;
+      const cell = document.createElement('div');
+      cell.className = 'heatmap-cell';
+      cell.style.background = `rgba(75,107,255,${getAlpha(v)})`;
+      cell.title = v.toFixed(1) + '%';
+      grid.appendChild(cell);
+    }
+  });
+}
+
+// ===== Demo mode: use generated data when API fails =====
+
+function useDemoData(section) {
+  const gen = {
+    overview: genOverviewDemo,
+    retention: genRetentionDemo,
+    sessions: genSessionsDemo,
+    duration: genDurationDemo,
+    habits: genHabitsDemo,
+    funnel: genFunnelDemo,
+  };
+  return gen[section] ? gen[section]() : {};
+}
+
+const RENDERERS = {
+  overview: renderOverview,
+  retention: renderRetention,
+  sessions: renderSessions,
+  duration: renderDuration,
+  habits: renderHabits,
+  funnel: renderFunnel,
+};
+
+async function loadSection(section, force = false) {
+  const status = document.getElementById('load-status');
+  if (!force && loaded[section]) return;
+
+  // file:// 直接打开时跳过 API，直接用演示数据
+  if (window.location.protocol === 'file:') {
+    loaded[section] = true;
+    RENDERERS[section](useDemoData(section));
+    status.textContent = '';
+    return;
+  }
+
+  status.textContent = '加载中…';
+  status.title = '';
+  try {
+    const json = await fetchSection(section);
+    loaded[section] = true;
+    RENDERERS[section](json.data || {});
+    status.textContent = '已更新 ' + new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+  } catch (e) {
+    console.error('API 请求失败：', e.message);
+    status.textContent = '加载失败：' + e.message;
+    status.title = e.message || '';
+    // 不标记 loaded，下次切换 tab 会重试
+  }
+}
+
+function initDates() {
+  const end = new Date();
+  end.setDate(end.getDate() - 1); // 默认截止昨天
+  const start = new Date(end);
+  start.setDate(end.getDate() - 29); // 最近30天
+  const fmt = d => d.toISOString().slice(0, 10);
+  document.getElementById('end-dt').value = fmt(end);
+  document.getElementById('start-dt').value = fmt(start);
+}
+
+document.getElementById('btn-refresh').addEventListener('click', async () => {
+  Object.keys(loaded).forEach(k => delete loaded[k]);
+  try { await fetch('/api/pump_cache/clear', { credentials: 'same-origin' }); } catch (_) {}
+  loadSection(activeTab, true);
+});
+
+function toggleStackMode(chartId, btnId) {
+  const btn = document.getElementById(btnId);
+  const data = stackedChartData[chartId];
+  if (!btn || !data) return;
+  const isPct = btn.dataset.mode === 'pct';
+  const newMode = isPct ? 'abs' : 'pct';
+  btn.dataset.mode = newMode;
+  btn.textContent = newMode === 'pct' ? '%' : '#';
+  btn.classList.toggle('abs-mode', newMode === 'abs');
+  const subEl = data.subElId ? document.getElementById(data.subElId) : null;
+  if (subEl) subEl.textContent = newMode === 'pct' ? (data.subPct || '占比（百分比堆积）') : (data.subAbs || '数量（堆积）');
+
+  destroyChart(chartId);
+  const ctx = document.getElementById(chartId);
+  if (!ctx) return;
+
+  let newChart;
+  if (newMode === 'pct') {
+    const p = getP();
+    newChart = mkStackedBar(ctx, data.labels, data.seriesLabels, data.seriesData, data.colors, stackPctOpts(p));
+  } else {
+    const p = getP();
+    const absData = data.seriesDataAbs || data.seriesData;
+    newChart = mkStackedBar(ctx, data.labels, data.seriesLabels, absData, data.colors, stackAbsOpts(p));
+  }
+  wireLegendEl(data.legendElId ? document.getElementById(data.legendElId) : null, newChart);
+}
+
+function setTheme(name) {
+  document.documentElement.setAttribute('data-theme', name);
+  document.querySelectorAll('.theme-btn').forEach(b => b.classList.toggle('active', b.dataset.theme === name));
+  // Redraw all charts with new colors
+  Object.keys(loaded).forEach(k => delete loaded[k]);
+  loadSection(activeTab, true);
+}
+
+// 若服务端注入失败（注释占位符仍存在），则前端补充拉取
+(function() {
+  const sel = document.getElementById('deviceFilter');
+  if (!sel) return;
+  // 如果除了"全部型号"没有其他 option，说明服务端注入未生效，走 fetch 兜底
+  if (sel.options.length <= 1) {
+    fetch('/api/pump_device_codes').then(r => r.ok ? r.json() : null).then(data => {
+      if (!data || !data.device_codes) return;
+      data.device_codes.forEach(code => {
+        const opt = document.createElement('option');
+        opt.value = code; opt.textContent = code;
+        sel.appendChild(opt);
+      });
+    }).catch(() => {});
+  }
+})();
+
+initDates();
+loadSection('overview');
+</script>
+</body>
+</html>

@@ -14,9 +14,10 @@ Metabase 通用大屏看板 - 后端代理服务
 访问示例：http://localhost:5001/
 """
 
-import os, json, time, hashlib, secrets
+import os, json, time, hashlib, secrets, socket, subprocess
 import http.cookies
 from http.server import HTTPServer, BaseHTTPRequestHandler
+from socketserver import ThreadingMixIn
 from urllib.parse import urlparse, parse_qs
 from urllib.request import urlopen, Request
 from urllib.error import HTTPError
@@ -38,6 +39,8 @@ METABASE_URL  = os.getenv("METABASE_URL",  "http://localhost:3000").rstrip("/")
 METABASE_USER = os.getenv("METABASE_USER", "")
 METABASE_PASS = os.getenv("METABASE_PASS", "")
 SERVER_PORT   = int(os.getenv("MB_PORT",   "5001"))
+
+socket.setdefaulttimeout(20)  # macOS SSL can hang without this global timeout
 CACHE_TTL      = int(os.getenv("CACHE_TTL",      "300"))   # 卡片数据缓存，秒
 CACHE_TTL_META = int(os.getenv("CACHE_TTL_META", "600"))   # 元信息缓存，秒
 SESSION_TTL    = int(os.getenv("SESSION_TTL",    str(8 * 3600)))  # 用户会话时长，秒
@@ -147,13 +150,22 @@ def _do_login() -> str:
             "未设置 METABASE_USER 或 METABASE_PASS 环境变量，"
             "请先执行：export METABASE_USER=xxx METABASE_PASS=yyy"
         )
-    payload = json.dumps({"username": METABASE_USER, "password": METABASE_PASS}).encode()
-    req = Request(
-        f"{METABASE_URL}/api/session", data=payload,
-        headers={"Content-Type": "application/json"}, method="POST"
+    payload = json.dumps({"username": METABASE_USER, "password": METABASE_PASS})
+    # 用 curl 代替 urllib，避免 macOS SSL 握手 hang 问题
+    result = subprocess.run(
+        ["curl", "-sk", "--max-time", "15",
+         "-X", "POST", f"{METABASE_URL}/api/session",
+         "-H", "Content-Type: application/json",
+         "-d", payload],
+        capture_output=True, text=True, timeout=20
     )
-    with urlopen(req, timeout=15) as r:
-        token = json.loads(r.read())["id"]
+    if result.returncode != 0:
+        raise OSError(f"curl 失败: {result.stderr.strip()}")
+    data = json.loads(result.stdout)
+    if "id" not in data:
+        from urllib.error import HTTPError
+        raise HTTPError(None, 401, str(data), {}, None)
+    token = data["id"]
     print(f"[auth] 获取新 session token OK")
     return token
 
@@ -215,6 +227,10 @@ def mb_post(path: str, body: dict) -> dict:
 
 # 不需要登录即可访问的路径
 _PUBLIC_PATHS = {"/login", "/api/login"}
+
+class ThreadedHTTPServer(ThreadingMixIn, HTTPServer):
+    daemon_threads = True
+
 
 class Handler(BaseHTTPRequestHandler):
 
@@ -401,6 +417,64 @@ class Handler(BaseHTTPRequestHandler):
                     "text/html; charset=utf-8"
                 )
 
+            elif path in ("/pump", "/pump_dashboard.html"):
+                fp = os.path.join(self._base_dir(), "pump_dashboard.html")
+                try:
+                    html = open(fp, "r", encoding="utf-8").read()
+                except FileNotFoundError:
+                    self.send_response(404); self.end_headers(); return
+                try:
+                    from pump_data import query_device_codes
+                    codes = query_device_codes()
+                    options_html = ''.join(
+                        f'<option value="{c}">{c}</option>' for c in codes
+                    )
+                    html = html.replace('<!-- __DEVICE_CODE_OPTIONS__ -->', options_html)
+                    print(f"[pump] injected device codes: {codes}")
+                except Exception as e:
+                    print(f"[pump] device codes injection failed: {e}")
+                body = html.encode("utf-8")
+                self.send_response(200)
+                self.send_header("Content-Type", "text/html; charset=utf-8")
+                self.send_header("Content-Length", str(len(body)))
+                self.end_headers()
+                self.wfile.write(body)
+
+            elif path == "/api/pump_dashboard":
+                start_dt    = qs("start_dt")
+                end_dt      = qs("end_dt")
+                section     = qs("section") or "overview"
+                device_code = qs("device_code") or ""
+                from pump_cache import pump_cache_key, pump_cache_ttl
+                cache_key = _make_key(*pump_cache_key(section, start_dt, end_dt), device_code)
+                cached = _cache_get(cache_key)
+                if cached:
+                    print(f"[cache] HIT  pump section={section} {start_dt}~{end_dt} device={device_code or 'all'}")
+                    return self.send_json(cached)
+                from pump_data import build_pump_dashboard
+                result = build_pump_dashboard(start_dt, end_dt, section, device_code)
+                ttl = pump_cache_ttl(result.get("start_dt", start_dt), result.get("end_dt", end_dt))
+                _cache_set(cache_key, result, ttl)
+                self.send_json(result)
+
+            elif path == "/api/pump_device_codes":
+                cached = _cache_get("pump_device_codes")
+                if cached:
+                    return self.send_json(cached)
+                from pump_data import query_device_codes
+                codes = query_device_codes()
+                result = {"device_codes": codes}
+                _cache_set("pump_device_codes", result, 3600)
+                self.send_json(result)
+
+            elif path == "/api/pump_cache/clear":
+                n = sum(1 for k in list(_cache.keys()) if ":[" in k and '"pump"' in k)
+                for k in list(_cache.keys()):
+                    if '"pump"' in k:
+                        del _cache[k]
+                print(f"[cache] CLEAR pump ({n} keys)")
+                self.send_json({"ok": True, "cleared": n})
+
             else:
                 self.send_response(404); self.end_headers()
 
@@ -427,24 +501,32 @@ class Handler(BaseHTTPRequestHandler):
             if not email or not password:
                 return self.send_json({"error": "请输入邮箱和密码"}, 400)
             try:
-                payload = json.dumps({"username": email, "password": password}).encode()
-                req = Request(
-                    f"{METABASE_URL}/api/session", data=payload,
-                    headers={"Content-Type": "application/json"}, method="POST"
+                payload = json.dumps({"username": email, "password": password})
+                r1 = subprocess.run(
+                    ["curl", "-sk", "--max-time", "15",
+                     "-X", "POST", f"{METABASE_URL}/api/session",
+                     "-H", "Content-Type: application/json", "-d", payload],
+                    capture_output=True, text=True, timeout=20
                 )
-                with urlopen(req, timeout=15) as r:
-                    mb_resp = json.loads(r.read())
+                if r1.returncode != 0:
+                    raise OSError(f"curl 失败: {r1.stderr.strip()}")
+                mb_resp = json.loads(r1.stdout)
                 mb_token = mb_resp.get("id", "")
+                if not mb_token:
+                    from urllib.error import HTTPError as _HE
+                    raise _HE(None, 401, str(mb_resp), {}, None)
 
                 # 取用户信息
                 first_name = ""
                 try:
-                    me_req = Request(
-                        f"{METABASE_URL}/api/user/current",
-                        headers={"X-Metabase-Session": mb_token, "Accept": "application/json"}
+                    r2 = subprocess.run(
+                        ["curl", "-sk", "--max-time", "10",
+                         f"{METABASE_URL}/api/user/current",
+                         "-H", f"X-Metabase-Session: {mb_token}",
+                         "-H", "Accept: application/json"],
+                        capture_output=True, text=True, timeout=15
                     )
-                    with urlopen(me_req, timeout=10) as r:
-                        me = json.loads(r.read())
+                    me = json.loads(r2.stdout)
                     first_name = me.get("first_name") or me.get("email") or email
                 except Exception:
                     first_name = email
@@ -537,38 +619,29 @@ if __name__ == "__main__":
         print(f"  缓存:       已禁用（CACHE_TTL=0）")
     print(f"  导航页:     http://localhost:{SERVER_PORT}/")
     print(f"  看板示例:   http://localhost:{SERVER_PORT}/?dashboard_id=14")
+    print(f"  吸奶器看板: http://localhost:{SERVER_PORT}/pump  (数据经 MCP → 美东 StarRocks)")
     print("=" * 58)
 
-    # 启动前验证登录，出错时给出具体原因
-    print("  正在验证 Metabase 连接...", end=" ", flush=True)
-    try:
-        get_token(force=True)
-        print("OK ✓")
-    except HTTPError as e:
-        print(f"失败!\n\n错误: Metabase 返回 HTTP {e.code}")
-        if e.code in (400, 401):
-            print("→ 账号或密码错误，请检查 METABASE_USER / METABASE_PASS")
-        else:
-            print(f"→ 服务端异常，请确认 {METABASE_URL} 是否可访问")
-        raise SystemExit(1)
-    except OSError as e:
-        # 包含 socket.timeout / ConnectionRefusedError / URLError 等所有网络异常
-        msg = str(e).lower()
-        print(f"失败!\n\n错误: {e}")
-        if "timed out" in msg or "timeout" in msg:
-            print(f"→ 连接超时，本机无法访问 {METABASE_URL}")
-            print("  请检查：1) 服务器出站 443 端口是否开放（安全组/防火墙）")
-            print("          2) 目标地址是否正确")
-        elif "refused" in msg:
-            print(f"→ 连接被拒绝，{METABASE_URL} 可能未运行")
-        else:
-            print(f"→ 网络错误，请确认服务器能访问 {METABASE_URL}")
-        raise SystemExit(1)
-    except Exception as e:
-        print(f"失败!\n\n错误: {e}")
-        raise SystemExit(1)
+    # 在后台线程里验证登录，不阻塞服务启动（macOS SSL 有时会 hang urlopen）
+    import threading
+    def _verify_login():
+        print("  正在验证 Metabase 连接...", end=" ", flush=True)
+        try:
+            get_token(force=True)
+            print("OK ✓")
+        except HTTPError as e:
+            print(f"失败!\n\n错误: Metabase 返回 HTTP {e.code}")
+            if e.code in (400, 401):
+                print("→ 账号或密码错误，请检查 METABASE_USER / METABASE_PASS")
+            else:
+                print(f"→ 服务端异常，请确认 {METABASE_URL} 是否可访问")
+            print("  Metabase 功能不可用，但吸奶器看板（MCP 路径）仍可正常使用。")
+        except Exception as e:
+            print(f"失败!\n\n错误: {e}")
+            print("  继续启动服务...\n")
+    threading.Thread(target=_verify_login, daemon=True).start()
 
-    server = HTTPServer(("0.0.0.0", SERVER_PORT), Handler)
+    server = ThreadedHTTPServer(("0.0.0.0", SERVER_PORT), Handler)
     try:
         server.serve_forever()
     except KeyboardInterrupt:
