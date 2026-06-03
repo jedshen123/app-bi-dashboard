@@ -316,6 +316,73 @@ class Handler(BaseHTTPRequestHandler):
             return
 
         try:
+            # ---- 固件趋势图：直接查底表，完整支持筛选参数 ----
+            if path == "/api/firmware_trend":
+                device_type = qs("device_type") or ""
+                region      = qs("region") or ""
+                status      = qs("status") or ""
+                cache_key   = _make_key("firmware_trend", device_type, region, status)
+                cached      = _cache_get(cache_key)
+                if cached:
+                    return self.send_json(cached)
+
+                where_clauses = [
+                    "get_json_object(device_info, '$.romVersion') IS NOT NULL",
+                    "get_json_object(device_info, '$.romVersion') != 'null'",
+                    "create_time >= DATE_SUB(NOW(), INTERVAL 30 DAY)",
+                ]
+                if device_type:
+                    where_clauses.append(f"model = '{device_type.replace(chr(39), '')}'")
+                if region:
+                    region_map = {"美东": "EC", "欧洲": "EU", "亚太": "AP"}
+                    src = region_map.get(region, region)
+                    where_clauses.append(f"data_source = '{src.replace(chr(39), '')}'")
+                if status:
+                    status_map = {"绑定": "2", "解绑": "1"}
+                    st = status_map.get(status, status)
+                    where_clauses.append(f"status = {st}")
+
+                where_sql = " AND ".join(where_clauses)
+                sql = f"""
+                    SELECT
+                        DATE(create_time) AS 创建时间,
+                        get_json_object(device_info, '$.romVersion') AS 系统版本,
+                        COUNT(*) AS count
+                    FROM dwd_usr_t_device_df
+                    WHERE {where_sql}
+                    GROUP BY DATE(create_time), 系统版本
+                    ORDER BY 创建时间, 系统版本
+                """
+                r = mb_post("/api/dataset", {"database": 4, "type": "native", "native": {"query": sql}})
+                data = r.get("data", {})
+                result = {
+                    "cols": [{"name": c.get("name"), "display_name": c.get("display_name") or c.get("name"), "base_type": c.get("base_type","")} for c in data.get("cols", [])],
+                    "rows": data.get("rows", []),
+                }
+                _cache_set(cache_key, result, 120)   # 2分钟缓存
+                return self.send_json(result)
+
+            # ---- 固件看板筛选器选项（GET，直接查底表 distinct） ----
+            if path == "/api/firmware_filter_options":
+                cache_key = _make_key("firmware_filter_options")
+                cached = _cache_get(cache_key)
+                if cached:
+                    return self.send_json(cached)
+                DB = 4
+                def _run_distinct(sql):
+                    r = mb_post("/api/dataset", {"database": DB, "type": "native", "native": {"query": sql}})
+                    return [row[0] for row in r.get("data",{}).get("rows",[]) if row[0] is not None]
+                device_types = sorted(_run_distinct("SELECT DISTINCT model FROM dwd_usr_t_device_df WHERE model IS NOT NULL ORDER BY model"))
+                regions = sorted(_run_distinct("SELECT DISTINCT CASE data_source WHEN 'EC' THEN '美东' WHEN 'EU' THEN '欧洲' WHEN 'AP' THEN '亚太' ELSE '其他' END AS r FROM dwd_usr_t_device_df WHERE data_source IS NOT NULL ORDER BY r"))
+                versions_raw = _run_distinct("SELECT DISTINCT get_json_object(device_info,'$.romVersion') AS v FROM dwd_usr_t_device_df WHERE get_json_object(device_info,'$.romVersion') IS NOT NULL AND get_json_object(device_info,'$.romVersion') != 'null' ORDER BY v LIMIT 200")
+                def _ver_key(v):
+                    try: return (0, float(v))
+                    except: return (1, v)
+                versions = sorted(versions_raw, key=_ver_key)
+                result = {"device_types": device_types, "regions": regions, "statuses": ["绑定","解绑"], "versions": versions}
+                _cache_set(cache_key, result, 300)
+                return self.send_json(result)
+
             # ---- 登出 ----
             if path == "/logout":
                 _sess_delete(self.headers.get("Cookie", ""))
@@ -435,6 +502,18 @@ class Handler(BaseHTTPRequestHandler):
                     "text/html; charset=utf-8"
                 )
 
+            elif path in ("/firmware", "/firmware_dashboard.html"):
+                fp = os.path.join(self._base_dir(), "firmware_dashboard.html")
+                try:
+                    body = open(fp, "r", encoding="utf-8").read().encode("utf-8")
+                except FileNotFoundError:
+                    self.send_response(404); self.end_headers(); return
+                self.send_response(200)
+                self.send_header("Content-Type", "text/html; charset=utf-8")
+                self.send_header("Content-Length", str(len(body)))
+                self.end_headers()
+                self.wfile.write(body)
+
             elif path in ("/pump", "/pump_dashboard.html"):
                 fp = os.path.join(self._base_dir(), "pump_dashboard.html")
                 try:
@@ -469,6 +548,22 @@ class Handler(BaseHTTPRequestHandler):
                 if cached:
                     print(f"[cache] HIT  pump section={section} {start_dt}~{end_dt} device={device_code or 'all'}")
                     return self.send_json(cached)
+
+                # firmware section：直接从 Metabase card API 拉取 dashboard 34 数据
+                if section == "firmware":
+                    def _query_card_rows(card_id):
+                        raw = mb_post(f"/api/card/{card_id}/query", {})
+                        return raw.get("data", {}).get("rows", [])
+                    data = {
+                        "firmware_bound":   _query_card_rows(245),
+                        "firmware_unbound": _query_card_rows(246),
+                        "firmware_trend":   _query_card_rows(248),
+                        "firmware_detail":  _query_card_rows(249),
+                    }
+                    result = {"code": 0, "start_dt": start_dt, "end_dt": end_dt, "section": section, "data": data}
+                    _cache_set(cache_key, result, 3600)
+                    return self.send_json(result)
+
                 from pump_data import build_pump_dashboard
                 result = build_pump_dashboard(start_dt, end_dt, section, device_code)
                 ttl = pump_cache_ttl(result.get("start_dt", start_dt), result.get("end_dt", end_dt))
@@ -577,6 +672,24 @@ class Handler(BaseHTTPRequestHandler):
             return
 
         try:
+            # ---- 直接查询 card（用于筛选器选项拉取） ----
+            if path == "/api/card_query":
+                cid = qs("card_id")
+                if not cid:
+                    return self.send_json({"error": "缺少 card_id"}, 400)
+                cache_key = _make_key("card_query", cid)
+                cached = _cache_get(cache_key)
+                if cached:
+                    return self.send_json(cached)
+                result = mb_post(f"/api/card/{cid}/query", {"parameters": []})
+                data = result.get("data", {})
+                slim = {
+                    "cols": [{"name": c.get("name"), "display_name": c.get("display_name") or c.get("name"), "base_type": c.get("base_type","")} for c in data.get("cols", [])],
+                    "rows": data.get("rows", []),
+                }
+                _cache_set(cache_key, slim, 300)   # 5分钟缓存，筛选项不常变
+                return self.send_json(slim)
+
             # ---- 卡片数据查询 ----
             if path == "/api/card_data":
                 did  = qs("dashboard_id")

@@ -15,7 +15,7 @@ DAILY = f"{DB}.dws_pump_daily_df"
 MODE  = f"{DB}.dws_pump_session_mode_df"
 RET   = f"{DB}.dws_pump_retention_di"
 
-SECTIONS = ("overview", "retention", "sessions", "duration", "habits", "funnel")
+SECTIONS = ("overview", "retention", "sessions", "duration", "habits", "funnel", "firmware")
 _db_checked = False
 _active_device_code = ""   # 当前请求的型号过滤（空=全部）
 
@@ -818,6 +818,47 @@ def query_chart11(start: str, end: str):
     """, [start, end])
 
 
+def query_chart_mode_sess_avg_per_user(start: str, end: str):
+    """各模式下人均每日吸奶次数：该模式总session数 / 统计天数 / 日均DAU"""
+    return _q(f"""
+        WITH mode_daily AS (
+            SELECT evt_dt,
+                modeType AS mode_type,
+                COUNT(DISTINCT useSessionId) AS sess_cnt
+            FROM {MODE}
+            WHERE evt_dt BETWEEN %s AND %s{_dc_and()}
+            GROUP BY evt_dt, modeType
+        ),
+        dau_daily AS (
+            SELECT evt_dt, SUM(dau) AS dau
+            FROM {DAILY}
+            WHERE evt_dt BETWEEN %s AND %s{_dc_and()}
+            GROUP BY evt_dt
+        )
+        SELECT
+            m.mode_type,
+            ROUND(SUM(m.sess_cnt) / NULLIF(SUM(d.dau), 0), 4) AS avg_sess_per_user
+        FROM mode_daily m
+        JOIN dau_daily d ON m.evt_dt = d.evt_dt
+        GROUP BY m.mode_type
+        ORDER BY avg_sess_per_user DESC
+    """, [start, end, start, end])
+
+
+def query_chart_mode_dur_avg_per_sess(start: str, end: str):
+    """各模式下人均每次吸奶时长（分钟）：该模式总时长 / 该模式总session数"""
+    return _q(f"""
+        SELECT
+            modeType AS mode_type,
+            ROUND(SUM(duration_sec) / 60.0 / NULLIF(COUNT(DISTINCT useSessionId), 0), 2) AS avg_dur_per_sess_min
+        FROM {MODE}
+        WHERE evt_dt BETWEEN %s AND %s{_dc_and()}
+          AND duration_sec <= 3600
+        GROUP BY modeType
+        ORDER BY avg_dur_per_sess_min DESC
+    """, [start, end])
+
+
 def query_chart_mode_sess_dist(start: str, end: str):
     return _q(f"""
         SELECT modeType AS mode_type,
@@ -966,6 +1007,7 @@ def query_chart_mode_dur_dist(start: str, end: str):
             ROUND(SUM(duration_sec) / 60.0, 2) AS duration_min
         FROM {MODE}
         WHERE evt_dt BETWEEN %s AND %s{_dc_and()}
+          AND duration_sec <= 3600
         GROUP BY modeType
         ORDER BY duration_min DESC
     """, [start, end])
@@ -1400,6 +1442,7 @@ def build_section(section: str, start: str, end: str, device_code: str = "") -> 
             "chart11":                  query_chart11(start, end),
             "chart_mode_sess_dist":     query_chart_mode_sess_dist(start, end),
             "chart_mode_sess_trend":    query_chart_mode_sess_trend(start, end),
+            "chart_mode_sess_avg":      query_chart_mode_sess_avg_per_user(start, end),
         }
 
     if section == "duration":
@@ -1414,6 +1457,7 @@ def build_section(section: str, start: str, end: str, device_code: str = "") -> 
             "chart14":                 query_chart14(start, end),
             "chart_mode_dur_dist":     query_chart_mode_dur_dist(start, end),
             "chart_mode_dur_trend":    query_chart_mode_dur_trend(start, end),
+            "chart_mode_dur_avg":      query_chart_mode_dur_avg_per_sess(start, end),
         }
 
     if section == "habits":
@@ -1452,6 +1496,11 @@ def build_section(section: str, start: str, end: str, device_code: str = "") -> 
             "chart20": query_chart20(trend_start, end),
             "chart21": query_chart21(trend_start, end),
         }
+
+    if section == "firmware":
+        # firmware 数据由 metabase_server.py 直接调用 Metabase card API 返回
+        # pump_data.py 不直接访问 Metabase，此处返回空占位
+        return {"_firmware_via_mb": True}
 
     raise ValueError(f"unknown section: {section}")
 

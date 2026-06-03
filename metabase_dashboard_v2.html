@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>AI吸乳计划看板V2 — Momcozy数据平台</title>
+  <title>AI吸乳计划分析 — Momcozy数据平台</title>
   <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js"></script>
   <script src="/dashboard_skeleton.js"></script>
   <style>
@@ -42,7 +42,7 @@
     }
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body {
-      font-family: 'PingFang SC', 'Microsoft YaHei', 'Segoe UI', sans-serif;
+      font-family: -apple-system, 'SF Pro Display', 'PingFang SC', 'Helvetica Neue', 'Microsoft YaHei', sans-serif;
       background:
         radial-gradient(ellipse 80% 50% at 20% -10%, rgba(255,92,138,.12), transparent 50%),
         radial-gradient(ellipse 60% 40% at 90% 20%, rgba(0,229,255,.08), transparent 45%),
@@ -630,181 +630,110 @@
     }
     .footer { border-top-color: var(--border); }
 
-    /* ============================================================ V2 · 参考图工作台风格 */
+    /* ============================================================ 吸奶器同款风格 */
     :root {
-      --bg-page: #edf7f8;
-      --bg-card: #ffffff;
-      --bg-card2: #ffffff;
-      --bg-glass: rgba(255,255,255,.96);
-      --border: #dce8f0;
-      --border-hi: #cbdce8;
-      --rose: #4663f2;
-      --rose-soft: #4663f2;
-      --rose-dim: #6b80ff;
-      --cyan: #4fc3e4;
-      --cyan-dim: #4fc3e4;
-      --violet: #821fc8;
-      --magenta: #f23891;
-      --green: #42c933;
-      --amber: #ff7b14;
-      --red: #ff2b2b;
-      --text-1: #1b203c;
-      --text-2: #5a6389;
-      --text-3: #8b94bd;
-      --radius: 8px;
+      --bg-page:   #f4f6ff;
+      --bg-card:   #ffffff;
+      --bg-card2:  #eef0fb;
+      --border:    rgba(75,107,255,0.15);
+      --border-hi: rgba(75,107,255,0.28);
+      --purple:    #4b6bff;
+      --purple-lt: #e8ecff;
+      --purple-dk: #2540cc;
+      --teal:      #5bc8e8;
+      --teal-lt:   #e2f7fd;
+      --teal-dk:   #1a7a96;
+      --coral:     #e8477a;
+      --coral-lt:  #fde8f0;
+      --coral-dk:  #a01848;
+      --amber:     #ff8c42;
+      --text-1:    #1a1d36;
+      --text-2:    #4a4e72;
+      --text-3:    #8b8fad;
+      --radius:    12px;
       --radius-sm: 8px;
-      --gap: 18px;
+      --gap:       16px;
+      /* 保留旧变量名兼容 */
+      --rose:      #4b6bff;
+      --rose-soft: #4b6bff;
+      --cyan:      #5bc8e8;
+      --cyan-dim:  #5bc8e8;
+      --violet:    #7b3fa0;
+      --magenta:   #e8477a;
+      --green:     #34d399;
+      --red:       #e8477a;
     }
     body {
-      background: #edf7f8;
+      background: var(--bg-page);
       color: var(--text-1);
     }
     .page {
-      max-width: 1768px;
-      padding: 0 28px 40px;
+      max-width: 1680px;
+      padding: 0 24px 40px;
     }
+    /* ---- 头部 ---- */
     .hdr {
-      min-height: 58px;
+      min-height: 52px;
       margin: 0;
-      padding: 0;
+      padding: 12px 0;
       border: 0;
-      border-bottom: 1px solid #dce8f0;
+      border-bottom: 0.5px solid var(--border);
       border-radius: 0;
       background: transparent;
       box-shadow: none;
     }
-    .hdr-left { gap: 10px; }
+    .hdr-left { gap: 8px; }
     .hdr-icon {
-      width: 20px;
-      height: 20px;
-      border: 0;
-      border-radius: 0;
-      background: transparent;
-      padding: 0;
+      width: 18px; height: 18px;
+      border: 0; border-radius: 0;
+      background: transparent; padding: 0;
     }
     .hdr-icon img { display: none; }
     .hdr-icon::before {
       content: '';
-      width: 18px;
-      height: 18px;
+      width: 16px; height: 16px;
       display: block;
       background:
-        linear-gradient(#4663f2,#4663f2) 1px 9px / 4px 2px no-repeat,
-        linear-gradient(#4663f2,#4663f2) 5px 6px / 2px 8px no-repeat,
-        linear-gradient(#4663f2,#4663f2) 9px 10px / 3px 2px no-repeat,
-        linear-gradient(#4663f2,#4663f2) 13px 4px / 2px 10px no-repeat;
+        linear-gradient(var(--purple),var(--purple)) 0 7px / 4px 2px no-repeat,
+        linear-gradient(var(--purple),var(--purple)) 4px 4px / 2px 8px no-repeat,
+        linear-gradient(var(--purple),var(--purple)) 8px 8px / 3px 2px no-repeat,
+        linear-gradient(var(--purple),var(--purple)) 12px 2px / 2px 10px no-repeat;
     }
     .hdr-title {
-      font-size: 18px;
-      font-weight: 800;
-      letter-spacing: 0;
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text-1);
+      letter-spacing: -0.3px;
     }
     .hdr-sub { display: none !important; }
-    .hdr-left > div:last-child {
-      display: flex;
-      align-items: center;
-      gap: 0;
-    }
-    .hdr-right {
-      gap: 12px;
-      color: var(--text-2);
-    }
-    .hdr-stat {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 0;
-      border: 0;
-      background: transparent;
-      text-align: left;
-    }
-    .hdr-stat-lbl {
-      font-size: 0;
-      width: 15px;
-      height: 15px;
-      border: 1.8px solid #8b94bd;
-      border-radius: 4px;
-      position: relative;
-    }
-    .hdr-stat-lbl::before {
-      content: '';
-      position: absolute;
-      left: 2px;
-      right: 2px;
-      top: 4px;
-      border-top: 1.5px solid #8b94bd;
-    }
-    .hdr-stat-val,
-    #live-clock {
-      color: #5a6389;
-      font-size: 16px;
-      font-weight: 700;
-      font-family: inherit;
-    }
-    #last-refresh {
-      margin-top: 0;
-      color: #8b94bd;
-      font-size: 12px;
-      text-align: left;
-    }
+    .hdr-stat,
+    #live-clock,
+    #last-refresh { display: none !important; }
     #refresh-btn {
-      padding: 5px 13px;
-      border: 1px solid #dbe3ff;
-      border-radius: 8px;
-      background: #eef2ff;
-      color: #4663f2;
-      font-size: 12px;
-      font-weight: 800;
+      padding: 4px 12px;
+      border: 0.5px solid var(--border);
+      border-radius: 6px;
+      background: var(--purple-lt);
+      color: var(--purple-dk);
+      font-size: 11px;
+      font-weight: 500;
     }
-    #refresh-btn:hover {
-      box-shadow: none;
-      background: #e3e9ff;
-      transform: none;
-    }
-    .v2-tabs {
-      display: flex;
-      gap: 26px;
-      align-items: center;
-      min-height: 58px;
-      border-bottom: 1px solid #dce8f0;
-      margin-bottom: 30px;
-    }
-    .v2-tab {
-      position: relative;
-      border: 0;
-      background: transparent;
-      color: #3f496f;
-      font-size: 15px;
-      font-weight: 800;
-      line-height: 58px;
-      white-space: nowrap;
-      cursor: pointer;
-      font-family: inherit;
-    }
-    .v2-tab:hover { color: #4663f2; }
-    .v2-tab.active { color: #4663f2; }
-    .v2-tab.active::after {
-      content: '';
-      position: absolute;
-      left: 0;
-      right: 0;
-      bottom: -1px;
-      height: 3px;
-      border-radius: 999px 999px 0 0;
-      background: #4663f2;
-    }
+    #refresh-btn:hover { background: #dce4ff; box-shadow: none; transform: none; }
+    /* ---- 导航 ---- */
+    .v2-tabs { display: none; }
+    /* ---- 状态条 ---- */
     .status-bar {
-      margin: -18px 0 18px;
-      border-color: #dce8f0;
-      background: rgba(255,255,255,.64);
-      color: var(--text-2);
+      margin: 0 0 16px;
+      border-color: var(--border);
+      background: rgba(255,255,255,.7);
+      color: var(--text-3);
+      font-size: 11px;
     }
-    .section {
-      margin-top: 30px;
-    }
-    .part1-section { margin-top: 0; }
+    /* ---- Section 标题 ---- */
+    .section { margin-top: 24px; }
+    .part1-section { margin-top: 12px; }
     .section-hdr {
-      margin-bottom: 16px;
+      margin-bottom: 12px;
       padding: 0;
       align-items: center;
     }
@@ -812,188 +741,192 @@
       padding: 0;
       border: 0;
       background: transparent;
-      color: #4663f2;
-      font-size: 15px;
-      font-weight: 800;
+      color: var(--purple);
+      font-size: 11px;
+      font-weight: 500;
       letter-spacing: 0;
+      text-transform: uppercase;
     }
     .section-title {
-      font-size: 16px;
-      font-weight: 800;
-      color: #1b203c;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-1);
     }
     .section-hint {
-      color: #8b94bd;
-      font-size: 13px;
-      font-weight: 600;
+      color: var(--text-3);
+      font-size: 11px;
+      font-weight: 400;
     }
     .section-hint.fixed {
       border: 0;
       background: transparent;
-      color: #8b94bd;
+      color: var(--text-3);
       padding: 0;
     }
+    /* ---- KPI 卡片 ---- */
     .kpi-grid {
-      gap: 14px;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
     }
     .kpi-card,
     .chart-card,
     .filter-bridge,
     .db-card {
-      border: 1px solid #dce8f0;
-      border-radius: 8px;
-      background: #fff;
+      border: 0.5px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--bg-card);
       box-shadow: none;
     }
     .kpi-card {
-      min-height: 132px;
-      padding: 20px 22px 18px;
+      min-height: 0;
+      padding: 14px 16px 12px;
     }
     .kpi-card::before { display: none; }
     .kpi-name {
       display: flex;
       align-items: center;
-      gap: 6px;
-      margin-bottom: 14px;
-      color: #8b94bd;
-      font-size: 13px;
-      font-weight: 800;
+      gap: 5px;
+      margin-bottom: 8px;
+      color: var(--text-3);
+      font-size: 11px;
+      font-weight: 400;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
     }
     .kpi-name::before {
       content: '';
-      width: 12px;
-      height: 12px;
-      border-radius: 3px;
-      border: 2px solid #4663f2;
+      width: 8px; height: 8px;
+      border-radius: 2px;
+      flex-shrink: 0;
+      background: var(--purple);
     }
-    .kpi-card:nth-child(4n+2) .kpi-name::before { border-color: #821fc8; }
-    .kpi-card:nth-child(4n+3) .kpi-name::before { border-color: #f23891; }
-    .kpi-card:nth-child(4n+4) .kpi-name::before { border-color: #4fc3e4; }
-    .kpi-name span {
-      display: none;
-    }
+    .kpi-card:nth-child(5n+2) .kpi-name::before { background: var(--violet); }
+    .kpi-card:nth-child(5n+3) .kpi-name::before { background: var(--coral); }
+    .kpi-card:nth-child(5n+4) .kpi-name::before { background: var(--amber); }
+    .kpi-card:nth-child(5n+5) .kpi-name::before { background: var(--teal); }
+    .kpi-name span { display: none; }
     .kpi-val,
     .kpi-val.pct {
-      color: #1b203c;
+      color: var(--text-1);
       font-family: inherit;
-      font-size: 31px;
-      font-weight: 900;
+      font-size: 24px;
+      font-weight: 500;
       line-height: 1.1;
+      letter-spacing: -0.5px;
     }
     .kpi-unit {
-      margin-left: 2px;
-      color: #8b94bd;
-      font-size: 16px;
-      font-weight: 800;
+      margin-left: 1px;
+      color: var(--text-3);
+      font-size: 12px;
+      font-weight: 400;
     }
     .kpi-compare {
-      margin-top: 13px;
-      gap: 8px;
+      margin-top: 6px;
+      gap: 2px;
       flex-direction: column;
     }
     .cmp {
-      font-size: 13px;
-      font-weight: 700;
-      color: #8b94bd;
+      font-size: 11px;
+      font-weight: 400;
+      color: var(--text-3);
     }
-    .cmp.up b { color: #4fc3e4; }
-    .cmp.down b { color: #f23891; }
-    .chart-card {
-      overflow: hidden;
-    }
+    .cmp.up b  { color: var(--teal); }
+    .cmp.down b { color: var(--coral); }
+    /* ---- 图表卡片 ---- */
+    .chart-card { overflow: hidden; }
     .chart-card-hdr,
     .card-hdr {
-      padding: 22px 28px 8px;
+      padding: 16px 20px 10px;
       border-bottom: 0;
-      background: #fff;
+      background: var(--bg-card);
     }
     .chart-card-hdr::before,
-    .card-hdr::before {
-      width: 0;
-      height: 0;
-      display: none;
-    }
+    .card-hdr::before { display: none; }
     .chart-card-title,
     .card-title {
-      color: #1b203c;
-      font-size: 17px;
-      font-weight: 900;
+      color: var(--text-1);
+      font-size: 13px;
+      font-weight: 500;
     }
-    .chart-legend-hint {
-      color: #8b94bd;
-      font-size: 12px;
-      font-weight: 700;
-    }
-    .chart-tabs {
-      gap: 8px;
-    }
+    .chart-legend-hint { color: var(--text-3); font-size: 11px; font-weight: 400; }
+    .chart-tabs { gap: 4px; }
     .chart-tab {
-      padding: 5px 12px;
-      border: 1px solid #dce8f0;
-      border-radius: 8px;
-      background: #f7f9ff;
-      color: #5a6389;
-      font-size: 12px;
-      font-weight: 800;
+      padding: 3px 10px;
+      border: 0.5px solid var(--border);
+      border-radius: 6px;
+      background: var(--bg-card2);
+      color: var(--text-2);
+      font-size: 11px;
+      font-weight: 400;
     }
     .chart-tab.on {
-      border-color: #dbe3ff;
-      background: #eef2ff;
-      color: #4663f2;
+      border-color: var(--purple);
+      background: var(--purple-lt);
+      color: var(--purple-dk);
+      font-weight: 500;
     }
     .chart-body,
-    .tab-panels {
-      height: 310px;
-    }
-    .tab-panels { min-height: 310px; }
+    .tab-panels { height: 320px; }
+    .tab-panels { min-height: 320px; }
     .chart-body,
     .tech21-canvas,
     .chart-body.tech21-canvas,
-    .tab-panel > div {
-      background: #fff;
-    }
+    .tab-panel > div { background: var(--bg-card); }
+    /* ---- part2 布局 ---- */
     #part2 {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 24px;
+      gap: 16px;
     }
-    #part2 .section-hdr {
-      grid-column: 1 / -1;
-      margin-bottom: -6px;
-    }
-    #part2 .chart-grid {
-      display: block;
-      margin: 0 !important;
-    }
-    #part2 .chart-grid:nth-of-type(4) {
-      grid-column: 1 / -1;
-    }
-    .funnel-wrap {
-      gap: 24px;
-    }
-    .funnel-table-wrap {
-      background: #fff;
-      min-height: 360px;
-    }
+    #part2 .section-hdr { grid-column: 1 / -1; margin-bottom: -4px; }
+    #part2 .chart-grid { display: block; margin: 0 !important; }
+    #part2 .chart-grid:nth-of-type(4) { grid-column: 1 / -1; }
+    .funnel-wrap { gap: 16px; }
+    .funnel-table-wrap { background: var(--bg-card); min-height: 320px; }
+    /* ---- 表格 ---- */
     .mini-tbl th,
     .mb-tbl th {
-      background: #f7f9ff;
-      color: #8b94bd;
-      font-weight: 800;
+      background: var(--purple-lt);
+      color: var(--purple-dk);
+      font-weight: 500;
+      font-size: 11px;
+      padding: 9px 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
     }
     .mini-tbl td,
     .mb-tbl td {
-      border-bottom-color: #edf1fd;
-      color: #1b203c;
+      border-bottom-color: var(--bg-card2);
+      color: var(--text-1);
+      font-size: 12px;
+      padding: 7px 12px;
+      white-space: nowrap;
     }
+    .mini-tbl td.num,
+    .mb-tbl td.num { font-size: 12px; color: var(--text-2); }
+    .mb-tbl td.rate-cell { font-weight: 500; }
+    .mb-tbl td.pct-high { color: #1a7a96; background: rgba(91,200,232,.08); }
+    .mb-tbl td.pct-mid  { color: #c45200; background: rgba(255,140,66,.08); }
+    .mb-tbl td.pct-low  { color: #a01848; background: rgba(232,71,122,.08); }
+    .mb-tbl tr:hover td { background: var(--bg-card2); }
     .footer { display: none; }
-    @media (min-width: 1500px) {
-      .kpi-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    @media (min-width: 1400px) {
+      .kpi-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+    }
+    @media (max-width: 1100px) {
+      .kpi-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      #part2, .funnel-wrap { grid-template-columns: 1fr; }
     }
     @media (max-width: 1200px) {
       #part2,
       .funnel-wrap { grid-template-columns: 1fr; }
+    }
+    /* 全局去除 monospace，统一用正文字体 */
+    .kpi-val, .kpi-val.pct, .scalar-val,
+    .hdr-stat-val, #live-clock,
+    .mb-tbl td.num, .mini-tbl td.num {
+      font-family: inherit;
+      letter-spacing: 0;
     }
   </style>
 </head>
@@ -1005,7 +938,7 @@
     <div class="hdr-left">
       <div class="hdr-icon"><img src="/favicon.png" alt="Momcozy" /></div>
       <div>
-        <div class="hdr-title" id="db-title">AI吸乳计划看板V2</div>
+        <div class="hdr-title" id="db-title">AI吸乳计划分析</div>
         <div class="hdr-sub" id="db-sub"></div>
       </div>
     </div>
@@ -1024,13 +957,6 @@
     </div>
   </header>
 
-  <nav class="v2-tabs" aria-label="看板模块">
-    <button type="button" class="v2-tab active" data-target="v2-overview">总览</button>
-    <button type="button" class="v2-tab" data-target="part2">触达与渗透</button>
-    <button type="button" class="v2-tab" data-target="v2-plan">计划完成</button>
-    <button type="button" class="v2-tab" data-target="part3">生成漏斗</button>
-  </nav>
-
   <!-- 状态条 -->
   <div class="status-bar" id="status-bar">
     <div class="s-dot loading" id="s-dot"></div>
@@ -1043,7 +969,7 @@
       <div class="section-hdr">
         <span class="section-num">总览</span>
         <span class="section-title">吸乳计划核心指标</span>
-        <span class="section-hint fixed">固定最近一日 · 不受下方日期筛选影响</span>
+        <span class="section-hint fixed">固定最近一日 · <span id="kpi-fixed-date">加载中...</span></span>
       </div>
       <div class="kpi-grid" id="kpi-grid"></div>
     </section>
@@ -1052,7 +978,6 @@
       <div class="section-hdr">
         <span class="section-num">趋势</span>
         <span class="section-title">触达、渗透与完成趋势</span>
-        <span class="section-hint" id="part2-hint">近30天 · 折线=数值 · 柱形=比率</span>
       </div>
       <div class="chart-grid g1" style="margin-bottom:12px">
         <div class="chart-card">
@@ -1062,9 +987,8 @@
               <button type="button" class="chart-tab on" data-tab="pump">吸奶器用户渗透</button>
               <button type="button" class="chart-tab" data-tab="app">APP大盘用户渗透</button>
             </div>
-            <div class="chart-legend-hint"><i>折线指标</i><i>柱形指标</i></div>
           </div>
-          <div class="tab-panels" style="height:300px">
+          <div class="tab-panels">
             <div class="tab-panel active" id="panel-reach-pump"><div id="chart-reach-pump" class="tech21-canvas"></div></div>
             <div class="tab-panel" id="panel-reach-app"><div id="chart-reach-app" class="tech21-canvas"></div></div>
           </div>
@@ -1078,7 +1002,6 @@
               <button type="button" class="chart-tab on" data-tab="c214">按次</button>
               <button type="button" class="chart-tab" data-tab="c213">按人</button>
             </div>
-            <div class="chart-legend-hint"><i>折线指标</i><i>柱形指标</i></div>
           </div>
           <div class="tab-panels">
             <div class="tab-panel active" id="panel-plan-214"><div id="chart-plan-214" class="tech21-canvas"></div></div>
@@ -1095,9 +1018,8 @@
               <button type="button" class="chart-tab" data-tab="usr">按人</button>
               <button type="button" class="chart-tab" data-tab="avg">人均</button>
             </div>
-            <div class="chart-legend-hint"><i>折线指标</i></div>
           </div>
-          <div class="tab-panels" style="height:260px">
+          <div class="tab-panels">
             <div class="tab-panel active" id="panel-method-cnt"><div id="chart-method-cnt" class="tech21-canvas"></div></div>
             <div class="tab-panel" id="panel-method-usr"><div id="chart-method-usr" class="tech21-canvas"></div></div>
             <div class="tab-panel" id="panel-method-avg"><div id="chart-method-avg" class="tech21-canvas"></div></div>
@@ -1110,7 +1032,6 @@
       <div class="section-hdr">
         <span class="section-num">漏斗</span>
         <span class="section-title">生成计划漏斗</span>
-        <span class="section-hint" id="part3-hint">受日期筛选 · 入口 → 同步</span>
       </div>
       <div class="funnel-wrap">
         <div class="chart-card">
@@ -1120,13 +1041,18 @@
         <div class="chart-card">
           <div class="chart-card-hdr">
             <span class="chart-card-title">3.2 关键转化率趋势</span>
-            <div class="chart-legend-hint"><i>折线指标</i></div>
           </div>
           <div class="chart-body tech21-canvas" id="chart-funnel-trend"></div>
         </div>
       </div>
       <div class="chart-card" style="margin-top:12px">
-        <div class="chart-card-hdr"><span class="chart-card-title">3.3 生成明细表</span></div>
+        <div class="chart-card-hdr">
+          <span class="chart-card-title">3.3 首次创建吸乳计划用户数 &amp; 新创建计划数</span>
+        </div>
+        <div class="chart-body tech21-canvas" id="chart-new-plan"></div>
+      </div>
+      <div class="chart-card" style="margin-top:12px">
+        <div class="chart-card-hdr"><span class="chart-card-title">3.4 AI吸乳计划生成明细</span></div>
         <div class="funnel-table-wrap" id="funnel-table"></div>
       </div>
     </section>
@@ -1161,19 +1087,17 @@ let filterState = {};     // param_id → 值字符串
 let chartMap    = {};     // dashcard_id → echarts instance
 let kpiSnapshot = {};     // label → { value, display }
 
-const COLORS = ['#4663F2', '#821FC8', '#F23891', '#4FC3E4', '#FF7B14', '#42C933', '#8B94BD', '#CBD5E1'];
-/** 折线：细线 + 高饱和亮色（与柱形色系区分） */
+const COLORS = ['#4b6bff', '#7b3fa0', '#e8477a', '#ff8c42', '#5bc8e8', '#2540cc', '#8b8fad', '#c4d0ff'];
 const LINE_WIDTH = 1.5;
-const LINE_PALETTE = ['#4663F2', '#821FC8', '#F23891', '#4FC3E4', '#FF7B14', '#42C933'];
+const LINE_PALETTE = ['#4b6bff', '#7b3fa0', '#e8477a', '#ff8c42', '#5bc8e8', '#2540cc'];
 
-/** 柱形：亮蓝色系 + 高透明（与折线暖色/霓虹色区分） */
 const BAR_STYLES = [
-  { fill: 'rgba(70, 99, 242, 0.32)', border: 'rgba(70, 99, 242, 0.18)' },
-  { fill: 'rgba(130, 31, 200, 0.30)', border: 'rgba(130, 31, 200, 0.18)' },
-  { fill: 'rgba(242, 56, 145, 0.30)', border: 'rgba(242, 56, 145, 0.18)' },
-  { fill: 'rgba(79, 195, 228, 0.34)', border: 'rgba(79, 195, 228, 0.18)' },
-  { fill: 'rgba(255, 123, 20, 0.26)', border: 'rgba(255, 123, 20, 0.16)' },
-  { fill: 'rgba(66, 201, 51, 0.24)', border: 'rgba(66, 201, 51, 0.14)' },
+  { fill: 'rgba(75, 107, 255, 0.30)', border: 'rgba(75, 107, 255, 0.15)' },
+  { fill: 'rgba(123, 63, 160, 0.28)', border: 'rgba(123, 63, 160, 0.14)' },
+  { fill: 'rgba(232, 71, 122, 0.28)', border: 'rgba(232, 71, 122, 0.14)' },
+  { fill: 'rgba(255, 140, 66, 0.26)', border: 'rgba(255, 140, 66, 0.13)' },
+  { fill: 'rgba(91, 200, 232, 0.30)', border: 'rgba(91, 200, 232, 0.15)' },
+  { fill: 'rgba(37, 64, 204, 0.26)', border: 'rgba(37, 64, 204, 0.13)' },
 ];
 
 function barItemStyle(idx) {
@@ -1186,8 +1110,8 @@ function barItemStyle(idx) {
   };
 }
 const CHART_UI = {
-  grid: '#E8EEF5', text2: '#5A6389', text1: '#1B203C',
-  tooltipBg: '#FFFFFF', tooltipBorder: '#DCE8F0',
+  grid: 'rgba(75,107,255,0.06)', text2: '#4a4e72', text1: '#1a1d36',
+  tooltipBg: '#FFFFFF', tooltipBorder: 'rgba(75,107,255,0.15)',
 };
 
 /** 看板专属叙事配置（dashboard_id → profile） */
@@ -1204,6 +1128,7 @@ const DASH_PROFILES = {
       penetration: { dashcardId: 130 },              /* card 148 */
       plan:        { dashcardId: 187, pumpUser: true }, /* card 214 */
       user:        { dashcardId: 186, pumpUser: true }, /* card 213 */
+      newPlan:     { dashcardId: 334 },              /* card 429 首次创建用户&新建计划数 */
     },
     kpis: [
       { source: 'visitor', field: '吸乳计划功能渗透吸奶器用户数', label: 'AI吸乳计划功能访客数', hint: '绑定吸奶器用户', isPct: false },
@@ -1214,6 +1139,8 @@ const DASH_PROFILES = {
       { source: 'user', field: '待完成吸乳计划用户数', label: '昨日有待完成的AI吸乳计划的用户总数', hint: '', isPct: false },
       { source: 'user', field: '完成吸乳计划用户数', label: '昨日有完成AI吸乳计划的用户总数', hint: '', isPct: false },
       { source: 'user', field: 'AI吸乳计划uv完成率', label: '完成计划用户比例', hint: '按人', isPct: true },
+      { source: 'newPlan', field: '首次创建AI吸乳计划用户数', label: '昨日首次创建计划用户数', hint: '新增用户', isPct: false },
+      { source: 'newPlan', field: '新建AI吸乳计划数', label: '昨日新建计划数', hint: '', isPct: false },
     ],
     reachTabs: {
       pump: {
@@ -1253,6 +1180,7 @@ const DASH_PROFILES = {
       avg: { dashcardId: 212, pumpUser: true, dim: 'AI吸乳计划日期', derived: true },
     },
     slots: {
+      newPlan:     { dashcardId: 334, dim: '日期', linesOnly: true },
       funnelTrend: { dashcardId: 170, dim: 'dt', linesOnly: true },
       funnelTable: { dashcardId: 171, dim: 'dt' },
     },
@@ -1622,7 +1550,10 @@ function renderKpiGrid(profile) {
     <div class="kpi-card loading" id="${kpiDomId(i)}">
       <div class="kpi-name">${k.label}${k.hint ? `<span>${k.hint}</span>` : ''}</div>
       <div class="${DashSkeleton.skeletonKpiValClass(k.isPct)}">--</div>
-      ${DashSkeleton.skeletonKpiCompareHtml()}
+      <div class="kpi-compare">
+        <span class="sk-line sk-shimmer sk-w45"></span>
+        <span class="sk-line sk-shimmer sk-w38"></span>
+      </div>
     </div>`).join('');
   grid.classList.add('show');
 }
@@ -1649,6 +1580,8 @@ function applyKpiValues(profile) {
   if (kpiLatestDate) {
     const el = document.getElementById('hdr-stat-date');
     if (el) el.textContent = kpiLatestDate;
+    const el2 = document.getElementById('kpi-fixed-date');
+    if (el2) el2.textContent = kpiLatestDate;
   }
 }
 
@@ -1686,13 +1619,15 @@ async function loadKpiStrip(profile) {
   const params = [];
   const cache = {};
 
-  for (const [name, src] of Object.entries(profile.kpiSources || {})) {
-    const dc = getDashcard(src.dashcardId);
-    if (!dc?.card_id) continue;
-    let { cols, rows } = await fetchDashcardData(dc, params);
-    if (src.pumpUser) rows = filterPumpUserRows(cols, rows);
-    cache[name] = { cols, rows };
-  }
+  await Promise.all(
+    Object.entries(profile.kpiSources || {}).map(async ([name, src]) => {
+      const dc = getDashcard(src.dashcardId);
+      if (!dc?.card_id) return;
+      let { cols, rows } = await fetchDashcardData(dc, params);
+      if (src.pumpUser) rows = filterPumpUserRows(cols, rows);
+      cache[name] = { cols, rows };
+    })
+  );
 
   profile.kpis.forEach(k => {
     const { cols, rows } = cache[k.source] || {};
@@ -1834,10 +1769,7 @@ function initDefaultDateFilter() {
 }
 
 function updatePartHints() {
-  const p2 = document.getElementById('part2-hint');
-  const p3 = document.getElementById('part3-hint');
-  if (p2) p2.textContent = '近30天 · 折线趋势 · 柱形规模';
-  if (p3) p3.textContent = '近30天 · 入口 → 同步';
+  // hints removed
 }
 
 function renderExplicitCombo(el, chartKey, cols, rows, slot, vizSettings, legendBottom) {
@@ -1864,7 +1796,7 @@ function renderExplicitCombo(el, chartKey, cols, rows, slot, vizSettings, legend
 
   const dimIdx = cols.indexOf(dimCol);
   const sorted = sortRowsByDate(cols, rows);
-  const xData = sorted.map(r => fmtDate(r[dimIdx]) || r[dimIdx]);
+  const xData = sorted.map(r => { const d = fmtDate(r[dimIdx]) || String(r[dimIdx]); return d.length >= 10 ? d.slice(5) : d; });
 
   const metCols = [...barNames, ...lineNames].map(n => cols.find(c => c.name === n)).filter(Boolean);
   if (!metCols.length) { renderTable(el, cols, rows, vizSettings); return; }
@@ -1941,20 +1873,20 @@ function renderExplicitCombo(el, chartKey, cols, rows, slot, vizSettings, legend
       },
     },
     legend: legendBottom ? {
-      show: true, type: 'scroll', orient: 'horizontal', bottom: 4, left: 'center', width: '92%',
+      show: true, type: 'scroll', orient: 'horizontal', bottom: 4, left: 14, width: '92%',
       textStyle: { color: CHART_UI.text2, fontSize: 10 },
       pageTextStyle: { color: CHART_UI.text2 },
       itemGap: 12,
-    } : { show: metCols.length > 1, top: 4, textStyle: { color: CHART_UI.text2, fontSize: 11 } },
+    } : { show: metCols.length > 1, orient: 'horizontal', left: 14, top: 4, textStyle: { color: CHART_UI.text2, fontSize: 11 }, itemGap: 14 },
     grid: {
       left: 56, right: dualAxis ? 52 : 16,
-      top: legendBottom ? 52 : 40,
-      bottom: legendBottom ? 52 : 36,
+      top: legendBottom ? 52 : (metCols.length > 1 ? 44 : 28),
+      bottom: legendBottom ? 56 : 56,
     },
     xAxis: {
       type: 'category', data: xData,
       axisLine: { lineStyle: { color: CHART_UI.grid } },
-      axisLabel: { color: CHART_UI.text2, fontSize: 10, rotate: xData.length > 20 ? 30 : 0 },
+      axisLabel: { color: CHART_UI.text2, fontSize: 10, rotate: 35, interval: 'auto' },
       axisTick: { show: false },
       barCategoryGap: !useStack && barNames.length > 1 ? '32%' : '20%',
     },
@@ -1966,46 +1898,47 @@ function renderExplicitCombo(el, chartKey, cols, rows, slot, vizSettings, legend
 /** 2.1 专用：冷色底 + 荧光折线 + 渐变胶囊柱 */
 const TECH21 = {
   bg: '#FFFFFF',
-  grid: 'rgba(220, 232, 240, 0.95)',
-  axis: '#8B94BD',
-  text: '#5A6389',
-  cyan: '#4FC3E4',
-  cyanHi: '#4FC3E4',
-  blue: '#4663F2',
-  violet: '#821FC8',
-  pink: '#F23891',
-  mute: '#8491A3',
-  tooltipBg: 'rgba(255, 255, 255, 0.96)',
-  tooltipBorder: '#DCE8F0',
+  grid: 'rgba(75, 107, 255, 0.07)',
+  axis: '#8b8fad',
+  text: '#4a4e72',
+  cyan: '#5bc8e8',
+  cyanHi: '#4b6bff',
+  blue: '#4b6bff',
+  violet: '#7b3fa0',
+  pink: '#e8477a',
+  mute: '#8b8fad',
+  tooltipBg: 'rgba(255, 255, 255, 0.98)',
+  tooltipBorder: 'rgba(75, 107, 255, 0.15)',
 };
 
 function techBarGradient() {
   return new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-    { offset: 0, color: 'rgba(70, 99, 242, 0.92)' },
-    { offset: 0.45, color: 'rgba(70, 99, 242, 0.55)' },
-    { offset: 1, color: 'rgba(70, 99, 242, 0.10)' },
+    { offset: 0, color: 'rgba(75, 107, 255, 0.88)' },
+    { offset: 0.5, color: 'rgba(75, 107, 255, 0.48)' },
+    { offset: 1, color: 'rgba(75, 107, 255, 0.08)' },
   ]);
 }
 
-/** 折线用暖色/紫粉系，与柱形电光青蓝拉开 */
-const TECH21_LINE_COLORS = ['#4663F2', '#821FC8', '#F23891', '#4FC3E4'];
+const TECH21_LINE_COLORS = ['#4b6bff', '#7b3fa0', '#e8477a', '#ff8c42'];
 
 function techBarGradientAlt(barIdx) {
   if (barIdx % 2 === 1) {
     return new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-      { offset: 0, color: 'rgba(242, 56, 145, 0.88)' },
-      { offset: 0.5, color: 'rgba(242, 56, 145, 0.42)' },
-      { offset: 1, color: 'rgba(242, 56, 145, 0.08)' },
+      { offset: 0, color: 'rgba(232, 71, 122, 0.82)' },
+      { offset: 0.5, color: 'rgba(232, 71, 122, 0.40)' },
+      { offset: 1, color: 'rgba(232, 71, 122, 0.06)' },
     ]);
   }
   return techBarGradient();
 }
 
-function buildTech21LineSeries(col, cols, sorted, lineIdx, displayName) {
+function buildTech21LineSeries(col, cols, sorted, lineIdx, displayName, isPct = false) {
   const colIdx = cols.indexOf(col);
   const data = sorted.map(r => r[colIdx]);
+  const dataLen = data.length;
   const color = TECH21_LINE_COLORS[lineIdx % TECH21_LINE_COLORS.length];
   const isCore = lineIdx === 0;
+  const labelStep = barLabelStep(dataLen);
   return {
     name: displayName,
     type: 'line',
@@ -2018,18 +1951,28 @@ function buildTech21LineSeries(col, cols, sorted, lineIdx, displayName) {
     lineStyle: {
       color,
       width: isCore ? 1.2 : 1,
-      shadowColor: color,
-      shadowBlur: 6,
     },
     itemStyle: {
       color: '#ffffff',
       borderColor: color,
       borderWidth: 1.5,
     },
+    label: {
+      show: true,
+      position: 'top',
+      fontSize: 11,
+      fontWeight: 500,
+      color: TECH21.text,
+      formatter(p) {
+        if (p.dataIndex % labelStep !== 0 && p.dataIndex !== dataLen - 1) return '';
+        if (isPct) return fmtPct2(p.value, Math.abs(Number(p.value)) <= 1);
+        return fmtShort(p.value);
+      },
+    },
     emphasis: {
       focus: 'series',
-      lineStyle: { width: isCore ? 1.6 : 1.2, shadowBlur: 10 },
-      itemStyle: { borderWidth: 2, shadowBlur: 8, shadowColor: color },
+      lineStyle: { width: isCore ? 1.6 : 1.2 },
+      itemStyle: { borderWidth: 2 },
       scale: 1.15,
     },
     z: 10 + lineIdx,
@@ -2055,12 +1998,16 @@ function formatBarDataLabel(value, isRate, asRatio) {
   return fmtShort(value);
 }
 
+/** 柱形图数据标签颜色：与柱子同色系，深两层 */
+const TECH21_BAR_LABEL_COLORS = ['#2540cc', '#5a1c82', '#2540cc', '#5a1c82'];
+
 function buildTech21BarSeries(col, cols, sorted, barIdx, opts = {}) {
   const colIdx = cols.indexOf(col);
   const data = sorted.map(r => r[colIdx]);
   const dataLen = data.length;
   const isRate = opts.isRate;
   const asRatio = opts.rateAsRatio !== false;
+  const labelColor = TECH21_BAR_LABEL_COLORS[barIdx % TECH21_BAR_LABEL_COLORS.length];
   const s = {
     name: opts.displayName || col.display_name || col.name,
     type: 'bar',
@@ -2069,11 +2016,11 @@ function buildTech21BarSeries(col, cols, sorted, barIdx, opts = {}) {
     barMaxWidth: opts.stack ? 28 : 24,
     label: {
       show: true,
-      position: opts.stack ? 'inside' : 'top',
-      distance: opts.stack ? 2 : 4,
-      fontSize: 9,
-      fontWeight: 500,
-      color: opts.stack ? 'rgba(255,255,255,0.92)' : TECH21.text,
+      position: 'inside',
+      distance: 4,
+      fontSize: 11,
+      fontWeight: 600,
+      color: labelColor,
       formatter(p) {
         if (!shouldShowBarLabel(p.dataIndex, dataLen)) return '';
         return formatBarDataLabel(p.value, isRate, asRatio);
@@ -2082,17 +2029,13 @@ function buildTech21BarSeries(col, cols, sorted, barIdx, opts = {}) {
     itemStyle: {
       color: techBarGradientAlt(barIdx),
       borderRadius: [3, 3, 0, 0],
-      borderColor: 'rgba(255, 255, 255, 0.45)',
-      borderWidth: 1,
     },
     emphasis: {
       itemStyle: {
         borderColor: TECH21.cyanHi,
-        borderWidth: 2,
-        shadowBlur: 14,
-        shadowColor: 'rgba(6, 182, 212, 0.55)',
+        borderWidth: 1,
       },
-      label: { show: true, fontSize: 10, color: '#E2E8F0' },
+      label: { show: true, fontSize: 11, color: labelColor },
     },
     z: 2 + barIdx,
   };
@@ -2125,7 +2068,7 @@ function renderTechComboChart(el, chartKey, cols, rows, slot, vizSettings, legen
 
   const dimIdx = cols.indexOf(dimCol);
   const sorted = sortRowsByDate(cols, rows);
-  const xData = sorted.map(r => fmtDate(r[dimIdx]) || r[dimIdx]);
+  const xData = sorted.map(r => { const d = fmtDate(r[dimIdx]) || String(r[dimIdx]); return d.length >= 10 ? d.slice(5) : d; });
 
   const chartTypeFor = (col) => {
     const rate = isRateCol(col, pctCfg);
@@ -2151,7 +2094,7 @@ function renderTechComboChart(el, chartKey, cols, rows, slot, vizSettings, legen
   const rateOnly = hasRate && !hasCount;
 
   const series = [];
-  lineCols.forEach((x, i) => series.push(buildTech21LineSeries(x.col, cols, sorted, i, x.displayName)));
+  lineCols.forEach((x, i) => series.push(buildTech21LineSeries(x.col, cols, sorted, i, x.displayName, isRateCol(x.col, pctCfg))));
   barCols.forEach((x, i) => {
     const isRate = isRateCol(x.col, pctCfg);
     const yIdx = dualAxis && isRate ? 1 : 0;
@@ -2199,10 +2142,10 @@ function renderTechComboChart(el, chartKey, cols, rows, slot, vizSettings, legen
       borderColor: TECH21.tooltipBorder,
       borderWidth: 1,
       padding: [10, 14],
-      extraCssText: 'backdrop-filter:blur(8px);border-radius:8px;box-shadow:0 8px 32px rgba(0,0,0,.45);',
+      extraCssText: 'border-radius:8px;box-shadow:0 2px 12px rgba(15,23,42,.08);',
       textStyle: {
         color: '#E2E8F0',
-        fontFamily: "'JetBrains Mono', 'Roboto Mono', 'Courier New', monospace",
+        fontFamily: "-apple-system, 'SF Pro Display', 'PingFang SC', sans-serif",
         fontSize: 12,
       },
       formatter(params) {
@@ -2220,12 +2163,14 @@ function renderTechComboChart(el, chartKey, cols, rows, slot, vizSettings, legen
       },
     },
     legend: legendBottom ? {
-      show: true, type: 'scroll', orient: 'horizontal', bottom: 4, left: 'center', width: '92%',
+      show: true, type: 'scroll', orient: 'horizontal', bottom: 4, left: 14, width: '92%',
       textStyle: { color: TECH21.text, fontSize: 10 },
       pageTextStyle: { color: TECH21.text },
       itemGap: 12,
     } : {
       show: series.length > 1,
+      orient: 'horizontal',
+      left: 14,
       top: 6,
       textStyle: { color: TECH21.text, fontSize: 11 },
       itemGap: 14,
@@ -2233,14 +2178,14 @@ function renderTechComboChart(el, chartKey, cols, rows, slot, vizSettings, legen
     grid: {
       left: 56,
       right: dualAxis ? 54 : 18,
-      top: legendBottom ? 52 : (barCols.length ? 50 : 44),
-      bottom: legendBottom ? 52 : 36,
+      top: legendBottom ? 52 : (series.length > 1 ? (barCols.length ? 52 : 46) : 28),
+      bottom: legendBottom ? 56 : 56,
     },
     xAxis: {
       type: 'category',
       data: xData,
       axisLine: { lineStyle: { color: 'rgba(51, 65, 85, 0.55)' } },
-      axisLabel: { color: TECH21.text, fontSize: 10, rotate: xData.length > 18 ? 28 : 0 },
+      axisLabel: { color: TECH21.text, fontSize: 10, rotate: 35, interval: 'auto' },
       axisTick: { show: false },
       barCategoryGap: useStack ? '18%' : '28%',
     },
@@ -2312,6 +2257,23 @@ async function loadMethodTabs(profile, params) {
   }
 }
 
+async function loadNewPlanChart(profile, params) {
+  const slot = profile.slots.newPlan;
+  const dc = getDashcard(slot.dashcardId);
+  const el = document.getElementById('chart-new-plan');
+  if (!dc || !el) return;
+  try {
+    let { cols, rows } = await fetchDashcardData(dc, []);
+    // 3.3 固定近30天：取最近30条（数据已按日期降序，取前30后反转）
+    const sorted = sortRowsByDate(cols, rows);
+    const recent30 = sorted.slice(-30);
+    clearLoading(el);
+    renderTechComboChart(el, 'new-plan', cols, recent30, { ...slot, swapBarLine: false }, dc.viz_settings || {});
+  } catch (e) {
+    showSlotError(el, e.message);
+  }
+}
+
 async function loadFunnelSlots(profile, params) {
   const slot = profile.slots.funnelTable;
   const dc = getDashcard(slot.dashcardId);
@@ -2355,6 +2317,7 @@ async function loadDesignedDashboard(profile) {
     loadPlanTabs(profile, params),
     loadMethodTabs(profile, params),
     loadFunnelSlots(profile, params),
+    loadNewPlanChart(profile, params),
   ]);
   setTimeout(() => {
     chartMap['reach-' + activeReachTab]?.resize();
@@ -2514,7 +2477,7 @@ function renderLineCombo(el, dcId, cols, rows, display, vizSettings) {
 
   const seriesSettings = vs['series_settings'] || {};
   const dimIdx         = cols.indexOf(dimCols[0]);
-  const xData          = rows.map(r => fmtDate(r[dimIdx]) || r[dimIdx]);
+  const xData          = rows.map(r => { const d = fmtDate(r[dimIdx]) || String(r[dimIdx]); return d.length >= 10 ? d.slice(5) : d; });
 
   const hasPct  = metCols.some(c => isRateCol(c, pctCfg));
   const hasInt  = metCols.some(c => !isRateCol(c, pctCfg));
@@ -2607,13 +2570,17 @@ function renderLineCombo(el, dcId, cols, rows, display, vizSettings) {
     },
     legend: {
       show: metCols.length > 1,
+      orient: 'horizontal',
+      left: 14,
+      top: 4,
       textStyle: { color: CHART_UI.text2, fontSize:11 },
-      type: 'scroll', top: 4, pageTextStyle:{ color: CHART_UI.text2 }
+      type: 'scroll', pageTextStyle:{ color: CHART_UI.text2 },
+      itemGap: 14,
     },
     grid: {
       left:   isHorz ? 100 : 55,
       right:  dualAxis ? 60 : 16,
-      top:    metCols.length > 1 ? 38 : 18,
+      top:    metCols.length > 1 ? 42 : 18,
       bottom: 38
     },
     xAxis: isHorz
@@ -2652,13 +2619,13 @@ function renderPie(el, dcId, cols, rows, vizSettings) {
       textStyle:{ color: CHART_UI.text1, fontSize:12 },
       formatter: p => `${p.marker}${p.name}<br/>值：<b>${fmtShort(p.value)}</b>　占比：<b>${p.percent}%</b>`
     },
-    legend: { orient:'vertical', right:8, top:'middle', textStyle:{ color: CHART_UI.text2, fontSize:11 }, type:'scroll' },
+    legend: { orient:'horizontal', left: 14, top: 4, textStyle:{ color: CHART_UI.text2, fontSize:11 }, type:'scroll', itemGap: 12 },
     series: [{
-      type:'pie', radius:['42%','68%'], center:['40%','52%'],
+      type:'pie', radius:['42%','68%'], center:['50%','56%'],
       data,
-      label:{ show:true, position:'inside', formatter:'{d}%', color:'#fff', fontSize:11, fontWeight:700 },
+      label:{ show:true, position:'inside', formatter:'{d}%', color:'#fff', fontSize:12, fontWeight:700 },
       labelLine:{ show:false },
-      emphasis:{ itemStyle:{ shadowBlur:12 } }
+      emphasis:{ itemStyle:{} }
     }],
   });
 }
@@ -2685,22 +2652,17 @@ function buildFunnelSteps(cols, row) {
 /** 按漏斗层级选用对比色：顶层块最亮，用深色字；下层用白字+轻阴影 */
 function buildFunnelLabelRich(steps) {
   const palettes = [
-    { title: '#0F172A', rate: '#334155', shadow: false },
-    { title: '#FFFFFF', rate: 'rgba(255,255,255,0.92)', shadow: true },
-    { title: '#FFFFFF', rate: 'rgba(248,250,252,0.88)', shadow: true },
-    { title: '#FFFFFF', rate: 'rgba(241,245,249,0.88)', shadow: true },
-    { title: '#FFFFFF', rate: 'rgba(241,245,249,0.85)', shadow: true },
+    { title: '#0F172A', rate: '#334155' },
+    { title: '#FFFFFF', rate: 'rgba(255,255,255,0.92)' },
+    { title: '#FFFFFF', rate: 'rgba(248,250,252,0.88)' },
+    { title: '#FFFFFF', rate: 'rgba(241,245,249,0.88)' },
+    { title: '#FFFFFF', rate: 'rgba(241,245,249,0.85)' },
   ];
   const rich = {};
   steps.forEach((_, i) => {
     const p = palettes[Math.min(i, palettes.length - 1)];
-    const shadow = p.shadow ? {
-      textShadowColor: 'rgba(15, 23, 42, 0.65)',
-      textShadowBlur: 4,
-      textShadowOffsetY: 1,
-    } : {};
-    rich[`h${i}`] = { fontSize: 12, fontWeight: 400, color: p.title, lineHeight: 17, align: 'center', ...shadow };
-    rich[`r${i}`] = { fontSize: 10, fontWeight: 400, color: p.rate, lineHeight: 14, align: 'center', ...shadow };
+    rich[`h${i}`] = { fontSize: 12, fontWeight: 400, color: p.title, lineHeight: 17, align: 'center' };
+    rich[`r${i}`] = { fontSize: 10, fontWeight: 400, color: p.rate, lineHeight: 14, align: 'center' };
   });
   return rich;
 }
@@ -2718,11 +2680,11 @@ function funnelLabelFormatter(steps) {
 }
 
 const FUNNEL_TECH_COLORS = [
-  'rgba(0, 242, 254, 0.92)',
-  'rgba(6, 182, 212, 0.88)',
-  'rgba(59, 130, 246, 0.85)',
-  'rgba(139, 92, 246, 0.82)',
-  'rgba(236, 72, 153, 0.78)',
+  'rgba(75, 107, 255, 0.90)',
+  'rgba(123, 63, 160, 0.86)',
+  'rgba(232, 71, 122, 0.82)',
+  'rgba(255, 140, 66, 0.82)',
+  'rgba(91, 200, 232, 0.82)',
 ];
 
 function funnelTooltip(steps) {
@@ -2751,8 +2713,8 @@ function renderFunnelChart(el, dcId, steps) {
       backgroundColor: TECH21.tooltipBg,
       borderColor: TECH21.tooltipBorder,
       borderWidth: 1,
-      extraCssText: 'backdrop-filter:blur(8px);border-radius:8px;',
-      textStyle: { color: '#E2E8F0', fontSize: 12 },
+      extraCssText: 'border-radius:8px;box-shadow:0 2px 12px rgba(15,23,42,.08);',
+      textStyle: { color: '#1B203C', fontSize: 12 },
       formatter: funnelTooltip(steps),
     },
     series: [{
@@ -2769,9 +2731,9 @@ function renderFunnelChart(el, dcId, steps) {
           fontWeight: 400,
           rich: labelRich,
         },
-        itemStyle: { borderColor: 'rgba(15, 23, 42, 0.6)', borderWidth: 1 },
+        itemStyle: { borderWidth: 0 },
       },
-      itemStyle: { borderColor: 'rgba(15, 23, 42, 0.6)', borderWidth: 1 },
+      itemStyle: { borderWidth: 0 },
       data: steps.map((s, i) => ({
         ...s,
         itemStyle: { color: FUNNEL_TECH_COLORS[i % FUNNEL_TECH_COLORS.length] },
@@ -2821,12 +2783,25 @@ function renderTable(el, cols, rows, vizSettings, tableClass = 'mb-tbl', tableOp
     visIdxs  = cols.map((_, i) => i);
   }
 
+  function pctCondClass(val) {
+    const n = Number(val);
+    if (isNaN(n)) return '';
+    const v = Math.abs(n) <= 1 ? n * 100 : n;
+    if (v >= 70) return 'pct-high';
+    if (v >= 40) return 'pct-mid';
+    return 'pct-low';
+  }
+
   const thead = `<thead><tr>${visCols.map(c =>
     `<th>${c.display_name || c.name}</th>`).join('')}</tr></thead>`;
   const tbody = `<tbody>${dataRows.map(row =>
-    `<tr>${visCols.map((col, j) =>
-      `<td class="${isNumType(col.base_type) ? 'num' : ''}">${fmtCell(row[visIdxs[j]], col)}</td>`
-    ).join('')}</tr>`
+    `<tr>${visCols.map((col, j) => {
+      const isNum = isNumType(col.base_type);
+      const isRate = isRateCol(col, pctCfg) || pctCfg.get(col.name) !== undefined;
+      const val = row[visIdxs[j]];
+      const cls = [isNum ? 'num' : '', isRate ? 'rate-cell ' + pctCondClass(val) : ''].filter(Boolean).join(' ');
+      return `<td class="${cls}">${fmtCell(val, col)}</td>`;
+    }).join('')}</tr>`
   ).join('')}</tbody>`;
 
   el.innerHTML = tableClass === 'mini-tbl'
@@ -2930,7 +2905,7 @@ async function init() {
 
     // 更新标题
     const displayTitle = profile?.useDesignedLayout
-      ? 'AI吸乳计划看板V2'
+      ? 'AI吸乳计划分析'
       : meta.name.replace(/^🗓️\s*/, '');
     document.title = displayTitle + ' — Momcozy数据平台';
     document.getElementById('db-title').textContent = displayTitle;

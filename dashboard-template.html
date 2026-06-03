@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>【看板名称】— Momcozy数据平台</title>
+
+<!-- 图标库 -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
+<!-- Chart.js -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+<!-- 设计系统 + 图表工厂 -->
+<link rel="stylesheet" href="/dashboard-theme.css">
+<script src="/chart-factory.js"></script>
+</head>
+<body>
+<div class="shell">
+
+  <!-- ============================================================
+       Topbar：标题 + 筛选控件
+       防抖说明：filterTimer 保证用户停止操作 800ms 后才触发请求
+  ============================================================ -->
+  <div class="topbar">
+    <div class="topbar-left">
+      <i class="ti ti-chart-bar" style="color:var(--purple);font-size:16px"></i>
+      <span class="topbar-title">【看板名称】</span>
+      <span class="topbar-sub" id="data-range-label"></span>
+    </div>
+    <div class="topbar-right">
+      <!-- 快捷日期按钮 -->
+      <button class="ctrl-btn" onclick="setQuickRange(7)">近7天</button>
+      <button class="ctrl-btn" onclick="setQuickRange(30)">近30天</button>
+      <button class="ctrl-btn" onclick="setQuickRange(90)">近90天</button>
+      <span class="ctrl-sep"></span>
+      <!-- 自定义日期 -->
+      <input type="date" id="start-dt" class="ctrl-input" onchange="onFilterChange()">
+      <span style="color:var(--text3);font-size:12px">~</span>
+      <input type="date" id="end-dt"   class="ctrl-input" onchange="onFilterChange()">
+      <span class="ctrl-sep"></span>
+      <!-- 维度筛选（按需保留） -->
+      <select id="dimFilter" class="ctrl-select" onchange="onFilterChange()">
+        <option value="">全部</option>
+      </select>
+      <span class="ctrl-sep"></span>
+      <span id="load-status" class="load-status"></span>
+    </div>
+    <div class="topbar-status-row">
+      <span id="load-error" class="load-status load-status-error"></span>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       Nav 标签页
+       新增 section 时：
+         1. 这里加 nav-item
+         2. 下方加对应 <div class="section" id="sec-xxx">
+         3. SECTION_SKELETONS 里加配置
+         4. RENDERERS 里加渲染函数
+  ============================================================ -->
+  <div class="nav" id="main-nav">
+    <div class="nav-item active" onclick="switchTab('overview')">总览</div>
+    <!-- <div class="nav-item" onclick="switchTab('detail')">明细</div> -->
+  </div>
+
+  <!-- ============================================================
+       Section：总览
+  ============================================================ -->
+  <div class="section active" id="sec-overview">
+    <!-- KPI 卡片行，由 renderOverview 动态填充 -->
+    <div class="kpi-row" id="kpi-overview"></div>
+
+    <!-- 图表区示例 -->
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title">
+          <i class="ti ti-chart-line"></i>
+          趋势图标题
+          <span class="help-tip" data-tip="这里写字段说明">?</span>
+        </div>
+        <div class="card-sub">副标题说明</div>
+        <div class="legend">
+          <span class="legend-item"><span class="legend-dot" style="background:var(--c1)"></span>系列1</span>
+          <span class="legend-item"><span class="legend-dot" style="background:var(--c2)"></span>系列2</span>
+        </div>
+        <div class="chart-wrap" style="height:200px">
+          <canvas id="trendChart"></canvas>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title"><i class="ti ti-chart-donut"></i>分布图标题</div>
+        <div class="card-sub">副标题说明</div>
+        <div class="chart-wrap" style="height:200px">
+          <canvas id="distChart"></canvas>
+        </div>
+        <div class="donut-legend" id="distChart-legend"></div>
+      </div>
+    </div>
+
+    <!-- 条形列表示例 -->
+    <div class="card" style="margin-top:16px">
+      <div class="card-title"><i class="ti ti-chart-bar"></i>排行榜标题</div>
+      <div class="card-sub">副标题说明</div>
+      <div id="bar-rank" class="bar-list" style="margin-top:10px"></div>
+    </div>
+  </div>
+
+  <!-- 更多 Section 按需复制... -->
+
+</div><!-- /shell -->
+
+<script>
+/* ============================================================
+   全局状态
+============================================================ */
+const { getTheme, mkLine, mkBar, mkDonut, mkStackedBar,
+        renderBarList, renderBarListNum, dtLabels,
+        kpiCard, kpiCardCmp, cmpHtml, fmtNum, fmtPct,
+        filterByDateRange, wireChartLegend, wireLegendEl,
+        setChartLoading, clearChartLoading } = DashCharts;
+
+let activeTab = 'overview';
+let loaded = {};       // 已加载的 section
+// rawData 存储每个 section 完整数据，用于前端日期裁剪
+const rawData = {};
+
+/* ============================================================
+   筛选器 — 防抖 + 快捷日期
+============================================================ */
+let _filterTimer = null;
+const DEBOUNCE_MS = 800;
+
+function onFilterChange() {
+  clearTimeout(_filterTimer);
+  _filterTimer = setTimeout(() => {
+    // ① 先尝试前端裁剪（不发请求）
+    if (!tryFrontendFilter()) {
+      // ② 前端裁剪覆盖不了（区间超出已有数据）才重新请求
+      loaded = {};
+      loadSection(activeTab, true);
+    }
+  }, DEBOUNCE_MS);
+}
+
+/**
+ * 前端日期裁剪
+ * 如果当前 section 的 rawData 覆盖了新选日期范围，直接用裁剪后的数据重绘，无需网络请求
+ * @returns {boolean} true=已裁剪完成 false=需要重新请求
+ */
+function tryFrontendFilter() {
+  const start = document.getElementById('start-dt').value;
+  const end   = document.getElementById('end-dt').value;
+  const raw = rawData[activeTab];
+  if (!raw || !raw._dateRange) return false;
+
+  // 如果新区间超出已有数据范围，必须重新请求
+  if (start < raw._dateRange.start || end > raw._dateRange.end) return false;
+
+  // 在已有数据上裁剪并重绘
+  RENDERERS[activeTab](raw, { start, end, frontendOnly: true });
+  updateDateLabel(start, end);
+  return true;
+}
+
+function setQuickRange(days) {
+  const end = new Date(); end.setDate(end.getDate() - 1);
+  const start = new Date(end); start.setDate(start.getDate() - days + 1);
+  const fmt = d => d.toISOString().slice(0, 10);
+  document.getElementById('start-dt').value = fmt(start);
+  document.getElementById('end-dt').value   = fmt(end);
+  onFilterChange();
+}
+
+function updateDateLabel(start, end) {
+  const el = document.getElementById('data-range-label');
+  if (el) el.textContent = `${start} ~ ${end}`;
+}
+
+function getDateRange() {
+  return {
+    start: document.getElementById('start-dt').value,
+    end:   document.getElementById('end-dt').value,
+  };
+}
+
+/* ============================================================
+   Section 骨架配置
+   新增 section 时在这里注册 charts / bars / kpis
+============================================================ */
+const SECTION_SKELETONS = {
+  overview: {
+    kpis:   [{ id: 'kpi-overview', n: 4 }],
+    charts: ['trendChart', 'distChart'],
+    bars:   ['bar-rank'],
+  },
+  // detail: {
+  //   charts: ['detailChart'],
+  // },
+};
+
+function applySectionSkeleton(section) {
+  const cfg = SECTION_SKELETONS[section];
+  if (!cfg) return;
+  (cfg.kpis || []).forEach(({ id, n }) => {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = Array.from({ length: n }, () => `
+      <div class="kpi skeleton-kpi">
+        <div class="skeleton-line w60"></div>
+        <div class="skeleton-line w40 lg"></div>
+        <div class="skeleton-line sm"></div>
+      </div>`).join('');
+  });
+  (cfg.charts || []).forEach(id => setChartLoading(id, true));
+  (cfg.bars   || []).forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = Array.from({ length: 4 }, () => `
+      <div class="bar-row">
+        <span class="skeleton-line w70"></span>
+        <div class="bar-track" style="flex:1;background:var(--surface2)"><div style="height:100%;width:72%;background:var(--border2);border-radius:3px"></div></div>
+        <span class="skeleton-line w30"></span>
+      </div>`).join('');
+  });
+}
+
+/* ============================================================
+   Tab 切换
+============================================================ */
+function switchTab(tab) {
+  activeTab = tab;
+  document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+  document.querySelector(`.nav-item[onclick*="${tab}"]`)?.classList.add('active');
+  document.querySelectorAll('.section').forEach(el => el.classList.remove('active'));
+  document.getElementById(`sec-${tab}`)?.classList.add('active');
+  loadSection(tab);
+}
+
+/* ============================================================
+   数据加载
+============================================================ */
+function setLoadStatus(msg, isError = false) {
+  document.getElementById('load-status').textContent = msg;
+  document.getElementById('load-error').textContent = isError ? msg : '';
+}
+
+function setNavLoading(tab, on) {
+  document.querySelector(`.nav-item[onclick*="${tab}"]`)?.classList.toggle('nav-loading', on);
+}
+
+async function fetchSection(section) {
+  const { start, end } = getDateRange();
+  const dim = document.getElementById('dimFilter')?.value || '';
+  const qs = new URLSearchParams({ section, start_dt: start, end_dt: end });
+  if (dim) qs.set('dim', dim);
+  // ↑ 根据实际后端接口调整 URL 和参数名
+  const res = await fetch(`/api/YOUR_DASHBOARD?${qs}`, {
+    credentials: 'same-origin',
+    signal: AbortSignal.timeout(60000),
+  });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return res.json();
+}
+
+async function loadSection(section, force = false) {
+  if (!force && loaded[section]) return;
+  setNavLoading(section, true);
+  applySectionSkeleton(section);
+  setLoadStatus('加载中...');
+  try {
+    const json = await fetchSection(section);
+    const data = json.data || json;
+    // 记录原始数据和日期范围，供前端裁剪使用
+    rawData[section] = { ...data, _dateRange: { start: getDateRange().start, end: getDateRange().end } };
+    loaded[section] = true;
+    RENDERERS[section](data);
+    updateDateLabel(getDateRange().start, getDateRange().end);
+    setLoadStatus('');
+  } catch (e) {
+    setLoadStatus(e.message, true);
+  } finally {
+    setNavLoading(section, false);
+  }
+}
+
+/* ============================================================
+   渲染函数
+   【使用说明】
+   - 每个 section 对应一个 renderXxx(d, opts={}) 函数
+   - opts.start / opts.end — 前端裁剪模式下的日期范围
+   - opts.frontendOnly     — true 时只重绘，不做 DOM 结构变更
+============================================================ */
+
+function renderOverview(d, opts = {}) {
+  const p = getTheme();
+  const start = opts.start || getDateRange().start;
+  const end   = opts.end   || getDateRange().end;
+
+  // ---- KPI ----
+  const s = d.summary || {};
+  document.getElementById('kpi-overview').innerHTML = [
+    kpiCardCmp('核心指标1', fmtNum(s.metric1), cmpHtml(s.metric1_d1_delta, '较前1日'), cmpHtml(s.metric1_d7_delta, '较前7日'), 'ti-users', 'purple'),
+    kpiCardCmp('核心指标2', fmtPct(s.metric2), cmpHtml(s.metric2_d1_delta, '较前1日', true), '', 'ti-percentage', 'teal'),
+    // 继续添加...
+  ].join('');
+
+  // ---- 折线图（前端裁剪） ----
+  const trend = filterByDateRange(d.trend_data || [], start, end);
+  mkLine(document.getElementById('trendChart'), [
+    { label: '系列1', data: trend.map(r => r.val1), borderColor: p.c1, backgroundColor: `rgba(${DashCharts.hexToRgb(p.c1).join(',')},0.08)`, fill: true, tension: 0.4 },
+    { label: '系列2', data: trend.map(r => r.val2), borderColor: p.c2, tension: 0.4 },
+  ], dtLabels(trend));
+
+  // ---- 环形图 ----
+  const dist = d.dist_data || [];
+  mkDonut(document.getElementById('distChart'),
+    dist.map(r => r.label), dist.map(r => r.value),
+    p.colors(), '62%', false);
+
+  // ---- 条形列表 ----
+  renderBarListNum(document.getElementById('bar-rank'), d.rank_data || [], 'name', 'value', p.colors(), '次');
+}
+
+/* ============================================================
+   渲染函数注册表
+============================================================ */
+const RENDERERS = {
+  overview: renderOverview,
+  // detail:  renderDetail,
+};
+
+/* ============================================================
+   初始化
+============================================================ */
+function init() {
+  // 设置默认日期（近30天）
+  const end   = new Date(); end.setDate(end.getDate() - 1);
+  const start = new Date(end); start.setDate(start.getDate() - 29);
+  const fmt = d => d.toISOString().slice(0, 10);
+  document.getElementById('start-dt').value = fmt(start);
+  document.getElementById('end-dt').value   = fmt(end);
+
+  // 初始加载
+  loadSection('overview');
+}
+
+init();
+</script>
+</body>
+</html>

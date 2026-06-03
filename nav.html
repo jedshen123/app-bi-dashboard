@@ -330,21 +330,21 @@
 
     <div class="nav-section-label">数据看板</div>
     <nav class="nav-list nav-main">
-      <div class="nav-item active" id="nav-ai" data-src="/dashboard" onclick="loadDashboard(this)">
+      <div class="nav-item active" id="nav-ai-v2" data-src="/dashboard-v2" onclick="loadDashboard(this)">
         <div class="nav-icon data-logo data-bars"><i></i></div>
-        <span class="nav-title">AI 吸乳计划看板</span>
-        <span class="nav-arrow">›</span>
-      </div>
-
-      <div class="nav-item" id="nav-ai-v2" data-src="/dashboard-v2" onclick="loadDashboard(this)">
-        <div class="nav-icon data-logo data-grid"><i></i></div>
-        <span class="nav-title">AI吸乳计划看板V2</span>
+        <span class="nav-title">AI吸乳计划分析</span>
         <span class="nav-arrow">›</span>
       </div>
 
       <div class="nav-item cyan" id="nav-pump" data-src="/pump" onclick="loadDashboard(this)">
-        <div class="nav-icon data-logo data-stack"><i></i></div>
-        <span class="nav-title">吸奶器行为看板</span>
+        <div class="nav-icon data-logo data-bars"><i></i></div>
+        <span class="nav-title">吸奶器用户行为分析</span>
+        <span class="nav-arrow">›</span>
+      </div>
+
+      <div class="nav-item cyan" id="nav-firmware" data-src="/firmware" onclick="loadDashboard(this)">
+        <div class="nav-icon data-logo data-bars"><i></i></div>
+        <span class="nav-title">智能设备固件版本统计</span>
         <span class="nav-arrow">›</span>
       </div>
     </nav>
@@ -401,7 +401,9 @@ mask.addEventListener('click', closeSidebar);
 /* ---- 加载内部看板 ---- */
 function loadDashboard(el) {
   setActive(el);
-  frame.src = el.dataset.src || '/dashboard';
+  const src = el.dataset.src || '/dashboard';
+  // 加时间戳防止 iframe 缓存旧版本
+  frame.src = src + (src.includes('?') ? '&' : '?') + '_t=' + Date.now();
   scheduleClose();
 }
 
@@ -429,7 +431,7 @@ async function doLogout() {
   location.replace('/login');
 }
 
-frame.src = '/dashboard';
+frame.src = '/dashboard-v2';
 loadUser();
 </script>
 </body>

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>吸奶器用户行为分析看板</title>
+<title>吸奶器用户行为分析</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
@@ -416,8 +416,7 @@
   <div class="topbar">
     <div class="topbar-left">
       <i class="ti ti-activity-heartbeat" style="color:var(--purple);font-size:16px"></i>
-      <span class="topbar-title">吸奶器用户行为分析</span>
-      <span class="topbar-sub">lute_app_dw · StarRocks</span>
+      <span class="topbar-title">吸奶器用户行为分析</span>      <span class="topbar-sub">lute_app_dw · StarRocks</span>
     </div>
     <div class="topbar-right">
       <i class="ti ti-calendar" style="font-size:12px;color:var(--text3)"></i>
@@ -514,7 +513,7 @@
 
     <div class="grid-2">
       <div class="card">
-        <div class="card-title"><i class="ti ti-chart-line"></i>用户留存率趋势<span class="help-tip" data-tip="用户口径：前N日活跃用户，在当日仍有活跃的比例&#10;D1=次日留存，D7=7日留存">?</span></div>
+        <div class="card-title"><i class="ti ti-chart-line"></i>活跃用户留存率趋势<span class="help-tip" data-tip="用户口径：前N日活跃用户，在当日仍有活跃的比例&#10;D1=次日留存，D7=7日留存">?</span></div>
         <div class="card-sub">用户口径：D1 次日留存 vs D7 七日留存</div>
         <div class="legend">
           <span class="legend-item"><span class="legend-dot" style="background:var(--c1)"></span>用户 D1</span>
@@ -525,7 +524,7 @@
         </div>
       </div>
       <div class="card">
-        <div class="card-title"><i class="ti ti-chart-line"></i>设备留存率趋势<span class="help-tip" data-tip="设备口径：前N日活跃设备，在当日仍有活跃的比例&#10;D1=次日留存，D7=7日留存">?</span></div>
+        <div class="card-title"><i class="ti ti-chart-line"></i>活跃设备留存率趋势<span class="help-tip" data-tip="设备口径：前N日活跃设备，在当日仍有活跃的比例&#10;D1=次日留存，D7=7日留存">?</span></div>
         <div class="card-sub">设备口径：D1 次日留存 vs D7 七日留存</div>
         <div class="legend">
           <span class="legend-item"><span class="legend-dot" style="background:var(--c2)"></span>设备 D1</span>
@@ -538,7 +537,7 @@
     </div>
 
     <div class="card" style="margin-bottom:16px">
-      <div class="card-title"><i class="ti ti-table"></i>留存率分组详情<span class="help-tip" data-tip="全局日期筛选器控制的是激活日期范围，即只展示在所选日期段内首次激活的用户群体，统计其 D1/D3/D7/D14 历史留存率。">?</span></div>
+      <div class="card-title"><i class="ti ti-table"></i>新用户留存率分组详情<span class="help-tip" data-tip="全局日期筛选器控制的是激活日期范围，即只展示在所选日期段内首次激活的用户群体，统计其 D1/D3/D7/D14 历史留存率。">?</span></div>
       <div class="card-sub">按激活日期段分组，D1 / D3 / D7 / D14 留存率（用户维度）</div>
       <div style="overflow-x:auto;margin-top:12px">
         <table class="data-table" id="table-retention">
@@ -642,6 +641,12 @@
         </div>
       </div>
     </div>
+
+    <div class="card">
+      <div class="card-title"><i class="ti ti-chart-bar"></i>各模式人均每日吸奶次数<span class="help-tip" data-tip="统计期内各模式总session数 / 日均DAU，反映不同模式的使用频率差异">?</span></div>
+      <div class="card-sub">各模式下人均每日使用次数（次/人·日）</div>
+      <div id="bar-mode-sess-avg" class="bar-list" style="margin-top:10px"></div>
+    </div>
   </div>
 
   <!-- ===== 吸奶时长 ===== -->
@@ -709,6 +714,12 @@
       <div class="chart-wrap" style="height:200px">
         <canvas id="cumDurComboChart" role="img" aria-label="每日新增时长和累计时长组合图"></canvas>
       </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><i class="ti ti-chart-bar"></i>各模式人均每次吸奶时长<span class="help-tip" data-tip="统计期内各模式总时长 / 总session数，反映用户在不同模式下单次使用的时长差异">?</span></div>
+      <div class="card-sub">各模式下人均每次使用时长（分钟/次）</div>
+      <div id="bar-mode-dur-avg" class="bar-list" style="margin-top:10px"></div>
     </div>
   </div>
 
@@ -877,11 +888,13 @@ const SECTION_SKELETONS = {
     kpis: [{ id: 'kpi-sessions', n: 4 }],
     charts: ['sessDailyTrendChart', 'sessAvgPerUserChart', 'sessDistChart', 'sessTrendChart',
       'cumUserChart', 'cumDevChart', 'sessModeDistChart', 'sessModeTrendChart'],
+    bars: ['bar-mode-sess-avg'],
   },
   duration: {
     kpis: [{ id: 'kpi-duration', n: 4 }],
     charts: ['durDailyTrendChart', 'durAvgPerUserChart', 'durDistChart', 'durTrendChart',
       'durModeDistChart', 'durModeTrendChart', 'cumDurComboChart'],
+    bars: ['bar-mode-dur-avg'],
   },
   habits: {
     charts: ['hourWeekdayChart', 'hourWeekendChart', 'adjDirChart', 'evtSourceChart', 'adjCntChart'],
@@ -1152,8 +1165,27 @@ function cmpHtml(pct, label, isPp = false) {
   return `<span class="${cls}">${arrow} ${Math.abs(n).toFixed(1)}${unit}</span> ${label}`;
 }
 
-function renderBarList(el, rows, labelKey, pctKey, colors, wide, isRatio = true) {
-  if (!el) return;
+function renderBarListNum(el, rows, labelKey, valKey, colors, unit = '') {
+  if (!el || !rows.length) {
+    if (el) el.innerHTML = '<div style="color:var(--text3);font-size:12px">暂无数据</div>';
+    return;
+  }
+  const vals = rows.map(r => Number(r[valKey]) || 0);
+  const max = Math.max(...vals, 0.001);
+  el.innerHTML = rows.map((r, i) => {
+    const v = vals[i];
+    const w = Math.round(v / max * 100);
+    const lbl = (r[labelKey] || '').replace(/</g, '&lt;');
+    const display = v % 1 === 0 ? v : v.toFixed(2);
+    return `<div class="bar-row">
+      <span class="bar-label">${lbl}</span>
+      <div class="bar-track"><div class="bar-fill" style="width:${w}%;background:${colors[i % colors.length]}"></div></div>
+      <span class="bar-val">${display}${unit ? ' ' + unit : ''}</span>
+    </div>`;
+  }).join('');
+}
+
+function renderBarList(el, rows, labelKey, pctKey, colors, wide, isRatio = true) {  if (!el) return;
   const pcts = rows.map(r => {
     const n = Number(r[pctKey]) || 0;
     return isRatio && n <= 1 ? n * 100 : n;
@@ -1228,7 +1260,7 @@ function mkLine(ctx, datasets, labels, opts = {}, isPct = false) {
       anchor: aligns[dsIdx % 2], align: aligns[dsIdx % 2], offset: 3,
       formatter: isPct
         ? (v) => v == null ? '' : parseFloat(v).toFixed(1) + '%'
-        : (v) => v == null ? '' : (typeof v === 'number' && Math.abs(v) >= 1000 ? (v/1000).toFixed(1)+'K' : (typeof v === 'number' ? v.toFixed(v % 1 === 0 ? 0 : 1) : v))
+        : (v) => v == null ? '' : (typeof v === 'number' ? v.toFixed(v % 1 === 0 ? 0 : 1) : String(v))
     }
   }));
   const c = new Chart(ctx, {
@@ -1262,7 +1294,7 @@ function mkBar(ctx, labels, datasets, opts = {}) {
       color: getP().text,
       font: { size: 11, weight: '500' },
       anchor: 'end', align: 'top', offset: 2, clamp: true,
-      formatter: (v) => v == null ? '' : (typeof v === 'number' && Math.abs(v) >= 1000 ? (v/1000).toFixed(1)+'K' : (typeof v === 'number' ? (v % 1 === 0 ? v : v.toFixed(1)) : v))
+      formatter: (v) => v == null ? '' : (typeof v === 'number' ? (v % 1 === 0 ? v : v.toFixed(1)) : v)
     }
   }));
   const c = new Chart(ctx, {
@@ -1542,18 +1574,12 @@ function genSessionsDemo() {
       { mode_type: '混合', cnt: 5360 },
       { mode_type: '自定义', cnt: 2000 },
     ],
-    chart_mode_sess_trend: (() => {
-      const modes = ['刺激', '泌乳', '混合', '自定义'];
-      const rows = [];
-      days.forEach(dt => {
-        const dayTotal = rnd(18000, 32000);
-        modes.forEach(m => {
-          const v = m === '泌乳' ? rnd(38, 50) : m === '刺激' ? rnd(22, 32) : m === '混合' ? rnd(14, 22) : rnd(5, 12);
-          rows.push({ dt, mode_type: m, pct: v / 100, cnt: Math.round(dayTotal * v / 100) });
-        });
-      });
-      return rows;
-    })()
+    chart_mode_sess_avg: [
+      { mode_type: 'expression',  avg_sess_per_user: 1.82 },
+      { mode_type: 'stimulation', avg_sess_per_user: 0.94 },
+      { mode_type: 'massage',     avg_sess_per_user: 0.61 },
+      { mode_type: 'custom',      avg_sess_per_user: 0.23 },
+    ],
   };
 }
 
@@ -1598,7 +1624,13 @@ function genDurationDemo() {
         });
       });
       return rows;
-    })()
+    })(),
+    chart_mode_dur_avg: [
+      { mode_type: 'expression',  avg_dur_per_sess_min: 18.4 },
+      { mode_type: 'massage',     avg_dur_per_sess_min: 14.2 },
+      { mode_type: 'stimulation', avg_dur_per_sess_min: 8.6 },
+      { mode_type: 'custom',      avg_dur_per_sess_min: 22.1 },
+    ],
   };
 }
 
@@ -1737,7 +1769,7 @@ function renderOverview(d) {
   const _dauLastIdx = _dauLabels.length - 1;
   const _dauStep = Math.max(1, Math.floor(_dauLabels.length / 6));
   const _dauShow = (ctx) => ctx.dataIndex % _dauStep === 0 || ctx.dataIndex === _dauLastIdx;
-  const _dauFmt = (v) => v == null ? '' : (Math.abs(v) >= 1000 ? (v/1000).toFixed(1)+'K' : String(v));
+  const _dauFmt = (v) => v == null ? '' : Number(v).toLocaleString('zh-CN');
   mkLine(document.getElementById('dauChart'), [
     { label: '用户', data: c1.map(r => r.dau), borderColor: p0.c1, backgroundColor: rgba(p0.c1, 0.08), borderWidth: 1.5, fill: true, tension: 0.4,
       datalabels: { display: _dauShow, color: p0.c1, font: { size: 11, weight: '500' }, anchor: 'start', align: 'start', offset: 3, formatter: _dauFmt } },
@@ -1749,7 +1781,7 @@ function renderOverview(d) {
   mkBar(document.getElementById('sessionTrendChart'), dtLabels(c2),
     [{ data: c2.map(r => r.session_count), backgroundColor: rgba(p0.c3, 0.7), borderRadius: 2 }]);
 
-  renderBarList(document.getElementById('bar-modes'), d.chart03 || [], 'mode_type', 'pct', p0.colors(), false, false);
+  renderBarList(document.getElementById('bar-modes'), d.chart03 || [], 'mode_type', 'pct', p0.colors(), false, true);
   const c4 = d.chart04 || [];
   mkDonut(document.getElementById('levelDonut'), c4.map(r => r.level_bucket), c4.map(r => r.pct), [rgba(p0.c1,0.25), rgba(p0.c1,0.5), p0.c1, p0.c6], '68%', false);
 
@@ -1813,7 +1845,8 @@ function renderRetention(d) {
   const newUD = d.newUserDev || [];
   mkLine(document.getElementById('newUserDevChart'), [
     { label: '新增用户', data: newUD.map(r => r.new_users), borderColor: pr.c1, backgroundColor: rgba(pr.c1, 0.08), borderWidth: 1.5, fill: true, tension: 0.4 },
-    { label: '新增设备', data: newUD.map(r => r.new_devices), borderColor: pr.c2, backgroundColor: rgba(pr.c2, 0.06), borderWidth: 1.5, fill: true, tension: 0.4 }
+    { label: '新增设备', data: newUD.map(r => r.new_devices), borderColor: pr.c2, backgroundColor: rgba(pr.c2, 0.06), borderWidth: 1.5, fill: true, tension: 0.4,
+      datalabels: { display: false } }
   ], dtLabels(newUD));
 
   const tbody = document.querySelector('#table-retention tbody');
@@ -1857,7 +1890,7 @@ function renderRetention(d) {
            font: { size: 11 }, color: pr2.text3,
            formatter: (v) => {
              const pct = totalStreak > 0 ? (v / totalStreak * 100).toFixed(1) : '0.0';
-             return [(v >= 1000 ? (v/1000).toFixed(1)+'K' : String(v)), pct + '%'];
+             return [String(v), pct + '%'];
            }
          }
       }],
@@ -1865,7 +1898,7 @@ function renderRetention(d) {
         plugins: { legend: { display: false } },
         scales: {
           x: { ticks: { font:{size:10}, color: pr2.text3 }, grid: { display: false } },
-          y: { ticks: { callback: v => v >= 1000 ? (v/1000).toFixed(1)+'K' : v, color: pr2.text3 }, grid: { display: false } }
+          y: { ticks: { callback: v => v, color: pr2.text3 }, grid: { display: false } }
         },
         layout: { padding: { top: 32 } }
       }
@@ -2003,6 +2036,13 @@ function renderSessions(d) {
     modeLabels4, sessModeAbs, modeColors4, stackAbsOpts(ps)
   );
   wireLegendEl(document.getElementById('legend-sess-mode-trend'), __sessModeTrendChart);
+
+  // 各模式人均每日吸奶次数
+  const cMsa = (d.chart_mode_sess_avg || []).map(r => ({
+    mode_type: MODE_MAP[r.mode_type] || r.mode_type,
+    val: r.avg_sess_per_user,
+  }));
+  renderBarListNum(document.getElementById('bar-mode-sess-avg'), cMsa, 'mode_type', 'val', ps.colors(), '次/人·日');
 }
 
 function renderDuration(d) {
@@ -2173,6 +2213,13 @@ function renderDuration(d) {
     durModeLabels, durModeAbs, durModeColors, stackAbsOpts(pd)
   );
   wireLegendEl(document.getElementById('legend-dur-mode-trend'), __durModeTrendChart);
+
+  // 各模式人均每次吸奶时长
+  const cMda = (d.chart_mode_dur_avg || []).map(r => ({
+    mode_type: MODE_MAP[r.mode_type] || r.mode_type,
+    val: r.avg_dur_per_sess_min,
+  }));
+  renderBarListNum(document.getElementById('bar-mode-dur-avg'), cMda, 'mode_type', 'val', pd.colors(), '分钟/次');
 }
 
 function renderHabits(d) {
@@ -2185,13 +2232,13 @@ function renderHabits(d) {
   const chart15 = d.chart15 || [];
   const hours = Array.from({length: 24}, (_, i) => i + '时');
   const weekdayData = hours.map((_, h) => {
-    const row = chart15.find(r => r.day_type === '工作日' && r.local_hour === h);
-    const v = row ? Number(row.pct) : 0;
+    const row = chart15.find(r => (r.day_type === '工作日' || r['日类型'] === '工作日') && (r.local_hour === h || r['时段_小时'] === h));
+    const v = row ? Number(row.pct ?? row['日类型内占比_pct']) : 0;
     return v <= 1 ? +(v * 100).toFixed(3) : v;
   });
   const weekendData = hours.map((_, h) => {
-    const row = chart15.find(r => r.day_type === '周末' && r.local_hour === h);
-    const v = row ? Number(row.pct) : 0;
+    const row = chart15.find(r => (r.day_type === '周末' || r['日类型'] === '周末') && (r.local_hour === h || r['时段_小时'] === h));
+    const v = row ? Number(row.pct ?? row['日类型内占比_pct']) : 0;
     return v <= 1 ? +(v * 100).toFixed(3) : v;
   });
   const hourBarOpts = {
@@ -2225,6 +2272,7 @@ function renderHabits(d) {
   const [hr1,hg1,hb1] = hexToRgb(ph.c1);
   const [hr2,hg2,hb2] = hexToRgb(ph.c2);
   destroyChart('hourWeekdayChart');
+  clearChartLoading('hourWeekdayChart');
   const wdCtx = document.getElementById('hourWeekdayChart');
   chartStore['hourWeekdayChart'] = new Chart(wdCtx, {
     type: 'bar',
@@ -2233,6 +2281,7 @@ function renderHabits(d) {
   });
 
   destroyChart('hourWeekendChart');
+  clearChartLoading('hourWeekendChart');
   const weCtx = document.getElementById('hourWeekendChart');
   chartStore['hourWeekendChart'] = new Chart(weCtx, {
     type: 'bar',
@@ -2425,8 +2474,17 @@ async function loadSection(section, force = false) {
 
   try {
     const json = await fetchSection(section);
+    const data = json.data || {};
+    // 保存原始数据 + 请求时的日期范围，供前端裁剪使用
+    rawData[section] = {
+      ...data,
+      _dateRange: {
+        start: document.getElementById('start-dt').value,
+        end:   document.getElementById('end-dt').value,
+      },
+    };
     loaded[section] = true;
-    RENDERERS[section](json.data || {});
+    RENDERERS[section](data);
     clearSectionError(section);
     setLoadStatus('');
   } catch (e) {
@@ -2449,10 +2507,39 @@ function initDates() {
   document.getElementById('start-dt').value = fmt(start);
 }
 
+// rawData 缓存：存储每个 section 完整原始数据，供前端日期裁剪使用
+const rawData = {};
+
+/**
+ * 前端日期裁剪
+ * 如果已缓存数据的日期范围覆盖新选区间，直接重绘无需请求后端
+ * @returns {boolean} true=已裁剪重绘 false=需重新请求
+ */
+function tryFrontendFilter(section) {
+  const start = document.getElementById('start-dt').value;
+  const end   = document.getElementById('end-dt').value;
+  const raw = rawData[section];
+  if (!raw || !raw._dateRange) return false;
+  if (start < raw._dateRange.start || end > raw._dateRange.end) return false;
+  // 数据已覆盖，前端裁剪重绘
+  RENDERERS[section]({ ...raw, _frontendFilter: { start, end } });
+  setLoadStatus(`数据已更新（前端裁剪）`);
+  setTimeout(() => setLoadStatus('', false), 1500);
+  return true;
+}
+
+let _refreshDebounceTimer = null;
+
 document.getElementById('btn-refresh').addEventListener('click', async () => {
-  Object.keys(loaded).forEach(k => delete loaded[k]);
-  try { await fetch('/api/pump_cache/clear', { credentials: 'same-origin' }); } catch (_) {}
-  loadSection(activeTab, true);
+  clearTimeout(_refreshDebounceTimer);
+  _refreshDebounceTimer = setTimeout(async () => {
+    // 先尝试前端裁剪
+    if (tryFrontendFilter(activeTab)) return;
+    // 裁剪失败则走完整请求流程
+    Object.keys(loaded).forEach(k => delete loaded[k]);
+    try { await fetch('/api/pump_cache/clear', { credentials: 'same-origin' }); } catch (_) {}
+    loadSection(activeTab, true);
+  }, 300);
 });
 
 function toggleStackMode(chartId, btnId) {

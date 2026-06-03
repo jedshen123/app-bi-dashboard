@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>智能设备固件版本统计 — Momcozy数据平台</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #f4f6ff; --surface: #ffffff; --surface2: #eef0fb;
+    --border: rgba(75,107,255,0.15); --border2: rgba(75,107,255,0.08);
+    --text: #1a1d36; --text2: #4a4e72; --text3: #8b8fad;
+    --purple: #4b6bff; --purple-light: #e8ecff; --purple-dark: #2540cc;
+    --teal: #5bc8e8; --teal-light: #e2f7fd; --teal-dark: #1a7a96;
+    --coral: #e8477a; --coral-light: #fde8f0; --coral-dark: #a01848;
+    --amber: #ff8c42; --amber-light: #fff0e5; --amber-dark: #c45200;
+    --radius: 12px; --radius-sm: 8px;
+    --c1: #4b6bff; --c2: #7b3fa0; --c3: #e8477a; --c4: #ff8c42; --c5: #5bc8e8; --c6: #2540cc;
+    --chart-text: #4a4e72; --chart-text3: #8b8fad; --chart-grid: rgba(75,107,255,0.06);
+  }
+  body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Segoe UI', sans-serif; font-size: 14px; line-height: 1.5; }
+  .shell { max-width: 1280px; margin: 0 auto; padding: 24px 20px 48px; }
+
+  /* Topbar */
+  .topbar { display: flex; align-items: flex-start; justify-content: space-between; padding: 0 0 10px; gap: 12px; flex-wrap: wrap; }
+  .topbar-left { display: flex; align-items: center; gap: 8px; min-width: 0; }
+  .topbar-title { font-size: 15px; font-weight: 600; color: var(--text); letter-spacing: -0.3px; white-space: nowrap; }
+  .topbar-sub { font-size: 10px; color: var(--text3); padding-left: 8px; border-left: 1px solid var(--border); margin-left: 4px; white-space: nowrap; }
+  .topbar-right { display: flex; align-items: center; gap: 5px; flex-wrap: wrap; justify-content: flex-end; }
+  .ctrl-btn { padding: 3px 10px; border-radius: 6px; border: 0.5px solid var(--border); background: var(--purple-light); color: var(--purple-dark); font-size: 11px; cursor: pointer; white-space: nowrap; transition: background 0.15s; }
+  .ctrl-btn:hover { background: var(--purple); color: #fff; }
+  .ctrl-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .ctrl-select { font-size: 11px; color: var(--text2); border: 0.5px solid var(--border); border-radius: 6px; background: var(--surface2); padding: 2px 6px; cursor: pointer; }
+  .ctrl-sep { width: 0.5px; height: 14px; background: var(--border); flex-shrink: 0; }
+  .load-status { font-size: 11px; color: var(--text3); }
+  .load-status-error { color: var(--coral); }
+
+  /* Filter bar */
+  .filter-bar { display: flex; align-items: center; gap: 8px; padding: 10px 14px; background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius); margin-bottom: 16px; flex-wrap: wrap; }
+  .filter-label { font-size: 11px; color: var(--text3); white-space: nowrap; }
+  .filter-sep { width: 0.5px; height: 16px; background: var(--border); margin: 0 4px; flex-shrink: 0; }
+  .filter-select { font-size: 11px; color: var(--text2); border: 0.5px solid var(--border); border-radius: 6px; background: var(--surface2); padding: 4px 8px; cursor: pointer; min-width: 80px; }
+  .filter-select:focus { outline: none; border-color: var(--purple); }
+  .filter-apply { padding: 4px 12px; border-radius: 6px; border: 0.5px solid var(--purple); background: var(--purple-light); color: var(--purple-dark); font-size: 11px; cursor: pointer; white-space: nowrap; font-weight: 500; }
+  .filter-apply:hover { background: var(--purple); color: #fff; }
+  .filter-reset { padding: 4px 10px; border-radius: 6px; border: 0.5px solid var(--border); background: transparent; color: var(--text3); font-size: 11px; cursor: pointer; }
+  .filter-reset:hover { border-color: var(--coral); color: var(--coral); }
+
+  /* Skeleton */
+  @keyframes skeleton-shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+  .skeleton-line { display:block;height:10px;border-radius:4px;background:linear-gradient(90deg,var(--surface2) 25%,var(--border2) 50%,var(--surface2) 75%);background-size:200% 100%;animation:skeleton-shimmer 1.2s ease-in-out infinite; }
+  .skeleton-line.w60{width:60%} .skeleton-line.w40{width:40%} .skeleton-line.lg{height:22px;margin-top:8px;border-radius:6px}
+  .chart-wrap.is-loading canvas { visibility: hidden; }
+  .chart-wrap.is-loading::after { content:'';position:absolute;inset:0;border-radius:6px;background:linear-gradient(90deg,var(--surface2) 20%,var(--border2) 45%,var(--surface2) 80%);background-size:200% 100%;animation:skeleton-shimmer 1.2s ease-in-out infinite; }
+
+  /* Grid */
+  .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; margin-bottom: 16px; }
+
+  /* Card */
+  .card { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 18px 20px; }
+  .card-title { font-size: 13px; font-weight: 500; color: var(--text); margin-bottom: 4px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  .card-title i { font-size: 15px; color: var(--text3); }
+  .card-sub { font-size: 11px; color: var(--text3); margin-bottom: 14px; }
+  .chart-wrap { position: relative; width: 100%; }
+
+  /* 饼图卡：左图右图例 */
+  .donut-card-body {
+    display: flex; align-items: flex-start; gap: 16px; min-height: 220px;
+  }
+  .donut-canvas-wrap {
+    position: relative; flex-shrink: 0; width: 200px; height: 200px;
+  }
+  .donut-center {
+    position: absolute; inset: 0; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; pointer-events: none;
+  }
+  .donut-center-num  { font-size: 22px; font-weight: 600; color: var(--text); letter-spacing: -1px; line-height: 1.1; }
+  .donut-center-lbl  { font-size: 10px; color: var(--text3); margin-top: 2px; }
+  /* 右侧图例，自适应宽度、靠右、固定高度可滚动 */
+  .donut-legend-side {
+    flex: 0 0 auto;
+    align-self: center;
+    max-height: 200px; overflow-y: auto;
+    display: flex; flex-direction: column; gap: 5px;
+    padding-right: 4px;
+    margin-left: auto;
+  }
+  .donut-legend-side::-webkit-scrollbar { width: 4px; }
+  .donut-legend-side::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+  .donut-legend-item {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 11px; color: var(--text2); white-space: nowrap;
+  }
+  .donut-legend-dot { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; }
+  .donut-legend-pct { color: var(--text3); margin-left: 12px; }
+
+  /* 趋势图图例：单行横向滚动 */
+  .trend-legend-wrap {
+    overflow-x: auto; white-space: nowrap;
+    margin-bottom: 8px; padding-bottom: 4px;
+  }
+  .trend-legend-wrap::-webkit-scrollbar { height: 4px; }
+  .trend-legend-wrap::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+  .trend-legend-item {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-size: 11px; color: var(--text2); margin-right: 12px;
+    cursor: pointer; user-select: none;
+  }
+  .trend-legend-item.hidden { opacity: 0.35; }
+  .legend-dot { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; }
+
+  /* Help tip */
+  .help-tip { display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;border-radius:50%;background:var(--surface2);border:0.5px solid var(--border);font-size:9px;color:var(--text3);cursor:help;margin-left:4px;position:relative;flex-shrink:0; }
+  .help-tip:hover::after { content:attr(data-tip);position:absolute;left:50%;transform:translateX(-50%);bottom:calc(100% + 6px);background:#333;color:#fff;font-size:11px;padding:6px 10px;border-radius:6px;white-space:pre-line;width:200px;z-index:100;pointer-events:none;line-height:1.4; }
+  .help-tip:hover::before { content:'';position:absolute;left:50%;transform:translateX(-50%);bottom:calc(100% + 1px);border:5px solid transparent;border-top-color:#333;z-index:101; }
+
+  /* Table */
+  .data-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .data-table th { font-size: 11px; color: var(--text3); font-weight: 500; text-align: left; padding: 0 8px 8px 0; border-bottom: 0.5px solid var(--border2); text-transform: uppercase; letter-spacing: 0.3px; white-space: nowrap; }
+  .data-table td { padding: 7px 8px 7px 0; border-bottom: 0.5px solid var(--border2); color: var(--text2); vertical-align: middle; white-space: nowrap; }
+  .data-table td:first-child { color: var(--text); font-weight: 500; }
+  .data-table tr:last-child td { border-bottom: none; }
+  .table-wrap { overflow-x: auto; max-height: 520px; overflow-y: auto; }
+
+  /* Badge */
+  .badge { display:inline-block;font-size:10px;padding:2px 8px;border-radius:20px;font-weight:500; }
+  .badge-purple { background:var(--purple-light);color:var(--purple-dark); }
+  .badge-teal   { background:var(--teal-light);color:var(--teal-dark); }
+  .badge-coral  { background:var(--coral-light);color:var(--coral-dark); }
+</style>
+</head>
+<body>
+<div class="shell">
+
+  <!-- Topbar -->
+  <div class="topbar">
+    <div class="topbar-left">
+      <i class="ti ti-cpu" style="color:var(--purple);font-size:16px"></i>
+      <span class="topbar-title">智能设备固件版本统计</span>
+      <span class="topbar-sub">Metabase · Dashboard 34</span>
+    </div>
+    <div class="topbar-right">
+      <span id="load-status" class="load-status" hidden></span>
+      <span id="load-error"  class="load-status load-status-error"></span>
+    </div>
+  </div>
+
+  <!-- 筛选器栏 -->
+  <div class="filter-bar">
+    <span class="filter-label">筛选</span>
+    <span class="filter-sep"></span>
+
+    <span class="filter-label">数据区域</span>
+    <select id="f-region" class="filter-select" onfocus="loadFilterOptions('f-region','数据所属区域')">
+      <option value="">全部</option>
+    </select>
+
+    <span class="filter-sep"></span>
+
+    <span class="filter-label">绑定状态</span>
+    <select id="f-status" class="filter-select" onfocus="loadFilterOptions('f-status','设备状态')">
+      <option value="">全部</option>
+    </select>
+
+    <span class="filter-sep"></span>
+
+    <span class="filter-label">设备类型</span>
+    <select id="f-type" class="filter-select" onfocus="loadFilterOptions('f-type','设备类型')">
+      <option value="M5P0" selected>M5P0</option>
+    </select>
+
+    <span class="filter-sep"></span>
+    <button class="filter-apply" onclick="applyFilters()">应用</button>
+    <button class="filter-reset" onclick="resetFilters()">重置</button>
+    <span id="filter-hint" style="font-size:11px;color:var(--text3);margin-left:4px"></span>
+  </div>
+
+  <!-- 版本分布饼图 -->
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title">
+        <i class="ti ti-chart-donut"></i>系统版本分布（已绑定）
+        <span class="help-tip" data-tip="受「数据区域」「设备类型」筛选影响">?</span>
+      </div>
+      <div class="card-sub">已绑定设备的固件版本占比</div>
+      <div class="donut-card-body">
+        <div class="donut-canvas-wrap">
+          <div class="chart-wrap is-loading" style="width:200px;height:200px">
+            <canvas id="pieBound"></canvas>
+          </div>
+          <div class="donut-center" id="pieBound-center">
+            <span class="donut-center-num">—</span>
+            <span class="donut-center-lbl">总设备数</span>
+          </div>
+        </div>
+        <div class="donut-legend-side" id="pieBound-legend"></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">
+        <i class="ti ti-chart-donut"></i>系统版本分布（解绑）
+        <span class="help-tip" data-tip="受「数据区域」「设备类型」筛选影响">?</span>
+      </div>
+      <div class="card-sub">解绑设备的固件版本占比</div>
+      <div class="donut-card-body">
+        <div class="donut-canvas-wrap">
+          <div class="chart-wrap is-loading" style="width:200px;height:200px">
+            <canvas id="pieUnbound"></canvas>
+          </div>
+          <div class="donut-center" id="pieUnbound-center">
+            <span class="donut-center-num">—</span>
+            <span class="donut-center-lbl">总设备数</span>
+          </div>
+        </div>
+        <div class="donut-legend-side" id="pieUnbound-legend"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 每日新增趋势 -->
+  <div class="card" style="margin-bottom:16px">
+    <div class="card-title">
+      <i class="ti ti-chart-line"></i>每日新增固件数 by 系统版本
+      <span class="help-tip" data-tip="受「数据区域」「绑定状态」「设备类型」筛选影响 · 近30天">?</span>
+      <span style="margin-left:auto;font-size:11px;color:var(--text3);font-weight:400">近30天</span>
+    </div>
+    <div class="card-sub">各固件版本每日新增设备数趋势</div>
+    <div class="trend-legend-wrap" id="legend-trend"></div>
+    <div class="chart-wrap is-loading" style="height:260px"><canvas id="trendChart"></canvas></div>
+  </div>
+
+  <!-- 设备状态明细 -->
+  <div class="card">
+    <div class="card-title">
+      <i class="ti ti-table"></i>智能设备版本状态明细
+      <span class="help-tip" data-tip="受全部四个筛选器影响">?</span>
+      <span id="table-count" style="font-size:11px;color:var(--text3);margin-left:auto;font-weight:400"></span>
+    </div>
+    <div class="card-sub">最多显示 2000 条</div>
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead><tr>
+          <th>设备名称</th>
+          <th>设备ID</th>
+          <th>SN</th>
+          <th>设备类型</th>
+          <th>MAC</th>
+          <th>系统版本</th>
+          <th>设备状态</th>
+          <th>创建时间</th>
+          <th>更新时间</th>
+          <th>最后登陆时间</th>
+          <th>数据区域</th>
+        </tr></thead>
+        <tbody id="table-body">
+          <tr><td colspan="11" style="padding:20px;color:var(--text3)">加载中...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<script>
+Chart.register(ChartDataLabels);
+
+/* ---- 常量 ---- */
+const DASHBOARD_ID = 34;
+const CARDS = {
+  bound:   { dashcard: 204, card: 245 },
+  unbound: { dashcard: 207, card: 246 },
+  trend:   { dashcard: 205, card: 248 },
+  detail:  { dashcard: 208, card: 249 },
+};
+// 参数 ID → 字段名
+const PARAM_IDS = {
+  region:  '2bed2207',
+  status:  '7c1681cb',
+  version: 'ff6be833',
+  type:    'dc18fd89',
+};
+// 12色扩展色板，色相均匀分布，色差显著
+const COLORS = [
+  '#4b6bff', // 蓝
+  '#e8477a', // 玫红
+  '#ff8c42', // 橙
+  '#5bc8e8', // 青
+  '#34d399', // 绿
+  '#f59e0b', // 琥珀
+  '#8b5cf6', // 紫
+  '#ec4899', // 粉
+  '#14b8a6', // 青绿
+  '#f97316', // 深橙
+  '#6366f1', // 靛蓝
+  '#a3e635', // 黄绿
+];
+const chartStore = {};
+
+/* ---- 工具 ---- */
+function rgba(hex, a) {
+  hex=(hex||'').replace('#','');
+  return `rgba(${parseInt(hex.slice(0,2),16)},${parseInt(hex.slice(2,4),16)},${parseInt(hex.slice(4,6),16)},${a})`;
+}
+function fmtNum(n) {
+  if (n==null) return '--';
+  n=Number(n);
+  if (Math.abs(n)>=1e4) return (n/1e4).toFixed(1)+'万';
+  return n.toLocaleString('zh-CN');
+}
+function fmtDate(v) { return v ? String(v).slice(0,10) : '—'; }
+function destroyChart(id) { if (chartStore[id]) { chartStore[id].destroy(); delete chartStore[id]; } }
+function clearLoading(id) { document.getElementById(id)?.closest('.chart-wrap')?.classList.remove('is-loading'); }
+function setLoading(id) { document.getElementById(id)?.closest('.chart-wrap')?.classList.add('is-loading'); }
+
+function setStatus(msg, isErr=false) {
+  const s=document.getElementById('load-status'), e=document.getElementById('load-error');
+  if (msg&&!isErr){s.textContent=msg;s.hidden=false;}else s.hidden=true;
+  e.textContent=isErr?msg:'';
+}
+
+/* ---- 筛选器值读取 ---- */
+function getFilters() {
+  return {
+    region:  document.getElementById('f-region').value,
+    status:  document.getElementById('f-status').value,
+    type:    document.getElementById('f-type').value,
+  };
+}
+
+/* ---- 构建参数数组（只把有值的参数传进去） ---- */
+function buildParams(filters, cardKey) {
+  const mapping = {
+    bound:   ['region','type'],
+    unbound: ['region','type'],
+    trend:   [],            // card 248 硬编码 M5P0，不传参数
+    detail:  ['region','status','type'],
+  };
+  const keys = mapping[cardKey] || [];
+  return keys
+    .filter(k => filters[k])
+    .map(k => ({
+      id: PARAM_IDS[k],
+      type: 'string/=',
+      value: [filters[k]],
+    }));
+}
+
+/* ---- 查询单张卡片 ---- */
+async function queryCard(cardKey, params) {
+  const { dashcard, card } = CARDS[cardKey];
+  const body = JSON.stringify({ parameters: params });
+  const res = await fetch(
+    `/api/card_data?dashboard_id=${DASHBOARD_ID}&dashcard_id=${dashcard}&card_id=${card}`,
+    { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin', body }
+  );
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const json = await res.json();
+  if (json.error) throw new Error(json.error);
+  return { cols: json.cols || [], rows: json.rows || [] };
+}
+
+/* ---- 趋势图独立查询（绕过 card 248 的硬编码，直接查底表） ---- */
+async function queryTrend(filters) {
+  const qs = new URLSearchParams();
+  if (filters.type)   qs.set('device_type', filters.type);
+  if (filters.region) qs.set('region',      filters.region);
+  if (filters.status) qs.set('status',      filters.status);
+  const res = await fetch(`/api/firmware_trend?${qs}`, { credentials: 'same-origin' });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const json = await res.json();
+  if (json.error) throw new Error(json.error);
+  return { cols: json.cols || [], rows: json.rows || [] };
+}
+
+/* ---- 渲染饼图（左饼 + 右侧可滚图例 + 中间总数） ---- */
+function renderDonut(canvasId, legendId, rows, vColorMap) {
+  destroyChart(canvasId); clearLoading(canvasId);
+  const total = rows.reduce((s,r)=>s+(Number(r[1])||0),0);
+
+  // 中间总数：直接用原始数字，不缩写
+  const center = document.getElementById(canvasId + '-center');
+  if (center) {
+    center.querySelector('.donut-center-num').textContent =
+      total > 0 ? total.toLocaleString('zh-CN') : '0';
+  }
+
+  if (!rows.length) return;
+
+  // 按数值降序排列
+  const sorted = [...rows].sort((a,b) => Number(b[1]) - Number(a[1]));
+
+  const c = new Chart(document.getElementById(canvasId), {
+    type: 'doughnut',
+    data: {
+      labels: sorted.map(r=>`v${r[0]}`),
+      datasets:[{ data:sorted.map(r=>Number(r[1])), backgroundColor:sorted.map(r=>vColorMap[r[0]]||COLORS[0]), borderWidth:0 }],
+    },
+    options: {
+      responsive:true, maintainAspectRatio:false, cutout:'64%',
+      plugins:{
+        legend:{display:false}, datalabels:{display:false},
+        tooltip:{callbacks:{label:p=>`v${sorted[p.dataIndex][0]}: ${p.parsed.toLocaleString('zh-CN')} (${total>0?(p.parsed/total*100).toFixed(1):0}%)`}},
+      },
+    },
+  });
+  chartStore[canvasId]=c;
+
+  // 右侧图例：降序
+  const el=document.getElementById(legendId);
+  if (el) el.innerHTML=sorted.map(r=>{
+    const pct = total>0?(Number(r[1])/total*100).toFixed(1):'0.0';
+    return `<div class="donut-legend-item">
+      <span class="donut-legend-dot" style="background:${vColorMap[r[0]]||COLORS[0]}"></span>
+      <span>v${r[0]}</span>
+      <span class="donut-legend-pct">${pct}%</span>
+    </div>`;
+  }).join('');
+}
+
+/* ---- 渲染趋势折线（近30天 + 单行横向滚动图例） ---- */
+function renderTrend(rows) {
+  destroyChart('trendChart'); clearLoading('trendChart');
+  if (!rows.length) return;
+
+  // 近30天过滤：取最近30天的数据
+  const today = new Date();
+  const cutoff = new Date(today); cutoff.setDate(today.getDate() - 30);
+  const cutoffStr = cutoff.toISOString().slice(0,10);
+  const filtered = rows.filter(r => String(r[0]).slice(0,10) >= cutoffStr);
+  const dataRows = filtered.length > 0 ? filtered : rows; // 如无近30天数据则显示全量
+
+  // card 248 字段: [0=创建时间, 1=系统版本, 2=count]
+  const versions = [...new Set(dataRows.map(r=>String(r[1]).trim()))]
+    .filter(v=>v&&v!=='null')
+    .sort((a,b)=>{ const na=parseFloat(a),nb=parseFloat(b); return (!isNaN(na)&&!isNaN(nb))?na-nb:a.localeCompare(b); });
+  const vColorMap = {}; versions.forEach((v,i)=>{ vColorMap[v]=COLORS[i%COLORS.length]; });
+  const dates = [...new Set(dataRows.map(r=>String(r[0]).slice(0,10).trim()))].sort();
+  const xLabels = dates.map(d=>{const p=d.split('-');return `${+p[1]}/${+p[2]}`;});
+
+  // Map으로 빠르게 매칭: key = "버전|날짜"
+  const dataMap = new Map();
+  dataRows.forEach(r => {
+    const dt  = String(r[0]).trim().slice(0,10);
+    const ver = String(r[1]).trim();
+    const cnt = Number(r[2]);
+    dataMap.set(`${ver}|${dt}`, cnt);
+  });
+
+  const datasets = versions.map(ver=>({
+    label:`v${ver}`,
+    data:dates.map(dt => dataMap.get(`${ver}|${dt}`) ?? 0),
+    borderColor:vColorMap[ver], backgroundColor:rgba(vColorMap[ver],0.07),
+    borderWidth:1.5, tension:0.4, pointRadius:2, datalabels:{display:false},
+  }));
+
+  // 单行横向滚动图例，支持点击切换显示
+  const legendEl=document.getElementById('legend-trend');
+  if (legendEl) {
+    legendEl.innerHTML=versions.map(v=>
+      `<span class="trend-legend-item" data-ver="${v}">
+        <span class="legend-dot" style="background:${vColorMap[v]}"></span>v${v}
+      </span>`).join('');
+    // 点击图例切换系列显示
+    legendEl.querySelectorAll('.trend-legend-item').forEach((item,i)=>{
+      item.addEventListener('click', ()=>{
+        const chart=chartStore['trendChart'];
+        if (!chart) return;
+        const meta=chart.getDatasetMeta(i);
+        meta.hidden = !meta.hidden;
+        item.classList.toggle('hidden', meta.hidden);
+        chart.update();
+      });
+    });
+  }
+
+  const c=new Chart(document.getElementById('trendChart'),{
+    type:'line', data:{labels:xLabels,datasets},
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{mode:'index',intersect:false},datalabels:{}},
+      scales:{
+        x:{ticks:{font:{size:10},color:'#8b8fad',maxRotation:35,autoSkip:true,maxTicksLimit:15},grid:{display:false}},
+        y:{ticks:{font:{size:10},color:'#8b8fad'},grid:{color:'rgba(75,107,255,0.06)'}},
+      },
+    },
+  });
+  chartStore['trendChart']=c;
+}
+
+/* ---- 渲染明细表 ---- */
+function renderTable(rows) {
+  document.getElementById('table-count').textContent=`共 ${rows.length} 条`;
+  // cols顺序: [设备ID,sn,设备类型,设备类型ID,mac,系统版本,设备状态,创建时间,更新时间,最后登陆时间,数据所属区域,deviceName]
+  document.getElementById('table-body').innerHTML=rows.slice(0,2000).map(r=>
+    `<tr>
+      <td>${r[11]||'—'}</td>
+      <td style="font-size:10px;color:var(--text3)">${String(r[0]||'').slice(-8)||'—'}</td>
+      <td style="font-size:10px;color:var(--text3)">${r[1]||'—'}</td>
+      <td>${r[2]||'—'}</td>
+      <td style="font-size:11px">${r[4]||'—'}</td>
+      <td><span class="badge badge-purple">${r[5]!=null?'v'+r[5]:'—'}</span></td>
+      <td><span class="badge ${r[6]==='绑定'||r[6]==='已绑定'?'badge-teal':'badge-coral'}">${r[6]||'—'}</span></td>
+      <td style="font-size:11px;color:var(--text3)">${fmtDate(r[7])}</td>
+      <td style="font-size:11px;color:var(--text3)">${fmtDate(r[8])}</td>
+      <td style="font-size:11px;color:var(--text3)">${fmtDate(r[9])}</td>
+      <td style="font-size:11px;color:var(--text3)">${r[10]||'—'}</td>
+    </tr>`
+  ).join('')||'<tr><td colspan="11" style="text-align:center;color:var(--text3);padding:20px">暂无数据</td></tr>';
+}
+
+/* ---- 筛选器选项：一次性从后端拉取所有字段的 distinct 值 ---- */
+let _filterOptionsLoaded = false;
+
+async function loadAllFilterOptions() {
+  if (_filterOptionsLoaded) return;
+  try {
+    const res = await fetch('/api/firmware_filter_options', { credentials: 'same-origin' });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const opts = await res.json();
+
+    // 各 select 当前值（保留用户已选的值）
+    const cur = {
+      'f-type':    document.getElementById('f-type').value    || 'M5P0',
+      'f-region':  document.getElementById('f-region').value  || '',
+      'f-status':  document.getElementById('f-status').value  || '',
+    };
+
+    function fillSelect(id, vals, defaultVal) {
+      const sel = document.getElementById(id);
+      if (!sel) return;
+      const selected = cur[id] || defaultVal || '';
+      sel.innerHTML = '<option value="">全部</option>' +
+        vals.map(v => `<option value="${v}"${v === selected ? ' selected' : ''}>${v}</option>`).join('');
+      if (selected && !sel.value) sel.value = '';   // 如果选中值不在列表里则回退到全部
+    }
+
+    fillSelect('f-type',    opts.device_types || [], 'M5P0');
+    fillSelect('f-region',  opts.regions      || [], '');
+    fillSelect('f-status',  opts.statuses     || [], '');
+
+    _filterOptionsLoaded = true;
+  } catch (e) {
+    console.warn('loadAllFilterOptions 失败:', e.message);
+  }
+}
+
+/* 用户点击任意筛选器时，触发选项加载（仅首次） */
+async function loadFilterOptions(selectId, fieldName) {
+  await loadAllFilterOptions();
+}
+
+/* ---- 颜色映射（从 bound+unbound 数据中提取版本） ---- */
+function makeColorMap(pie1Rows, pie2Rows) {
+  const versions=[...new Set([...pie1Rows,...pie2Rows].map(r=>String(r[0])))].sort((a,b)=>Number(a)-Number(b));
+  const m={}; versions.forEach((v,i)=>{ m[v]=COLORS[i%COLORS.length]; });
+  return m;
+}
+
+/* ---- 主加载函数 ---- */
+async function applyFilters() {
+  const filters = getFilters();
+  const hint = Object.entries(filters).filter(([,v])=>v).map(([k,v])=>v).join(' · ');
+  document.getElementById('filter-hint').textContent = hint ? `已筛选: ${hint}` : '';
+  setStatus('加载中...');
+
+  // 各图标加骨架
+  ['pieBound','pieUnbound','trendChart'].forEach(setLoading);
+  document.getElementById('table-body').innerHTML='<tr><td colspan="11" style="padding:20px;color:var(--text3)">加载中...</td></tr>';
+
+  try {
+    // 并行请求所有4张卡
+    const [res1, res2, res3, res4] = await Promise.all([
+      queryCard('bound',   buildParams(filters,'bound')),
+      queryCard('unbound', buildParams(filters,'unbound')),
+      queryTrend(filters),   // 趋势图走独立接口，完整支持筛选
+      queryCard('detail',  buildParams(filters,'detail')),
+    ]);
+
+    // 颜色映射
+    const vColorMap = makeColorMap(res1.rows, res2.rows);
+
+    // 饼图
+    renderDonut('pieBound',   'pieBound-legend',   res1.rows, vColorMap);
+    renderDonut('pieUnbound', 'pieUnbound-legend', res2.rows, vColorMap);
+
+    // 趋势
+    renderTrend(res3.rows);
+
+    // 明细表
+    renderTable(res4.rows);
+
+    setStatus('');
+  } catch(e) {
+    setStatus(e.message, true);
+    console.error(e);
+  }
+}
+
+function resetFilters() {
+  document.getElementById('f-region').value  = '';
+  document.getElementById('f-status').value  = '';
+  document.getElementById('f-type').value    = 'M5P0';
+  document.getElementById('filter-hint').textContent = '';
+  applyFilters();
+}
+
+// Enter 键触发应用
+document.addEventListener('keydown', e => { if (e.key==='Enter') applyFilters(); });
+
+// 初始加载：同时拉筛选器选项 + 首次查询数据
+loadAllFilterOptions().then(() => applyFilters());
+</script>
+</body>
+</html>
