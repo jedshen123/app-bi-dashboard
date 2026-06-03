@@ -228,6 +228,10 @@ def mb_post(path: str, body: dict) -> dict:
 # 不需要登录即可访问的路径
 _PUBLIC_PATHS = {"/login", "/api/login"}
 
+# 客户端/反向代理提前断开连接（非业务错误）
+_CLIENT_GONE = (BrokenPipeError, ConnectionResetError)
+
+
 class ThreadedHTTPServer(ThreadingMixIn, HTTPServer):
     daemon_threads = True
 
@@ -237,31 +241,58 @@ class Handler(BaseHTTPRequestHandler):
     def log_message(self, fmt, *args):
         print(f"[{self.date_time_string()}] {fmt % args}")
 
+    def handle(self):
+        try:
+            super().handle()
+        except _CLIENT_GONE:
+            pass
+
+    def _safe_write(self, body: bytes) -> bool:
+        try:
+            self.wfile.write(body)
+            return True
+        except _CLIENT_GONE:
+            return False
+
     def send_json(self, data, status=200):
         body = json.dumps(data, ensure_ascii=False, default=str).encode()
-        self.send_response(status)
-        self.send_header("Content-Type",             "application/json; charset=utf-8")
-        self.send_header("Access-Control-Allow-Origin", "*")
-        self.send_header("Content-Length",           str(len(body)))
-        self.end_headers()
-        self.wfile.write(body)
+        try:
+            self.send_response(status)
+            self.send_header("Content-Type",             "application/json; charset=utf-8")
+            self.send_header("Access-Control-Allow-Origin", "*")
+            self.send_header("Content-Length",           str(len(body)))
+            self.end_headers()
+        except _CLIENT_GONE:
+            return
+        self._safe_write(body)
 
     def send_redirect(self, location: str):
-        self.send_response(302)
-        self.send_header("Location", location)
-        self.send_header("Content-Length", "0")
-        self.end_headers()
+        try:
+            self.send_response(302)
+            self.send_header("Location", location)
+            self.send_header("Content-Length", "0")
+            self.end_headers()
+        except _CLIENT_GONE:
+            pass
 
     def serve_file(self, fp: str, ct: str):
         try:
             body = open(fp, "rb").read()
         except FileNotFoundError:
-            self.send_response(404); self.end_headers(); return
-        self.send_response(200)
-        self.send_header("Content-Type",   ct)
-        self.send_header("Content-Length", str(len(body)))
-        self.end_headers()
-        self.wfile.write(body)
+            try:
+                self.send_response(404)
+                self.end_headers()
+            except _CLIENT_GONE:
+                pass
+            return
+        try:
+            self.send_response(200)
+            self.send_header("Content-Type",   ct)
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+        except _CLIENT_GONE:
+            return
+        self._safe_write(body)
 
     def _base_dir(self):
         return os.path.dirname(os.path.abspath(__file__))
@@ -503,39 +534,17 @@ class Handler(BaseHTTPRequestHandler):
                 )
 
             elif path in ("/firmware", "/firmware_dashboard.html"):
-                fp = os.path.join(self._base_dir(), "firmware_dashboard.html")
-                try:
-                    body = open(fp, "r", encoding="utf-8").read().encode("utf-8")
-                except FileNotFoundError:
-                    self.send_response(404); self.end_headers(); return
-                self.send_response(200)
-                self.send_header("Content-Type", "text/html; charset=utf-8")
-                self.send_header("Content-Length", str(len(body)))
-                self.end_headers()
-                self.wfile.write(body)
+                return self.serve_file(
+                    os.path.join(self._base_dir(), "firmware_dashboard.html"),
+                    "text/html; charset=utf-8",
+                )
 
             elif path in ("/pump", "/pump_dashboard.html"):
-                fp = os.path.join(self._base_dir(), "pump_dashboard.html")
-                try:
-                    html = open(fp, "r", encoding="utf-8").read()
-                except FileNotFoundError:
-                    self.send_response(404); self.end_headers(); return
-                try:
-                    from pump_data import query_device_codes
-                    codes = query_device_codes()
-                    options_html = ''.join(
-                        f'<option value="{c}">{c}</option>' for c in codes
-                    )
-                    html = html.replace('<!-- __DEVICE_CODE_OPTIONS__ -->', options_html)
-                    print(f"[pump] injected device codes: {codes}")
-                except Exception as e:
-                    print(f"[pump] device codes injection failed: {e}")
-                body = html.encode("utf-8")
-                self.send_response(200)
-                self.send_header("Content-Type", "text/html; charset=utf-8")
-                self.send_header("Content-Length", str(len(body)))
-                self.end_headers()
-                self.wfile.write(body)
+                # 静态 HTML 立即返回；设备型号由前端 /api/pump_device_codes 异步加载（避免 MCP 阻塞页面）
+                return self.serve_file(
+                    os.path.join(self._base_dir(), "pump_dashboard.html"),
+                    "text/html; charset=utf-8",
+                )
 
             elif path == "/api/pump_dashboard":
                 start_dt    = qs("start_dt")
@@ -564,8 +573,18 @@ class Handler(BaseHTTPRequestHandler):
                     _cache_set(cache_key, result, 3600)
                     return self.send_json(result)
 
-                from pump_data import build_pump_dashboard
-                result = build_pump_dashboard(start_dt, end_dt, section, device_code)
+                try:
+                    from pump_data import build_pump_dashboard
+                    result = build_pump_dashboard(start_dt, end_dt, section, device_code)
+                except Exception as e:
+                    print(f"[pump] build_pump_dashboard failed section={section}: {e}")
+                    return self.send_json({
+                        "code": 1,
+                        "error": str(e),
+                        "section": section,
+                        "start_dt": start_dt,
+                        "end_dt": end_dt,
+                    }, 502)
                 ttl = pump_cache_ttl(result.get("start_dt", start_dt), result.get("end_dt", end_dt))
                 _cache_set(cache_key, result, ttl)
                 self.send_json(result)
@@ -574,8 +593,12 @@ class Handler(BaseHTTPRequestHandler):
                 cached = _cache_get("pump_device_codes")
                 if cached:
                     return self.send_json(cached)
-                from pump_data import query_device_codes
-                codes = query_device_codes()
+                try:
+                    from pump_data import query_device_codes
+                    codes = query_device_codes()
+                except Exception as e:
+                    print(f"[pump] query_device_codes failed: {e}")
+                    return self.send_json({"device_codes": [], "error": str(e)}, 502)
                 result = {"device_codes": codes}
                 _cache_set("pump_device_codes", result, 3600)
                 self.send_json(result)
@@ -591,6 +614,8 @@ class Handler(BaseHTTPRequestHandler):
             else:
                 self.send_response(404); self.end_headers()
 
+        except _CLIENT_GONE:
+            pass
         except HTTPError as e:
             detail = e.read().decode("utf-8", errors="replace")
             self.send_json({"error": f"Metabase API {e.code}", "detail": detail[:500]}, 502)
@@ -655,7 +680,7 @@ class Handler(BaseHTTPRequestHandler):
                 self.send_header("Set-Cookie",
                     f"{SESSION_COOKIE}={sess_token}; Path=/; HttpOnly; Max-Age={SESSION_TTL}")
                 self.end_headers()
-                self.wfile.write(resp_body)
+                self._safe_write(resp_body)
 
             except HTTPError as e:
                 print(f"[login] {email} 登录失败: HTTP {e.code}")
@@ -728,6 +753,8 @@ class Handler(BaseHTTPRequestHandler):
             else:
                 self.send_response(404); self.end_headers()
 
+        except _CLIENT_GONE:
+            pass
         except HTTPError as e:
             detail = e.read().decode("utf-8", errors="replace")
             self.send_json({"error": f"Metabase API {e.code}", "detail": detail[:500]}, 502)

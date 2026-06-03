@@ -140,6 +140,41 @@
       padding-top: 16px;
       border-top: 1px solid var(--border);
     }
+    .nav-platform-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+    }
+    .nav-platform-row .nav-item {
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 10px 6px 8px;
+      gap: 6px;
+      min-height: 72px;
+    }
+    .nav-platform-row .nav-item:hover,
+    .nav-platform-row .nav-item.active {
+      transform: none;
+    }
+    .nav-platform-row .nav-title {
+      flex: none;
+      font-size: 11px;
+      line-height: 1.35;
+      width: 100%;
+    }
+    .nav-platform-row .nav-icon {
+      width: 28px;
+      height: 28px;
+    }
+    .nav-platform-row .ext-icon {
+      position: absolute;
+      top: 6px;
+      right: 6px;
+      font-size: 9px;
+      opacity: .85;
+    }
     .nav-section-label {
       margin: 0 2px 8px;
       color: var(--text-3);
@@ -351,11 +386,16 @@
 
     <div class="nav-platform-section">
       <div class="nav-section-label">平台入口</div>
-      <nav class="nav-list">
-        <a class="nav-item" id="nav-platform" href="https://app-data.luteos.site/" target="_blank" rel="noopener">
+      <nav class="nav-list nav-platform-row">
+        <a class="nav-item" id="nav-platform" href="https://app-data.luteos.site/" target="_blank" rel="noopener noreferrer" title="数据开发平台">
+          <span class="ext-icon" aria-hidden="true">↗</span>
           <div class="nav-icon data-logo data-stack"><i></i></div>
           <span class="nav-title">数据开发平台</span>
-          <span class="ext-icon">↗</span>
+        </a>
+        <a class="nav-item cyan" id="nav-posthog" href="https://us.posthog.com/" target="_blank" rel="noopener noreferrer" title="PostHog 行为分析">
+          <span class="ext-icon" aria-hidden="true">↗</span>
+          <div class="nav-icon data-logo data-bars"><i></i></div>
+          <span class="nav-title">行为分析平台</span>
         </a>
       </nav>
     </div>
