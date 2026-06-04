@@ -1181,7 +1181,12 @@ const DASH_PROFILES = {
     },
     slots: {
       newPlan:     { dashcardId: 334, dim: '日期', linesOnly: true },
-      funnelTrend: { dashcardId: 170, dim: 'dt', linesOnly: true },
+      funnelTrend: {
+        dashcardId: 170,
+        dim: 'dt',
+        linesOnly: true,
+        hiddenLineLabels: ['同步日历', '日程同步'],
+      },
       funnelTable: { dashcardId: 171, dim: 'dt' },
     },
   },
@@ -1932,7 +1937,7 @@ function techBarGradientAlt(barIdx) {
   return techBarGradient();
 }
 
-function buildTech21LineSeries(col, cols, sorted, lineIdx, displayName, isPct = false) {
+function buildTech21LineSeries(col, cols, sorted, lineIdx, displayName, isPct = false, opts = {}) {
   const colIdx = cols.indexOf(col);
   const data = sorted.map(r => r[colIdx]);
   const dataLen = data.length;
@@ -1958,7 +1963,7 @@ function buildTech21LineSeries(col, cols, sorted, lineIdx, displayName, isPct = 
       borderWidth: 1.5,
     },
     label: {
-      show: true,
+      show: opts.showLabel !== false,
       position: 'top',
       fontSize: 11,
       fontWeight: 500,
@@ -2094,7 +2099,20 @@ function renderTechComboChart(el, chartKey, cols, rows, slot, vizSettings, legen
   const rateOnly = hasRate && !hasCount;
 
   const series = [];
-  lineCols.forEach((x, i) => series.push(buildTech21LineSeries(x.col, cols, sorted, i, x.displayName, isRateCol(x.col, pctCfg))));
+  const hiddenLineLabels = slot.hiddenLineLabels || [];
+  const shouldHideLineLabel = (x) => hiddenLineLabels.some(name => {
+    const candidates = [x.col.name, x.col.display_name, x.displayName].filter(Boolean);
+    return candidates.some(candidate => candidate === name || candidate.includes(name) || name.includes(candidate));
+  });
+  lineCols.forEach((x, i) => series.push(buildTech21LineSeries(
+    x.col,
+    cols,
+    sorted,
+    i,
+    x.displayName,
+    isRateCol(x.col, pctCfg),
+    { showLabel: !shouldHideLineLabel(x) },
+  )));
   barCols.forEach((x, i) => {
     const isRate = isRateCol(x.col, pctCfg);
     const yIdx = dualAxis && isRate ? 1 : 0;
