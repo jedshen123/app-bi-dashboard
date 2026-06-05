@@ -174,6 +174,7 @@
 
     <span class="filter-sep"></span>
     <button class="filter-apply" onclick="applyFilters()">应用</button>
+    <button class="filter-reset" onclick="refreshFirmwareCache()">刷新缓存</button>
     <button class="filter-reset" onclick="resetFilters()">重置</button>
     <span id="filter-hint" style="font-size:11px;color:var(--text3);margin-left:4px"></span>
   </div>
@@ -597,6 +598,18 @@ async function applyFilters() {
     setStatus(e.message, true);
     console.error(e);
   }
+}
+
+async function refreshFirmwareCache() {
+  setStatus('正在清理缓存...');
+  try {
+    await fetch('/api/cache/clear?scope=firmware', { credentials: 'same-origin' });
+  } catch (e) {
+    console.warn('清理缓存失败，继续刷新:', e.message);
+  }
+  _filterOptionsLoaded = false;
+  await loadAllFilterOptions();
+  await applyFilters();
 }
 
 function resetFilters() {

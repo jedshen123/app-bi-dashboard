@@ -72,6 +72,43 @@ def _cache_set(key: str, data, ttl: int):
         _cache[key] = {"data": data, "expires_at": time.time() + ttl}
 
 
+def _cache_clear(scope: str = "all", dashboard_id: str = "") -> int:
+    """按看板范围清理缓存，返回删除的 key 数。"""
+    def payload(key: str) -> str:
+        return key.split(":", 1)[1] if ":" in key else key
+
+    def should_clear(key: str) -> bool:
+        raw = payload(key)
+        if scope == "pump":
+            return '"pump"' in raw or key == "pump_device_codes"
+        if scope == "firmware":
+            return (
+                '"firmware_trend"' in raw
+                or '"firmware_filter_options"' in raw
+                or '"card_data", "34"' in raw
+            )
+        if scope == "dashboard":
+            if not dashboard_id:
+                return (
+                    '"meta"' in raw
+                    or '"param_values"' in raw
+                    or '"card_data"' in raw
+                )
+            return (
+                f'"meta", "{dashboard_id}"' in raw
+                or f'"param_values", "{dashboard_id}"' in raw
+                or f'"card_data", "{dashboard_id}"' in raw
+            )
+        if scope == "all":
+            return True
+        return False
+
+    keys = [k for k in list(_cache.keys()) if should_clear(k)]
+    for key in keys:
+        del _cache[key]
+    return len(keys)
+
+
 def _make_key(*parts) -> str:
     """将任意参数序列化为稳定的缓存键（MD5 前缀 + 原文截断，便于调试）。"""
     raw = json.dumps(parts, ensure_ascii=False, sort_keys=True, default=str)
@@ -347,6 +384,16 @@ class Handler(BaseHTTPRequestHandler):
             return
 
         try:
+            # ---- 手动清理看板缓存：刷新按钮先清缓存，再重新请求接口 ----
+            if path == "/api/cache/clear":
+                scope = (qs("scope") or "all").strip()
+                dashboard_id = (qs("dashboard_id") or "").strip()
+                if scope not in {"all", "dashboard", "firmware", "pump"}:
+                    return self.send_json({"error": "无效 scope"}, 400)
+                n = _cache_clear(scope, dashboard_id)
+                print(f"[cache] CLEAR scope={scope} dashboard_id={dashboard_id or '-'} ({n} keys)")
+                return self.send_json({"ok": True, "scope": scope, "dashboard_id": dashboard_id, "cleared": n})
+
             # ---- 固件趋势图：直接查底表，完整支持筛选参数 ----
             if path == "/api/firmware_trend":
                 device_type = qs("device_type") or ""
@@ -515,6 +562,12 @@ class Handler(BaseHTTPRequestHandler):
                     "application/javascript; charset=utf-8",
                 )
 
+            elif path in ("/home", "/home.html"):
+                self.serve_file(
+                    os.path.join(self._base_dir(), "home.html"),
+                    "text/html; charset=utf-8",
+                )
+
             elif path in ("/dashboard", "/metabase_dashboard.html"):
                 self.serve_file(
                     os.path.join(self._base_dir(), "metabase_dashboard.html"),
@@ -604,10 +657,7 @@ class Handler(BaseHTTPRequestHandler):
                 self.send_json(result)
 
             elif path == "/api/pump_cache/clear":
-                n = sum(1 for k in list(_cache.keys()) if ":[" in k and '"pump"' in k)
-                for k in list(_cache.keys()):
-                    if '"pump"' in k:
-                        del _cache[k]
+                n = _cache_clear("pump")
                 print(f"[cache] CLEAR pump ({n} keys)")
                 self.send_json({"ok": True, "cleared": n})
 

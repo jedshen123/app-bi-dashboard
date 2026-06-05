@@ -342,7 +342,7 @@
     body.sidebar-open #sidebar-mask { display: block; }
   </style>
 </head>
-<body>
+<body class="sidebar-open">
 
   <!-- iframe 内容区 -->
   <iframe id="main-frame" allowfullscreen></iframe>
@@ -365,7 +365,7 @@
 
     <div class="nav-section-label">数据看板</div>
     <nav class="nav-list nav-main">
-      <div class="nav-item active" id="nav-ai-v2" data-src="/dashboard-v2" onclick="loadDashboard(this)">
+      <div class="nav-item" id="nav-ai-v2" data-src="/dashboard-v2" onclick="loadDashboard(this)">
         <div class="nav-icon data-logo data-bars"><i></i></div>
         <span class="nav-title">AI吸乳计划分析</span>
         <span class="nav-arrow">›</span>
@@ -442,9 +442,20 @@ mask.addEventListener('click', closeSidebar);
 function loadDashboard(el) {
   setActive(el);
   const src = el.dataset.src || '/dashboard';
+  loadFrame(src);
+  openSidebar();
+}
+
+function loadDashboardBySrc(src) {
+  const el = document.querySelector(`.nav-main .nav-item[data-src="${src}"]`);
+  if (el) setActive(el);
+  loadFrame(src);
+  openSidebar();
+}
+
+function loadFrame(src) {
   // 加时间戳防止 iframe 缓存旧版本
   frame.src = src + (src.includes('?') ? '&' : '?') + '_t=' + Date.now();
-  scheduleClose();
 }
 
 /* ---- 激活态切换 ---- */
@@ -452,6 +463,12 @@ function setActive(el) {
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   el.classList.add('active');
 }
+
+window.addEventListener('message', event => {
+  if (event.data?.type === 'momcozy-open-dashboard' && event.data.src) {
+    loadDashboardBySrc(event.data.src);
+  }
+});
 
 /* ---- 用户信息 ---- */
 async function loadUser() {
@@ -471,7 +488,7 @@ async function doLogout() {
   location.replace('/login');
 }
 
-frame.src = '/dashboard-v2';
+frame.src = '/home.html';
 loadUser();
 </script>
 </body>

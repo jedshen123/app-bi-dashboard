@@ -477,7 +477,7 @@
         <div id="last-refresh">等待加载...</div>
       </div>
       <button id="refresh-btn" onclick="reloadAllCards()">
-        <span id="btn-icon">↻</span><span>刷新</span>
+        <span id="btn-icon">↻</span><span>刷新缓存</span>
       </button>
     </div>
   </header>
@@ -1866,7 +1866,17 @@ function resetDesignedLoading() {
 }
 
 async function reloadAllCards() {
-  setStatus('loading', '正在刷新数据...');
+  setStatus('loading', '正在清理缓存并刷新数据...');
+  const btn  = document.getElementById('refresh-btn');
+  const icon = document.getElementById('btn-icon');
+  btn.classList.add('loading');
+  icon.innerHTML = '<span class="spin">↻</span>';
+  try {
+    const qs = new URLSearchParams({ scope: 'dashboard', dashboard_id: DASHBOARD_ID });
+    await fetch(`/api/cache/clear?${qs}`, { credentials: 'same-origin' });
+  } catch (e) {
+    console.warn('清理缓存失败，继续刷新:', e.message);
+  }
   const profile = getProfile();
   if (profile?.useDesignedLayout) {
     kpiSnapshot = {};

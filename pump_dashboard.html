@@ -424,6 +424,7 @@
       <span style="color:var(--text3);font-size:11px">~</span>
       <input type="date" id="end-dt" class="ctrl-input" />
       <button type="button" id="btn-refresh" class="ctrl-btn">查询</button>
+      <button type="button" id="btn-refresh-cache" class="ctrl-btn">刷新缓存</button>
       <div class="ctrl-sep"></div>
       <select id="deviceFilter" class="ctrl-select">
         <option value="all">全部型号</option>
@@ -2538,6 +2539,21 @@ document.getElementById('btn-refresh').addEventListener('click', async () => {
     // 裁剪失败则走完整请求流程
     Object.keys(loaded).forEach(k => delete loaded[k]);
     try { await fetch('/api/pump_cache/clear', { credentials: 'same-origin' }); } catch (_) {}
+    loadSection(activeTab, true);
+  }, 300);
+});
+
+document.getElementById('btn-refresh-cache').addEventListener('click', async () => {
+  clearTimeout(_refreshDebounceTimer);
+  _refreshDebounceTimer = setTimeout(async () => {
+    Object.keys(loaded).forEach(k => delete loaded[k]);
+    Object.keys(rawData).forEach(k => delete rawData[k]);
+    setLoadStatus('正在清理缓存并刷新...');
+    try {
+      await fetch('/api/cache/clear?scope=pump', { credentials: 'same-origin' });
+    } catch (e) {
+      console.warn('清理缓存失败，继续刷新:', e.message);
+    }
     loadSection(activeTab, true);
   }, 300);
 });
