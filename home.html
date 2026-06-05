@@ -9,7 +9,6 @@
       --ink: #2e3846;
       --muted: #7b8794;
       --line: #763f4b;
-      --line-soft: rgba(118, 63, 75, .12);
       --card: #ffffff;
       --border: #d9dde3;
       --shadow: 0 18px 42px rgba(28, 35, 45, .10);
@@ -28,17 +27,27 @@
     }
 
     .home {
-      position: relative;
       min-height: 100vh;
-      padding: 76px 48px 170px;
+      padding: 56px 48px 56px 308px;
       overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .home-content {
+      width: min(100%, 1120px);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
     }
 
     .greeting {
       display: flex;
       align-items: center;
       gap: 26px;
-      margin-bottom: 132px;
+      justify-content: center;
+      margin-bottom: 68px;
     }
 
     .hello-icon {
@@ -110,23 +119,25 @@
       font-size: 21px;
       font-weight: 800;
       letter-spacing: 0;
+      text-align: center;
     }
 
     .dashboard-links {
       display: flex;
       align-items: stretch;
+      justify-content: center;
       flex-wrap: wrap;
-      gap: 36px;
+      gap: 28px;
       max-width: 1120px;
     }
 
     .dashboard-card {
       display: flex;
       align-items: center;
-      gap: 24px;
-      min-width: 264px;
+      gap: 16px;
+      width: 280px;
       min-height: 102px;
-      padding: 28px 36px;
+      padding: 28px 22px;
       border: 1px solid var(--border);
       border-radius: 8px;
       background: var(--card);
@@ -177,45 +188,12 @@
       white-space: nowrap;
     }
 
-    .landscape {
-      position: absolute;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      height: 198px;
-      color: var(--line);
-      pointer-events: none;
-      opacity: .98;
-    }
-
-    .cloud {
-      position: absolute;
-      height: 38px;
-      background:
-        radial-gradient(circle at 24px 30px, var(--line-soft) 0 23px, transparent 24px),
-        radial-gradient(circle at 70px 20px, var(--line-soft) 0 36px, transparent 37px),
-        radial-gradient(circle at 124px 30px, var(--line-soft) 0 22px, transparent 23px);
-      border-radius: 999px;
-    }
-
-    .cloud.c1 { left: 7%; bottom: 112px; width: 150px; }
-    .cloud.c2 { left: 28%; bottom: 196px; width: 118px; }
-    .cloud.c3 { right: 28%; bottom: 130px; width: 150px; }
-
-    .landscape svg {
-      position: absolute;
-      inset: auto 0 0;
-      width: 100%;
-      height: 170px;
-      display: block;
-    }
-
     @media (max-width: 900px) {
       body { overflow: auto; }
-      .home { padding: 44px 24px 140px; overflow: hidden; }
+      .home { padding: 44px 24px; overflow: hidden; }
       .greeting {
         gap: 18px;
-        margin-bottom: 72px;
+        margin-bottom: 44px;
       }
       .greeting h1 { font-size: 24px; }
       .section-title { font-size: 18px; margin-bottom: 22px; }
@@ -231,39 +209,29 @@
 </head>
 <body>
   <main class="home">
-    <section class="greeting" aria-label="欢迎">
-      <div class="hello-icon" aria-hidden="true"><span class="face"></span></div>
-      <h1 id="greeting-title">您好，欢迎回来</h1>
-    </section>
+    <div class="home-content">
+      <section class="greeting" aria-label="欢迎">
+        <div class="hello-icon" aria-hidden="true"><span class="face"></span></div>
+        <h1 id="greeting-title">您好，欢迎回来</h1>
+      </section>
 
-    <section aria-labelledby="continue-title">
-      <h2 class="section-title" id="continue-title">从你离开的地方继续</h2>
-      <div class="dashboard-links">
-        <a class="dashboard-card" href="/dashboard-v2" data-src="/dashboard-v2">
-          <span class="card-icon" aria-hidden="true"></span>
-          <span class="card-title">AI吸乳计划分析</span>
-        </a>
-        <a class="dashboard-card" href="/pump" data-src="/pump">
-          <span class="card-icon" aria-hidden="true"></span>
-          <span class="card-title">吸奶器用户行为分析</span>
-        </a>
-        <a class="dashboard-card" href="/firmware" data-src="/firmware">
-          <span class="card-icon" aria-hidden="true"></span>
-          <span class="card-title">智能设备固件版本统计</span>
-        </a>
-      </div>
-    </section>
-
-    <div class="landscape" aria-hidden="true">
-      <div class="cloud c1"></div>
-      <div class="cloud c2"></div>
-      <div class="cloud c3"></div>
-      <svg viewBox="0 0 1440 170" preserveAspectRatio="none">
-        <path d="M0 112 H116 L194 46 L246 112 H330 L430 74 L518 118 L616 56 L720 126 L810 84 L905 126 H1018 L1050 64 L1088 86 L1130 55 L1190 126 H1440" fill="none" stroke="currentColor" stroke-width="2.4" vector-effect="non-scaling-stroke"/>
-        <path d="M0 140 H260 L338 170 H1440" fill="none" stroke="currentColor" stroke-width="2.4" vector-effect="non-scaling-stroke"/>
-        <path d="M746 126 L780 45 L814 126" fill="none" stroke="currentColor" stroke-width="2.4" vector-effect="non-scaling-stroke"/>
-        <path d="M780 45 L792 70 L803 60" fill="none" stroke="currentColor" stroke-width="2.4" vector-effect="non-scaling-stroke"/>
-      </svg>
+      <section aria-labelledby="continue-title">
+        <h2 class="section-title" id="continue-title">从你离开的地方继续</h2>
+        <div class="dashboard-links">
+          <a class="dashboard-card" href="/dashboard-v2" data-src="/dashboard-v2">
+            <span class="card-icon" aria-hidden="true"></span>
+            <span class="card-title">AI吸乳计划分析</span>
+          </a>
+          <a class="dashboard-card" href="/pump" data-src="/pump">
+            <span class="card-icon" aria-hidden="true"></span>
+            <span class="card-title">吸奶器用户行为分析</span>
+          </a>
+          <a class="dashboard-card" href="/firmware" data-src="/firmware">
+            <span class="card-icon" aria-hidden="true"></span>
+            <span class="card-title">智能设备固件版本统计</span>
+          </a>
+        </div>
+      </section>
     </div>
   </main>
 
