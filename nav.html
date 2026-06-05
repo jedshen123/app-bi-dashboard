@@ -31,7 +31,7 @@
     html, body {
       width: 100%; height: 100%;
       overflow: hidden;
-      background: var(--bg-deep);
+      background: #fafbfc;
       font-family: 'PingFang SC', 'Microsoft YaHei', 'Segoe UI', sans-serif;
     }
 
@@ -42,7 +42,7 @@
       width: 100%;
       height: 100%;
       border: none;
-      background: var(--bg-deep);
+      background: #fafbfc;
     }
 
     /* ============================================================ 左边缘触发条 */
@@ -339,13 +339,13 @@
       background: rgba(0,0,0,.25);
       backdrop-filter: blur(1px);
     }
-    body.sidebar-open #sidebar-mask { display: block; }
+    body.sidebar-open #sidebar-mask { display: none; }
   </style>
 </head>
 <body class="sidebar-open">
 
   <!-- iframe 内容区 -->
-  <iframe id="main-frame" allowfullscreen></iframe>
+  <iframe id="main-frame" src="/home.html" allowfullscreen></iframe>
 
   <!-- 左边缘触发条 -->
   <div id="sidebar-trigger"></div>
@@ -488,7 +488,6 @@ async function doLogout() {
   location.replace('/login');
 }
 
-frame.src = '/home.html';
 loadUser();
 </script>
 </body>
