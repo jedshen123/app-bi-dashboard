@@ -336,10 +336,9 @@
     #sidebar-mask {
       display: none;
       position: fixed; inset: 0; z-index: 250;
-      background: rgba(0,0,0,.25);
-      backdrop-filter: blur(1px);
+      background: transparent;
     }
-    body.sidebar-open #sidebar-mask { display: none; }
+    body.sidebar-open #sidebar-mask { display: block; }
   </style>
 </head>
 <body class="sidebar-open">
