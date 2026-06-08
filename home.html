@@ -218,15 +218,15 @@
       <section aria-labelledby="continue-title">
         <h2 class="section-title" id="continue-title">开启你的数据之旅</h2>
         <div class="dashboard-links">
-          <a class="dashboard-card" href="/dashboard-v2" data-src="/dashboard-v2">
+          <a class="dashboard-card" href="/board/ai-v2" data-board-id="ai-v2">
             <span class="card-icon" aria-hidden="true"></span>
             <span class="card-title">AI吸乳计划分析</span>
           </a>
-          <a class="dashboard-card" href="/pump" data-src="/pump">
+          <a class="dashboard-card" href="/board/pump" data-board-id="pump">
             <span class="card-icon" aria-hidden="true"></span>
             <span class="card-title">吸奶器用户行为分析</span>
           </a>
-          <a class="dashboard-card" href="/firmware" data-src="/firmware">
+          <a class="dashboard-card" href="/board/firmware" data-board-id="firmware">
             <span class="card-icon" aria-hidden="true"></span>
             <span class="card-title">智能设备固件版本统计</span>
           </a>
@@ -250,10 +250,10 @@
 
     document.querySelectorAll('.dashboard-card').forEach(card => {
       card.addEventListener('click', event => {
-        const src = card.dataset.src;
-        if (!src || window.parent === window) return;
+        const boardId = card.dataset.boardId;
+        if (!boardId || window.parent === window) return;
         event.preventDefault();
-        window.parent.postMessage({ type: 'momcozy-open-dashboard', src }, '*');
+        window.parent.postMessage({ type: 'momcozy-open-dashboard', boardId }, '*');
       });
     });
 

@@ -544,6 +544,12 @@ class Handler(BaseHTTPRequestHandler):
                 self.send_json(result)
 
             # ---- 前端页面 ----
+            elif path in ("/home",) or path.startswith("/board/"):
+                self.serve_file(
+                    os.path.join(self._base_dir(), "nav.html"),
+                    "text/html; charset=utf-8",
+                )
+
             elif path in ("/", "/nav", "/nav.html"):
                 if path == "/" and qs("dashboard_id"):
                     self.serve_file(
@@ -825,8 +831,9 @@ if __name__ == "__main__":
         print(f"  缓存:       卡片数据 {CACHE_TTL}s · 元信息 {CACHE_TTL_META}s")
     else:
         print(f"  缓存:       已禁用（CACHE_TTL=0）")
-    print(f"  导航页:     http://localhost:{SERVER_PORT}/")
-    print(f"  看板示例:   http://localhost:{SERVER_PORT}/?dashboard_id=14")
+    print(f"  首页:       http://localhost:{SERVER_PORT}/home")
+    print(f"  看板示例:   http://localhost:{SERVER_PORT}/board/ai-v2")
+    print(f"  旧版直链:   http://localhost:{SERVER_PORT}/?dashboard_id=14")
     print(f"  吸奶器看板: http://localhost:{SERVER_PORT}/pump  (数据经 MCP → 美东 StarRocks)")
     print("=" * 58)
 

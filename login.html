@@ -237,7 +237,7 @@ async function doLogin(e) {
     });
     const data = await res.json();
     if (res.ok && data.ok) {
-      window.location.replace('/');
+      window.location.replace('/home');
     } else {
       errTxt.textContent = data.error || '登录失败，请重试';
       errEl.classList.add('show');

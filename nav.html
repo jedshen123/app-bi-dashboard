@@ -364,19 +364,19 @@
 
     <div class="nav-section-label">数据看板</div>
     <nav class="nav-list nav-main">
-      <div class="nav-item" id="nav-ai-v2" data-src="/dashboard-v2" onclick="loadDashboard(this)">
+      <div class="nav-item" id="nav-ai-v2" data-board-id="ai-v2" data-src="/dashboard-v2" onclick="loadDashboard(this)">
         <div class="nav-icon data-logo data-bars"><i></i></div>
         <span class="nav-title">AI吸乳计划分析</span>
         <span class="nav-arrow">›</span>
       </div>
 
-      <div class="nav-item cyan" id="nav-pump" data-src="/pump" onclick="loadDashboard(this)">
+      <div class="nav-item cyan" id="nav-pump" data-board-id="pump" data-src="/pump" onclick="loadDashboard(this)">
         <div class="nav-icon data-logo data-bars"><i></i></div>
         <span class="nav-title">吸奶器用户行为分析</span>
         <span class="nav-arrow">›</span>
       </div>
 
-      <div class="nav-item cyan" id="nav-firmware" data-src="/firmware" onclick="loadDashboard(this)">
+      <div class="nav-item cyan" id="nav-firmware" data-board-id="firmware" data-src="/firmware" onclick="loadDashboard(this)">
         <div class="nav-icon data-logo data-bars"><i></i></div>
         <span class="nav-title">智能设备固件版本统计</span>
         <span class="nav-arrow">›</span>
@@ -414,7 +414,13 @@ const trigger = document.getElementById('sidebar-trigger');
 const mask    = document.getElementById('sidebar-mask');
 const frame   = document.getElementById('main-frame');
 
-const LAST_DASHBOARD_KEY = 'momcozy_last_dashboard';
+const BOARDS = {
+  'ai-v2':    { src: '/dashboard-v2', el: '#nav-ai-v2' },
+  'pump':     { src: '/pump',          el: '#nav-pump' },
+  'firmware': { src: '/firmware',      el: '#nav-firmware' },
+};
+
+const HOME_PATHS = new Set(['/', '/home']);
 
 let hideTimer = null;
 
@@ -439,24 +445,77 @@ sidebar.addEventListener('mouseenter', () => clearTimeout(hideTimer));
 sidebar.addEventListener('mouseleave', scheduleClose);
 mask.addEventListener('click', closeSidebar);
 
+/* ---- URL 路由 ---- */
+function boardIdFromPath() {
+  const m = location.pathname.match(/^\/board\/([a-z0-9-]+)\/?$/i);
+  return m ? m[1] : null;
+}
+
+function isHomePath() {
+  const p = location.pathname.replace(/\/$/, '') || '/';
+  return HOME_PATHS.has(p);
+}
+
+function setUrlBoard(boardId, replace) {
+  const url = `/board/${boardId}`;
+  const state = { view: 'board', boardId };
+  if (replace) history.replaceState(state, '', url);
+  else history.pushState(state, '', url);
+}
+
+function setUrlHome(replace) {
+  const state = { view: 'home' };
+  if (replace) history.replaceState(state, '', '/home');
+  else history.pushState(state, '', '/home');
+}
+
+function loadFrameSrc(src) {
+  frame.src = src + (src.includes('?') ? '&' : '?') + '_t=' + Date.now();
+}
+
+function loadBoard(boardId, { replace = false, skipUrl = false } = {}) {
+  const board = BOARDS[boardId];
+  if (!board) return;
+  const el = document.querySelector(board.el);
+  if (el) setActive(el);
+  loadFrameSrc(board.src);
+  closeSidebar();
+  if (!skipUrl) setUrlBoard(boardId, replace);
+}
+
+function loadHome({ replace = false, skipUrl = false, openNav = false } = {}) {
+  document.querySelectorAll('.nav-main .nav-item').forEach(n => n.classList.remove('active'));
+  loadFrameSrc('/home.html');
+  if (openNav) openSidebar();
+  if (!skipUrl) setUrlHome(replace);
+}
+
 /* ---- 加载内部看板 ---- */
 function loadDashboard(el) {
+  const boardId = el.dataset.boardId;
+  if (boardId && BOARDS[boardId]) {
+    loadBoard(boardId);
+    return;
+  }
   setActive(el);
-  const src = el.dataset.src || '/dashboard';
-  loadFrame(src);
+  loadFrameSrc(el.dataset.src || '/dashboard');
   closeSidebar();
+}
+
+function loadDashboardByBoardId(boardId) {
+  if (BOARDS[boardId]) loadBoard(boardId);
 }
 
 function loadDashboardBySrc(src) {
+  const boardId = Object.keys(BOARDS).find(id => BOARDS[id].src === src);
+  if (boardId) {
+    loadBoard(boardId);
+    return;
+  }
   const el = document.querySelector(`.nav-main .nav-item[data-src="${src}"]`);
   if (el) setActive(el);
-  loadFrame(src);
+  loadFrameSrc(src);
   closeSidebar();
-}
-
-function loadFrame(src) {
-  localStorage.setItem(LAST_DASHBOARD_KEY, src);
-  frame.src = src + (src.includes('?') ? '&' : '?') + '_t=' + Date.now();
 }
 
 /* ---- 激活态切换 ---- */
@@ -466,23 +525,32 @@ function setActive(el) {
 }
 
 window.addEventListener('message', event => {
-  if (event.data?.type === 'momcozy-open-dashboard' && event.data.src) {
-    loadDashboardBySrc(event.data.src);
-  }
+  if (event.data?.type !== 'momcozy-open-dashboard') return;
+  if (event.data.boardId) loadDashboardByBoardId(event.data.boardId);
+  else if (event.data.src) loadDashboardBySrc(event.data.src);
 });
 
-/* ---- 启动：恢复上次看板或展示首页 ---- */
-function init() {
-  const lastSrc = localStorage.getItem(LAST_DASHBOARD_KEY);
-  if (lastSrc) {
-    const el = document.querySelector(`.nav-main .nav-item[data-src="${lastSrc}"]`);
-    if (el) setActive(el);
-    frame.src = lastSrc + (lastSrc.includes('?') ? '&' : '?') + '_t=' + Date.now();
-    /* 有历史看板时侧栏默认折叠，已在 <body> 初始状态无 sidebar-open 类 */
-  } else {
-    /* 首次进入：展示首页并展开侧栏 */
-    openSidebar();
+window.addEventListener('popstate', () => {
+  const boardId = boardIdFromPath();
+  if (boardId && BOARDS[boardId]) {
+    loadBoard(boardId, { skipUrl: true });
+    return;
   }
+  loadHome({ skipUrl: true, openNav: isHomePath() });
+});
+
+/* ---- 启动：按 URL 恢复看板或展示首页 ---- */
+function init() {
+  const boardId = boardIdFromPath();
+  if (boardId && BOARDS[boardId]) {
+    loadBoard(boardId, { replace: true, skipUrl: true });
+    return;
+  }
+  if (isHomePath()) {
+    loadHome({ replace: location.pathname === '/', skipUrl: location.pathname === '/home', openNav: true });
+    return;
+  }
+  loadHome({ replace: true });
 }
 
 /* ---- 用户信息 ---- */
@@ -499,7 +567,6 @@ async function loadUser() {
 
 /* ---- 登出 ---- */
 async function doLogout() {
-  localStorage.removeItem(LAST_DASHBOARD_KEY);
   await fetch('/logout');
   location.replace('/login');
 }
