@@ -341,7 +341,7 @@
     body.sidebar-open #sidebar-mask { display: block; }
   </style>
 </head>
-<body class="sidebar-open">
+<body>
 
   <!-- iframe 内容区 -->
   <iframe id="main-frame" src="/home.html" allowfullscreen></iframe>
@@ -414,6 +414,8 @@ const trigger = document.getElementById('sidebar-trigger');
 const mask    = document.getElementById('sidebar-mask');
 const frame   = document.getElementById('main-frame');
 
+const LAST_DASHBOARD_KEY = 'momcozy_last_dashboard';
+
 let hideTimer = null;
 
 /* ---- 侧栏开关 ---- */
@@ -442,18 +444,18 @@ function loadDashboard(el) {
   setActive(el);
   const src = el.dataset.src || '/dashboard';
   loadFrame(src);
-  openSidebar();
+  closeSidebar();
 }
 
 function loadDashboardBySrc(src) {
   const el = document.querySelector(`.nav-main .nav-item[data-src="${src}"]`);
   if (el) setActive(el);
   loadFrame(src);
-  openSidebar();
+  closeSidebar();
 }
 
 function loadFrame(src) {
-  // 加时间戳防止 iframe 缓存旧版本
+  localStorage.setItem(LAST_DASHBOARD_KEY, src);
   frame.src = src + (src.includes('?') ? '&' : '?') + '_t=' + Date.now();
 }
 
@@ -469,6 +471,20 @@ window.addEventListener('message', event => {
   }
 });
 
+/* ---- 启动：恢复上次看板或展示首页 ---- */
+function init() {
+  const lastSrc = localStorage.getItem(LAST_DASHBOARD_KEY);
+  if (lastSrc) {
+    const el = document.querySelector(`.nav-main .nav-item[data-src="${lastSrc}"]`);
+    if (el) setActive(el);
+    frame.src = lastSrc + (lastSrc.includes('?') ? '&' : '?') + '_t=' + Date.now();
+    /* 有历史看板时侧栏默认折叠，已在 <body> 初始状态无 sidebar-open 类 */
+  } else {
+    /* 首次进入：展示首页并展开侧栏 */
+    openSidebar();
+  }
+}
+
 /* ---- 用户信息 ---- */
 async function loadUser() {
   try {
@@ -483,11 +499,13 @@ async function loadUser() {
 
 /* ---- 登出 ---- */
 async function doLogout() {
+  localStorage.removeItem(LAST_DASHBOARD_KEY);
   await fetch('/logout');
   location.replace('/login');
 }
 
 loadUser();
+init();
 </script>
 </body>
 </html>
