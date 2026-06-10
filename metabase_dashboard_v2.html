@@ -2292,10 +2292,13 @@ function renderTechComboChart(el, chartKey, cols, rows, slot, vizSettings, legen
       itemGap: 12,
     } : {
       show: series.length > 1,
+      type: 'scroll',
       orient: 'horizontal',
       left: 14,
+      right: 14,
       top: 6,
       textStyle: { color: TECH21.text, fontSize: 11 },
+      pageTextStyle: { color: TECH21.text },
       itemGap: 14,
     },
     grid: {
@@ -2423,7 +2426,7 @@ async function loadFunnelSlots(profile, params) {
     try {
       let { cols, rows } = await fetchDashcardData(dcTrend, params);
       clearLoading(elTrend);
-      renderTechComboChart(elTrend, 'funnel-trend', cols, rows, profile.slots.funnelTrend, dcTrend.viz_settings || {}, true);
+      renderTechComboChart(elTrend, 'funnel-trend', cols, rows, profile.slots.funnelTrend, dcTrend.viz_settings || {}, false);
     } catch (e) {
       showSlotError(elTrend, e.message);
     }
