@@ -953,7 +953,7 @@
     }
     .mini-bar-fill {
       height: 100%; border-radius: 3px;
-      background: linear-gradient(90deg, #e8a0a0, #f0c0c0);
+      background: linear-gradient(90deg, rgba(232,71,122,0.75), rgba(232,71,122,0.40));
       transition: width .3s;
     }
     .mini-bar-val { white-space: nowrap; font-size: 10px; }
@@ -2002,20 +2002,27 @@ function techBarGradient() {
 
 function techBarGradientBlue(barIdx) {
   if (barIdx % 2 === 1) {
+    return 'rgba(75, 107, 255, 0.85)';
+  }
+  return 'rgba(232, 71, 122, 0.35)';
+}
+
+function techBarGradientBlueGrad(barIdx) {
+  if (barIdx % 2 === 1) {
     return new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-      { offset: 0,   color: 'rgba(232, 71, 122, 0.82)' },
-      { offset: 0.5, color: 'rgba(232, 71, 122, 0.40)' },
-      { offset: 1,   color: 'rgba(232, 71, 122, 0.06)' },
+      { offset: 0,   color: 'rgba(75, 107, 255, 0.88)' },
+      { offset: 0.5, color: 'rgba(75, 107, 255, 0.48)' },
+      { offset: 1,   color: 'rgba(75, 107, 255, 0.08)' },
     ]);
   }
   return new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-    { offset: 0,   color: 'rgba(75, 107, 255, 0.88)' },
-    { offset: 0.5, color: 'rgba(75, 107, 255, 0.48)' },
-    { offset: 1,   color: 'rgba(75, 107, 255, 0.08)' },
+    { offset: 0,   color: 'rgba(232, 71, 122, 0.82)' },
+    { offset: 0.5, color: 'rgba(232, 71, 122, 0.40)' },
+    { offset: 1,   color: 'rgba(232, 71, 122, 0.06)' },
   ]);
 }
 
-const TECH21_LINE_COLORS = ['#ff8c42', '#e8477a', '#7b3fa0', '#4b6bff'];
+const TECH21_LINE_COLORS = ['#5b2d8e', '#e8477a', '#7b3fa0', '#4b6bff'];
 
 function techBarGradientAlt(barIdx) {
   if (barIdx % 2 === 1) {
@@ -2075,7 +2082,7 @@ function buildTech21LineSeries(col, cols, sorted, lineIdx, displayName, isPct = 
   };
 }
 
-const TECH21_LINE_LABEL_COLORS = ['#c45e00', '#b02050', '#5a1c82', '#2540cc'];
+const TECH21_LINE_LABEL_COLORS = ['#3d1a6e', '#b02050', '#5a1c82', '#2540cc'];
 function barLabelStep(dataLen) {
   if (dataLen <= 6) return 1;
   if (dataLen <= 12) return 2;
@@ -2125,7 +2132,7 @@ function buildTech21BarSeries(col, cols, sorted, barIdx, opts = {}) {
     },
     itemStyle: {
       color: (opts.colorFn || techBarGradientAlt)(barIdx),
-      borderRadius: [3, 3, 0, 0],
+      borderRadius: opts.borderRadius || [3, 3, 0, 0],
     },
     emphasis: {
       itemStyle: {
@@ -2220,6 +2227,7 @@ function renderTechComboChart(el, chartKey, cols, rows, slot, vizSettings, legen
       isRate,
       rateAsRatio,
       colorFn: slot.barColorFn,
+      borderRadius: slot.barBorderRadius,
       labelPosition: isTopLabel ? 'top' : (slot.barLabelPosition || 'top'),
       labelColor: barLabelColors[i % barLabelColors.length],
     }));
@@ -2316,7 +2324,7 @@ async function loadReachTabs(profile, params) {
     try {
       const { cols, rows, slot } = await fetchMergedReach(tabCfg, params);
       clearLoading(el);
-      renderTechComboChart(el, 'reach-' + key, cols, rows, { ...slot, swapBarLine: false, rename: tabCfg.rename, barColorFn: techBarGradientBlue, barLabelColors: ['#2540cc', '#a01848'], barLabelPosition: 'inside', barTopLabels: ['吸乳计划功能渗透吸奶器用户数', '其中使用AI吸乳计划的用户数', '吸乳计划功能渗透用户数'] }, {});
+      renderTechComboChart(el, 'reach-' + key, cols, rows, { ...slot, swapBarLine: false, rename: tabCfg.rename, barColorFn: techBarGradientBlue, barLabelColors: ['#a01848', '#2540cc'], barLabelPosition: 'inside', barTopLabels: ['吸乳计划功能渗透吸奶器用户数', '其中使用AI吸乳计划的用户数', '吸乳计划功能渗透用户数'], barBorderRadius: [1, 1, 0, 0] }, {});
       designedCache['reach-' + key] = true;
     } catch (e) {
       showSlotError(el, e.message);
@@ -2333,7 +2341,7 @@ async function loadPlanTabs(profile, params) {
       let { cols, rows } = await fetchDashcardData(dc, params);
       if (slot.pumpUser) rows = filterPumpUserRows(cols, rows);
       clearLoading(el);
-      renderTechComboChart(el, slot.dashcardId, cols, rows, { ...slot, swapBarLine: false, barColorFn: techBarGradientBlue, barLabelColors: ['#2540cc', '#a01848'], barLabelPosition: 'inside', barTopLabels: ['完成吸乳计划次数', '完成吸乳计划用户数'] }, dc.viz_settings || {});
+      renderTechComboChart(el, slot.dashcardId, cols, rows, { ...slot, swapBarLine: false, barColorFn: techBarGradientBlue, barLabelColors: ['#a01848', '#2540cc'], barLabelPosition: 'inside', barTopLabels: ['完成吸乳计划次数', '完成吸乳计划用户数'], barBorderRadius: [1, 1, 0, 0] }, dc.viz_settings || {});
       designedCache['plan-' + key] = true;
     } catch (e) {
       showSlotError(el, e.message);
@@ -2383,7 +2391,7 @@ async function loadNewPlanChart(profile, params) {
     const sorted = sortRowsByDate(cols, rows);
     const recent30 = sorted.slice(-30);
     clearLoading(el);
-    renderTechComboChart(el, 'new-plan', cols, recent30, { ...slot, swapBarLine: false, barColorFn: techBarGradientBlue, barLabelColors: ['#2540cc', '#a01848'] }, dc.viz_settings || {});
+    renderTechComboChart(el, 'new-plan', cols, recent30, { ...slot, swapBarLine: false, barColorFn: techBarGradientBlueGrad, barLabelColors: ['#a01848', '#2540cc'] }, dc.viz_settings || {});
   } catch (e) {
     showSlotError(el, e.message);
   }
@@ -2805,11 +2813,11 @@ function funnelLabelFormatter(steps) {
 }
 
 const FUNNEL_TECH_COLORS = [
-  'rgba(91, 200, 232, 0.82)',
+  'rgba(75, 107, 255, 0.88)',
   'rgba(123, 63, 160, 0.86)',
   'rgba(232, 71, 122, 0.82)',
   'rgba(255, 140, 66, 0.82)',
-  'rgba(75, 107, 255, 0.55)',
+  'rgba(91, 200, 232, 0.82)',
 ];
 
 function funnelTooltip(steps) {
